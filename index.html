@@ -1,0 +1,111 @@
+HTML
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本嚴選代購 | 潮流選品與生活雜貨</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #333; background-color: #f9f9f9; line-height: 1.6; }
+        
+        /* Header */
+        header { background-color: #fff; border-bottom: 1px solid #eaeaea; padding: 20px 0; text-align: center; position: sticky; top: 0; z-index: 100; }
+        header h1 { font-size: 1.5rem; letter-spacing: 2px; color: #1a1a1a; font-weight: 600; }
+        header p { font-size: 0.85rem; color: #666; margin-top: 4px; }
+
+        /* Banner */
+        .banner { background: linear-gradient(135deg, #2c3e50, #4ca1af); color: white; text-align: center; padding: 60px 20px; }
+        .banner h2 { font-size: 2rem; margin-bottom: 12px; font-weight: 500; }
+        .banner p { font-size: 1rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+        /* Container */
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+
+        /* Section Title */
+        .section-title { text-align: center; font-size: 1.4rem; margin-bottom: 30px; letter-spacing: 1px; position: relative; }
+        .section-title::after { content: ''; display: block; width: 40px; height: 2px; background: #333; margin: 10px auto 0; }
+
+        /* Product Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-4px); }
+        .card-img { height: 200px; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem; }
+        .card-body { padding: 20px; }
+        .card-tag { display: inline-block; background-color: #f0f0f0; color: #555; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; }
+        .card-title { font-size: 1.1rem; margin-bottom: 8px; font-weight: 600; }
+        .card-desc { font-size: 0.85rem; color: #666; margin-bottom: 15px; }
+        .card-price { font-size: 1.1rem; color: #d9534f; font-weight: bold; }
+
+        /* Call to Action Section */
+        .cta-section { background-color: #fff; border-radius: 12px; padding: 40px 20px; text-align: center; margin-top: 50px; border: 1px solid #eee; }
+        .cta-btn { display: inline-block; background-color: #06c755; color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 1rem; margin-top: 15px; box-shadow: 0 4px 10px rgba(6,199,85,0.3); }
+
+        /* Footer */
+        footer { text-align: center; padding: 30px 0; font-size: 0.8rem; color: #888; border-top: 1px solid #eaeaea; margin-top: 60px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>JAPAN SELECT SHOP</h1>
+        <p>東京 / 大阪 現場連線嚴選代購</p>
+    </header>
+
+    <section class="banner">
+        <h2>日本限定選品 ‧ 直送到府</h2>
+        <p>提供藥妝選品、潮流品牌與限時預購服務，讓你輕鬆入手與日本同步的優質好物。</p>
+    </section>
+
+    <div class="container">
+        <h3 class="section-title">熱門代購選品</h3>
+        
+        <div class="grid">
+            <!-- 商品卡片 1 -->
+            <div class="card">
+                <div class="card-img">日本專櫃美妝 / 藥妝選品</div>
+                <div class="card-body">
+                    <span class="card-tag">限時連線</span>
+                    <div class="card-title">專櫃彩妝與話題藥妝</div>
+                    <div class="card-desc">親自採購保障正品，包含限定色號與熱門保養品。</div>
+                    <div class="card-price">私訊報價 / 甜甜價</div>
+                </div>
+            </div>
+
+            <!-- 商品卡片 2 -->
+            <div class="card">
+                <div class="card-img">潮流服飾 / 鞋款</div>
+                <div class="card-body">
+                    <span class="card-tag">專櫃直購</span>
+                    <div class="card-title">日本限定 潮流服飾</div>
+                    <div class="card-desc">代找各大品牌日本限定發售款式與限定顏色。</div>
+                    <div class="card-price">依款式現場報價</div>
+                </div>
+            </div>
+
+            <!-- 商品卡片 3 -->
+            <div class="card">
+                <div class="card-img">精緻生活雜貨 / 零食</div>
+                <div class="card-body">
+                    <span class="card-tag">人氣推薦</span>
+                    <div class="card-title">生活質感選物 & 伴手禮</div>
+                    <div class="card-desc">嚴選日本質感家居、文具與地方限時伴手禮。</div>
+                    <div class="card-price">歡迎傳圖詢價</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h3>想找特定商品？或者需要即時連線報價？</h3>
+            <p>點擊下方按鈕加入官方 Line，傳送圖片即可為您報價與預購。</p>
+            <a href="#" class="cta-btn">加入 Line 專人客服諮詢</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Japan Select Shop. All Rights Reserved.</p>
+    </footer>
+
+</body>
+</html>
