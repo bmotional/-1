@@ -291,6 +291,27 @@
   .wish-row-meta { font-size: 11px; color: var(--khaki-dark); margin-top: 6px; }
   .big-modal .modal { max-width: 640px; max-height: 82vh; overflow-y: auto; }
 
+  .prod-admin-row {
+    display: flex; gap: 14px; align-items: center; border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 12px; margin-bottom: 10px; background: var(--bg);
+  }
+  .prod-admin-thumb {
+    width: 56px; height: 68px; object-fit: cover; border-radius: var(--radius);
+    background: #E4DCC9; flex-shrink: 0;
+  }
+  .prod-admin-info { flex: 1; min-width: 0; }
+  .prod-admin-name { font-weight: 600; font-size: 14px; }
+  .prod-admin-meta { font-size: 12px; color: var(--ink-soft); }
+  .badge-hidden { background: var(--danger); color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+  .prod-admin-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .image-preview {
+    width: 100%; aspect-ratio: 4/5; background: #E4DCC9; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px;
+    color: var(--khaki-dark); font-size: 12px;
+  }
+  .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+
   /* ============ Modal (Auth) ============ */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(42, 40, 35, 0.45);
@@ -589,6 +610,7 @@
     <div class="admin-tabs">
       <button class="admin-tab active" data-admin-tab="orders">訂單管理</button>
       <button class="admin-tab" data-admin-tab="wishlist">許願管理</button>
+      <button class="admin-tab" data-admin-tab="products">商品管理</button>
     </div>
 
     <div id="adminOrdersTab">
@@ -602,10 +624,74 @@
     <div id="adminWishlistTab" style="display:none">
       <div id="adminWishlistList"></div>
     </div>
+
+    <div id="adminProductsTab" style="display:none">
+      <div class="admin-panel-actions">
+        <span class="filter-label" id="adminProductsCount"></span>
+        <button class="btn btn-primary btn-sm" id="newProductBtn">+ 新增商品</button>
+      </div>
+      <div id="adminProductsList"></div>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ============ Product Edit Modal（管理員新增/編輯商品用） ============ -->
+<div class="modal-overlay" id="productEditOverlay">
+  <div class="modal">
+    <button class="modal-close" id="productEditClose" aria-label="關閉">×</button>
+    <h3 id="productEditTitle">編輯商品</h3>
+
+    <div class="image-preview" id="productImagePreview">尚無圖片</div>
+    <div class="field">
+      <label for="productImageFile">上傳/更換圖片</label>
+      <input type="file" id="productImageFile" accept="image/*">
+      <div class="form-msg" id="productImageMsg"></div>
+    </div>
+
+    <form id="productEditForm">
+      <input type="hidden" id="productEditId">
+      <div class="field"><label for="pfName">商品名稱</label><input type="text" id="pfName" required></div>
+      <div class="form-grid-2">
+        <div class="field"><label for="pfBrand">品牌</label><input type="text" id="pfBrand"></div>
+        <div class="field"><label for="pfPrice">售價(NT$)</label><input type="number" id="pfPrice" required></div>
+      </div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="pfCountry">產地</label>
+          <select id="pfCountry" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+            <option value="japan">日本</option><option value="korea">韓國</option><option value="vietnam">越南</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pfCategory">分類</label>
+          <select id="pfCategory" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+            <option value="男裝">男裝</option><option value="女裝">女裝</option><option value="飾品">飾品</option><option value="零食">零食</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="pfStatus">狀態</label>
+          <select id="pfStatus" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+            <option value="available">現貨</option><option value="preorder">預購中</option>
+            <option value="soldout">暫不供應</option><option value="coming_soon">即將上架</option>
+          </select>
+        </div>
+        <div class="field"><label for="pfDeposit">訂金比例(0-1，如0.75)</label><input type="number" id="pfDeposit" step="0.05" min="0" max="1"></div>
+      </div>
+      <div class="field"><label for="pfDesc">商品說明</label><textarea id="pfDesc"></textarea></div>
+      <div class="field">
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="pfHidden" style="width:auto;"> 隱藏此商品（客戶完全看不到，但資料保留）
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%">儲存商品</button>
+      <div class="form-msg" id="productEditMsg"></div>
+    </form>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -661,6 +747,7 @@ async function loadProducts() {
   const { data, error } = await sb
     .from('products')
     .select('*')
+    .eq('is_hidden', false)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -1093,7 +1180,9 @@ document.querySelectorAll('[data-admin-tab]').forEach(btn => {
     const tab = btn.dataset.adminTab;
     document.getElementById('adminOrdersTab').style.display = tab === 'orders' ? 'block' : 'none';
     document.getElementById('adminWishlistTab').style.display = tab === 'wishlist' ? 'block' : 'none';
+    document.getElementById('adminProductsTab').style.display = tab === 'products' ? 'block' : 'none';
     if (tab === 'wishlist') loadAdminWishlist();
+    if (tab === 'products') loadAdminProducts();
   });
 });
 
@@ -1190,6 +1279,118 @@ async function loadAdminWishlist() {
     </div>
   `).join('');
 }
+
+/* ============================================================
+   商品管理（管理員）
+   ============================================================ */
+async function loadAdminProducts() {
+  const { data, error } = await sb.from('products').select('*').order('created_at', { ascending: false });
+  const list = document.getElementById('adminProductsList');
+  const countEl = document.getElementById('adminProductsCount');
+  if (error) { list.innerHTML = '<p>讀取商品失敗</p>'; console.error(error); return; }
+
+  countEl.textContent = `共 ${data.length} 件商品`;
+  list.innerHTML = data.map(p => `
+    <div class="prod-admin-row">
+      <img class="prod-admin-thumb" src="${p.image_url || ''}" alt="">
+      <div class="prod-admin-info">
+        <div class="prod-admin-name">${p.name}${p.is_hidden ? '<span class="badge-hidden">隱藏中</span>' : ''}</div>
+        <div class="prod-admin-meta">${p.brand || ''}　${COUNTRY_LABEL[p.country] || p.country}　${ntd(p.price_ntd)}　${STATUS_LABEL[p.status] || p.status}</div>
+      </div>
+      <div class="prod-admin-actions">
+        <button class="btn btn-outline btn-sm" data-edit-product="${p.id}">編輯</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-edit-product]').forEach(btn => {
+    btn.addEventListener('click', () => openProductEditor(data.find(p => String(p.id) === btn.dataset.editProduct)));
+  });
+}
+
+document.getElementById('newProductBtn').addEventListener('click', () => openProductEditor(null));
+
+function openProductEditor(product) {
+  const title = document.getElementById('productEditTitle');
+  const preview = document.getElementById('productImagePreview');
+  document.getElementById('productEditId').value = product ? product.id : '';
+  document.getElementById('pfName').value = product ? product.name : '';
+  document.getElementById('pfBrand').value = product ? (product.brand || '') : '';
+  document.getElementById('pfPrice').value = product ? product.price_ntd : '';
+  document.getElementById('pfCountry').value = product ? product.country : 'japan';
+  document.getElementById('pfCategory').value = product ? product.category : '男裝';
+  document.getElementById('pfStatus').value = product ? product.status : 'available';
+  document.getElementById('pfDeposit').value = product ? product.deposit_ratio : 0.5;
+  document.getElementById('pfDesc').value = product ? (product.description || '') : '';
+  document.getElementById('pfHidden').checked = product ? !!product.is_hidden : false;
+  document.getElementById('productEditForm').dataset.currentImage = product ? (product.image_url || '') : '';
+  document.getElementById('productImageMsg').textContent = '';
+  document.getElementById('productEditMsg').textContent = '';
+
+  title.textContent = product ? '編輯商品' : '新增商品';
+  preview.innerHTML = product && product.image_url ? `<img src="${product.image_url}" alt="">` : '尚無圖片';
+
+  document.getElementById('productEditOverlay').classList.add('open');
+}
+document.getElementById('productEditClose').addEventListener('click', () => {
+  document.getElementById('productEditOverlay').classList.remove('open');
+});
+
+// 圖片上傳：選檔案後立即上傳到 Supabase Storage，成功後把公開網址存起來備用
+document.getElementById('productImageFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const msg = document.getElementById('productImageMsg');
+  msg.textContent = '上傳中...'; msg.className = 'form-msg';
+
+  const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+  const { error: uploadErr } = await sb.storage.from('product-images').upload(filePath, file);
+  if (uploadErr) {
+    msg.textContent = '上傳失敗：' + uploadErr.message; msg.className = 'form-msg err';
+    return;
+  }
+  const { data: pub } = sb.storage.from('product-images').getPublicUrl(filePath);
+  document.getElementById('productEditForm').dataset.currentImage = pub.publicUrl;
+  document.getElementById('productImagePreview').innerHTML = `<img src="${pub.publicUrl}" alt="">`;
+  msg.textContent = '圖片上傳成功'; msg.className = 'form-msg ok';
+});
+
+document.getElementById('productEditForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('productEditMsg');
+  msg.textContent = '儲存中...'; msg.className = 'form-msg';
+
+  const id = document.getElementById('productEditId').value;
+  const payload = {
+    name: document.getElementById('pfName').value.trim(),
+    brand: document.getElementById('pfBrand').value.trim(),
+    price_ntd: Number(document.getElementById('pfPrice').value),
+    country: document.getElementById('pfCountry').value,
+    category: document.getElementById('pfCategory').value,
+    status: document.getElementById('pfStatus').value,
+    deposit_ratio: Number(document.getElementById('pfDeposit').value),
+    description: document.getElementById('pfDesc').value.trim(),
+    is_hidden: document.getElementById('pfHidden').checked,
+    image_url: document.getElementById('productEditForm').dataset.currentImage || '',
+  };
+
+  let error;
+  if (id) {
+    ({ error } = await sb.from('products').update(payload).eq('id', id));
+  } else {
+    ({ error } = await sb.from('products').insert(payload));
+  }
+
+  if (error) {
+    msg.textContent = '儲存失敗：' + error.message; msg.className = 'form-msg err';
+    return;
+  }
+  msg.textContent = '儲存成功'; msg.className = 'form-msg ok';
+  toast(id ? '商品已更新' : '商品已新增');
+  await loadAdminProducts();
+  await loadProducts(); // 同步更新前台商品列表
+  setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
+});
 
 /* ============================================================
    許願專區
