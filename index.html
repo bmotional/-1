@@ -883,12 +883,65 @@ function renderCart() {
   });
 }
 
-document.getElementById('checkoutBtn').addEventListener('click', () => {
+/* ============================================================
+   送出預購訂單（真實寫入 Supabase orders 與 order_items）
+   ============================================================ */
+document.getElementById('checkoutBtn').addEventListener('click', async () => {
   if (!state.user) { toast('請先登入'); openAuth(); return; }
   if (state.cart.length === 0) { toast('購物車是空的'); return; }
-  // 階段一僅收集預購需求，尚未串接金流。
-  // 之後接入 LINE Pay / 綠界 / 藍新時，把實際付款流程接在這個函式裡即可。
+
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  checkoutBtn.disabled = true;
+  checkoutBtn.textContent = '送出中...';
+
+  let grand = 0, deposit = 0;
+  const itemsPayload = state.cart.map(item => {
+    const p = item.products || {};
+    const lineTotal = (p.price_ntd || 0) * item.quantity;
+    const lineDeposit = lineTotal * (p.deposit_ratio || 0.5);
+    grand += lineTotal;
+    deposit += lineDeposit;
+    return {
+      product_id: item.product_id,
+      product_name: p.name,
+      brand: p.brand,
+      price_ntd: p.price_ntd,
+      deposit_ratio: p.deposit_ratio,
+      quantity: item.quantity,
+    };
+  });
+
+  // 1. 寫入訂單主表 orders
+  const { data: order, error: orderErr } = await sb
+    .from('orders')
+    .insert({ user_id: state.user.id, total_ntd: grand, deposit_ntd: Math.round(deposit) })
+    .select()
+    .single();
+
+  if (orderErr) {
+    console.error(orderErr);
+    toast('送出失敗，請稍後再試');
+    checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
+    return;
+  }
+
+  // 2. 寫入訂單明細 order_items
+  const rows = itemsPayload.map(it => ({ ...it, order_id: order.id }));
+  const { error: itemsErr } = await sb.from('order_items').insert(rows);
+
+  if (itemsErr) {
+    console.error(itemsErr);
+    toast('訂單建立但明細寫入失敗，請聯絡我們');
+    checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
+    return;
+  }
+
+  // 3. 清空該使用者的購物車
+  await sb.from('cart_items').delete().eq('user_id', state.user.id);
+  await loadCart();
+
   toast('已收到你的預購需求，我們會透過 LINE 與你確認訂金付款方式');
+  checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
   closeCart();
 });
 
