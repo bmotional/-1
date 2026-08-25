@@ -258,6 +258,39 @@
   .footer-links { display: flex; gap: 18px; font-size: 13px; color: var(--ink-soft); }
   .footer-links a:hover { color: var(--ink); }
 
+  /* ============ Orders / Admin panel ============ */
+  .order-row {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 12px; background: var(--bg);
+  }
+  .order-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .order-id { font-size: 12px; color: var(--ink-soft); }
+  .order-status {
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; color: #fff;
+  }
+  .order-status-pending { background: var(--brass); }
+  .order-status-locked { background: var(--ink); }
+  .order-status-fulfilled { background: var(--sencha); }
+  .order-status-cancelled { background: var(--danger); }
+  .order-items-list { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; }
+  .order-items-list div { padding: 2px 0; }
+  .order-total { font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; }
+  .order-admin-actions { margin-top: 10px; display: flex; gap: 8px; }
+  .admin-tabs { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .admin-tab {
+    background: none; border: none; padding: 10px 4px; font-size: 14px; color: var(--ink-soft);
+    border-bottom: 2px solid transparent;
+  }
+  .admin-tab.active { color: var(--ink); border-color: var(--brass); font-weight: 600; }
+  .admin-panel-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .wish-row {
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 10px; background: var(--bg);
+  }
+  .wish-row-brand { font-weight: 600; font-size: 14px; }
+  .wish-row-desc { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+  .wish-row-meta { font-size: 11px; color: var(--khaki-dark); margin-top: 6px; }
+  .big-modal .modal { max-width: 640px; max-height: 82vh; overflow-y: auto; }
+
   /* ============ Modal (Auth) ============ */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(42, 40, 35, 0.45);
@@ -363,6 +396,9 @@
       <button class="icon-btn" id="cartBtn" aria-label="購物車">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 7H6"/></svg>
         <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" id="adminBtn" style="display:none" aria-label="管理後台" title="管理後台">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
       </button>
     </div>
   </div>
@@ -511,6 +547,7 @@
     <div id="authLoggedInView" style="display:none">
       <h3>會員中心</h3>
       <p class="sub" id="loggedInEmail"></p>
+      <button class="btn btn-outline" id="myOrdersBtn" style="width:100%; margin-bottom:10px;">查看我的訂單</button>
       <button class="btn btn-outline" id="logoutBtn" style="width:100%">登出</button>
     </div>
   </div>
@@ -534,6 +571,40 @@
   </div>
 </aside>
 
+<!-- ============ My Orders Modal (客戶查看自己的訂單) ============ -->
+<div class="modal-overlay big-modal" id="myOrdersOverlay">
+  <div class="modal">
+    <button class="modal-close" id="myOrdersClose" aria-label="關閉">×</button>
+    <h3>我的訂單</h3>
+    <p class="sub">訂單狀態：待確認 → 已鎖定(採購中) → 已完成</p>
+    <div id="myOrdersList"></div>
+  </div>
+</div>
+
+<!-- ============ Admin Panel Modal（管理員專用） ============ -->
+<div class="modal-overlay big-modal" id="adminOverlay">
+  <div class="modal">
+    <button class="modal-close" id="adminClose" aria-label="關閉">×</button>
+    <h3>管理後台</h3>
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-admin-tab="orders">訂單管理</button>
+      <button class="admin-tab" data-admin-tab="wishlist">許願管理</button>
+    </div>
+
+    <div id="adminOrdersTab">
+      <div class="admin-panel-actions">
+        <span class="filter-label" id="adminOrdersCount"></span>
+        <button class="btn btn-primary btn-sm" id="lockAllPendingBtn">一鍵鎖定所有待確認訂單</button>
+      </div>
+      <div id="adminOrdersList"></div>
+    </div>
+
+    <div id="adminWishlistTab" style="display:none">
+      <div id="adminWishlistList"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -554,6 +625,7 @@ const state = {
   filterCountry: 'all',
   filterStatus: 'all',
   user: null,      // Supabase auth user
+  profile: null,   // profiles 資料表對應的一列，含 is_admin
   cart: [],        // [{id, product_id, quantity, products:{...}}]
 };
 
@@ -742,6 +814,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   }
   msg.textContent = '註冊成功！'; msg.className = 'form-msg ok';
   state.user = data.user;
+  await loadProfile();
   await loadCart();
   refreshAuthView();
   toast('歡迎加入濱水一湖');
@@ -761,6 +834,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     return;
   }
   state.user = data.user;
+  await loadProfile();
   await loadCart();
   refreshAuthView();
   toast('登入成功');
@@ -784,8 +858,10 @@ document.getElementById('lineLoginBtn').addEventListener('click', async () => {
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await sb.auth.signOut();
   state.user = null;
+  state.profile = null;
   state.cart = [];
   renderCart();
+  updateAdminUI();
   refreshAuthView();
   closeAuth();
   toast('已登出');
@@ -794,7 +870,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 // 監聽登入狀態變化（包含 OAuth 導回）
 sb.auth.onAuthStateChange((event, session) => {
   state.user = session ? session.user : null;
-  if (state.user) loadCart();
+  if (state.user) { loadCart(); loadProfile(); }
 });
 
 /* ============================================================
@@ -883,9 +959,6 @@ function renderCart() {
   });
 }
 
-/* ============================================================
-   送出預購訂單（真實寫入 Supabase orders 與 order_items）
-   ============================================================ */
 document.getElementById('checkoutBtn').addEventListener('click', async () => {
   if (!state.user) { toast('請先登入'); openAuth(); return; }
   if (state.cart.length === 0) { toast('購物車是空的'); return; }
@@ -902,12 +975,8 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
     grand += lineTotal;
     deposit += lineDeposit;
     return {
-      product_id: item.product_id,
-      product_name: p.name,
-      brand: p.brand,
-      price_ntd: p.price_ntd,
-      deposit_ratio: p.deposit_ratio,
-      quantity: item.quantity,
+      product_id: item.product_id, product_name: p.name, brand: p.brand,
+      price_ntd: p.price_ntd, deposit_ratio: p.deposit_ratio, quantity: item.quantity,
     };
   });
 
@@ -915,8 +984,7 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   const { data: order, error: orderErr } = await sb
     .from('orders')
     .insert({ user_id: state.user.id, total_ntd: grand, deposit_ntd: Math.round(deposit) })
-    .select()
-    .single();
+    .select().single();
 
   if (orderErr) {
     console.error(orderErr);
@@ -928,7 +996,6 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   // 2. 寫入訂單明細 order_items
   const rows = itemsPayload.map(it => ({ ...it, order_id: order.id }));
   const { error: itemsErr } = await sb.from('order_items').insert(rows);
-
   if (itemsErr) {
     console.error(itemsErr);
     toast('訂單建立但明細寫入失敗，請聯絡我們');
@@ -944,6 +1011,166 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
   closeCart();
 });
+
+/* ============================================================
+   會員資料 / 管理員身份判斷
+   ------------------------------------------------------------
+   登入後多讀一次 profiles 表，確認 is_admin 是否為 true，
+   藉此決定要不要顯示管理後台的入口按鈕。
+   ============================================================ */
+async function loadProfile() {
+  if (!state.user) { state.profile = null; updateAdminUI(); return; }
+  const { data, error } = await sb
+    .from('profiles')
+    .select('is_admin, display_name')
+    .eq('id', state.user.id)
+    .single();
+  if (error) { console.error('讀取會員資料失敗', error); state.profile = null; }
+  else { state.profile = data; }
+  updateAdminUI();
+}
+function updateAdminUI() {
+  const adminBtn = document.getElementById('adminBtn');
+  const isAdmin = !!(state.profile && state.profile.is_admin);
+  adminBtn.style.display = isAdmin ? 'flex' : 'none';
+}
+
+/* ============================================================
+   我的訂單（客戶端）
+   ============================================================ */
+const myOrdersOverlay = document.getElementById('myOrdersOverlay');
+document.getElementById('myOrdersBtn').addEventListener('click', () => {
+  closeAuth();
+  myOrdersOverlay.classList.add('open');
+  loadMyOrders();
+});
+document.getElementById('myOrdersClose').addEventListener('click', () => myOrdersOverlay.classList.remove('open'));
+myOrdersOverlay.addEventListener('click', (e) => { if (e.target === myOrdersOverlay) myOrdersOverlay.classList.remove('open'); });
+
+const ORDER_STATUS_LABEL = { pending: '待確認', locked: '已鎖定(採購中)', fulfilled: '已完成', cancelled: '已取消' };
+
+async function loadMyOrders() {
+  if (!state.user) return;
+  const { data, error } = await sb
+    .from('orders')
+    .select('id, status, total_ntd, deposit_ntd, created_at, order_items(*)')
+    .eq('user_id', state.user.id)
+    .order('created_at', { ascending: false });
+  const list = document.getElementById('myOrdersList');
+  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; return; }
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有訂單紀錄。</p>'; return; }
+
+  list.innerHTML = data.map(o => `
+    <div class="order-row">
+      <div class="order-row-top">
+        <span class="order-id">訂單 #${o.id}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        <span class="order-status order-status-${o.status}">${ORDER_STATUS_LABEL[o.status] || o.status}</span>
+      </div>
+      <div class="order-items-list">
+        ${(o.order_items || []).map(it => `<div>${it.product_name} × ${it.quantity}</div>`).join('')}
+      </div>
+      <div class="order-total"><span>訂金</span><span>${ntd(o.deposit_ntd)}</span></div>
+      <div class="order-total"><span>總額</span><span>${ntd(o.total_ntd)}</span></div>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   管理後台（is_admin = true 才會看到入口）
+   ============================================================ */
+const adminOverlay = document.getElementById('adminOverlay');
+document.getElementById('adminBtn').addEventListener('click', () => {
+  adminOverlay.classList.add('open');
+  loadAdminOrders();
+});
+document.getElementById('adminClose').addEventListener('click', () => adminOverlay.classList.remove('open'));
+adminOverlay.addEventListener('click', (e) => { if (e.target === adminOverlay) adminOverlay.classList.remove('open'); });
+
+document.querySelectorAll('[data-admin-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-admin-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.adminTab;
+    document.getElementById('adminOrdersTab').style.display = tab === 'orders' ? 'block' : 'none';
+    document.getElementById('adminWishlistTab').style.display = tab === 'wishlist' ? 'block' : 'none';
+    if (tab === 'wishlist') loadAdminWishlist();
+  });
+});
+
+async function loadAdminOrders() {
+  const { data, error } = await sb
+    .from('orders')
+    .select('id, status, total_ntd, deposit_ntd, created_at, user_id, order_items(*), profiles(display_name)')
+    .order('created_at', { ascending: false });
+  const list = document.getElementById('adminOrdersList');
+  const countEl = document.getElementById('adminOrdersCount');
+  if (error) { list.innerHTML = '<p>讀取訂單失敗，請確認管理員權限是否設定正確</p>'; console.error(error); return; }
+
+  const pendingCount = (data || []).filter(o => o.status === 'pending').length;
+  countEl.textContent = `共 ${data.length} 筆訂單，${pendingCount} 筆待確認`;
+
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有訂單。</p>'; return; }
+
+  list.innerHTML = data.map(o => `
+    <div class="order-row">
+      <div class="order-row-top">
+        <span class="order-id">訂單 #${o.id}　${(o.profiles && o.profiles.display_name) || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        <span class="order-status order-status-${o.status}">${ORDER_STATUS_LABEL[o.status] || o.status}</span>
+      </div>
+      <div class="order-items-list">
+        ${(o.order_items || []).map(it => `<div>${it.product_name} × ${it.quantity}（${it.brand || ''}）</div>`).join('')}
+      </div>
+      <div class="order-total"><span>訂金</span><span>${ntd(o.deposit_ntd)}</span></div>
+      <div class="order-total"><span>總額</span><span>${ntd(o.total_ntd)}</span></div>
+      <div class="order-admin-actions">
+        ${o.status === 'pending' ? `<button class="btn btn-outline btn-sm" data-lock-order="${o.id}">鎖定此筆訂單</button>` : ''}
+        ${o.status === 'locked' ? `<button class="btn btn-outline btn-sm" data-fulfill-order="${o.id}">標記為已完成</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-lock-order]').forEach(btn => {
+    btn.addEventListener('click', () => updateOrderStatus(btn.dataset.lockOrder, 'locked'));
+  });
+  list.querySelectorAll('[data-fulfill-order]').forEach(btn => {
+    btn.addEventListener('click', () => updateOrderStatus(btn.dataset.fulfillOrder, 'fulfilled'));
+  });
+}
+
+async function updateOrderStatus(orderId, status) {
+  const payload = { status };
+  if (status === 'locked') payload.locked_at = new Date().toISOString();
+  const { error } = await sb.from('orders').update(payload).eq('id', orderId);
+  if (error) { toast('操作失敗：' + error.message); return; }
+  toast('訂單狀態已更新');
+  loadAdminOrders();
+}
+
+document.getElementById('lockAllPendingBtn').addEventListener('click', async () => {
+  if (!confirm('確定要把所有「待確認」訂單一次鎖定嗎？鎖定後訂單即視為已進入採購程序。')) return;
+  const { error } = await sb.from('orders').update({ status: 'locked', locked_at: new Date().toISOString() }).eq('status', 'pending');
+  if (error) { toast('鎖單失敗：' + error.message); return; }
+  toast('已鎖定所有待確認訂單');
+  loadAdminOrders();
+});
+
+async function loadAdminWishlist() {
+  const { data, error } = await sb
+    .from('wishlist_requests')
+    .select('id, brand_name, description, created_at, profiles(display_name)')
+    .order('created_at', { ascending: false });
+  const list = document.getElementById('adminWishlistList');
+  if (error) { list.innerHTML = '<p>讀取許願失敗</p>'; console.error(error); return; }
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有許願紀錄。</p>'; return; }
+
+  list.innerHTML = data.map(w => `
+    <div class="wish-row">
+      <div class="wish-row-brand">${w.brand_name}</div>
+      ${w.description ? `<div class="wish-row-desc">${w.description}</div>` : ''}
+      <div class="wish-row-meta">${(w.profiles && w.profiles.display_name) || '（未命名會員）'}　${new Date(w.created_at).toLocaleDateString('zh-Hant-TW')}</div>
+    </div>
+  `).join('');
+}
 
 /* ============================================================
    許願專區
@@ -984,6 +1211,7 @@ document.getElementById('navToggle').addEventListener('click', () => {
   const { data: { session } } = await sb.auth.getSession();
   state.user = session ? session.user : null;
   await loadProducts();
+  await loadProfile();
   await loadCart();
 })();
 </script>
