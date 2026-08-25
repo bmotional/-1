@@ -1100,11 +1100,19 @@ document.querySelectorAll('[data-admin-tab]').forEach(btn => {
 async function loadAdminOrders() {
   const { data, error } = await sb
     .from('orders')
-    .select('id, status, total_ntd, deposit_ntd, created_at, user_id, order_items(*), profiles(display_name)')
+    .select('id, status, total_ntd, deposit_ntd, created_at, user_id, order_items(*)')
     .order('created_at', { ascending: false });
   const list = document.getElementById('adminOrdersList');
   const countEl = document.getElementById('adminOrdersCount');
   if (error) { list.innerHTML = '<p>讀取訂單失敗，請確認管理員權限是否設定正確</p>'; console.error(error); return; }
+
+  // 另外撈出所有相關會員的暱稱，自己在前端合併(避免依賴資料庫的關聯查詢)
+  const userIds = [...new Set((data || []).map(o => o.user_id))];
+  let nameMap = {};
+  if (userIds.length > 0) {
+    const { data: profs } = await sb.from('profiles').select('id, display_name').in('id', userIds);
+    (profs || []).forEach(p => { nameMap[p.id] = p.display_name; });
+  }
 
   const pendingCount = (data || []).filter(o => o.status === 'pending').length;
   countEl.textContent = `共 ${data.length} 筆訂單，${pendingCount} 筆待確認`;
@@ -1114,7 +1122,7 @@ async function loadAdminOrders() {
   list.innerHTML = data.map(o => `
     <div class="order-row">
       <div class="order-row-top">
-        <span class="order-id">訂單 #${o.id}　${(o.profiles && o.profiles.display_name) || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        <span class="order-id">訂單 #${o.id}　${nameMap[o.user_id] || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
         <span class="order-status order-status-${o.status}">${ORDER_STATUS_LABEL[o.status] || o.status}</span>
       </div>
       <div class="order-items-list">
@@ -1124,7 +1132,7 @@ async function loadAdminOrders() {
       <div class="order-total"><span>總額</span><span>${ntd(o.total_ntd)}</span></div>
       <div class="order-admin-actions">
         ${o.status === 'pending' ? `<button class="btn btn-outline btn-sm" data-lock-order="${o.id}">鎖定此筆訂單</button>` : ''}
-        ${o.status === 'locked' ? `<button class="btn btn-outline btn-sm" data-fulfill-order="${o.id}">標記為已完成</button>` : ''}
+        ${o.status === 'locked' ? `<button class="btn btn-outline btn-sm" data-fulfill-order="${o.id}">標記為已完成</button><button class="btn btn-outline btn-sm" data-unlock-order="${o.id}">解除鎖定</button>` : ''}
       </div>
     </div>
   `).join('');
@@ -1134,6 +1142,9 @@ async function loadAdminOrders() {
   });
   list.querySelectorAll('[data-fulfill-order]').forEach(btn => {
     btn.addEventListener('click', () => updateOrderStatus(btn.dataset.fulfillOrder, 'fulfilled'));
+  });
+  list.querySelectorAll('[data-unlock-order]').forEach(btn => {
+    btn.addEventListener('click', () => updateOrderStatus(btn.dataset.unlockOrder, 'pending'));
   });
 }
 
@@ -1157,17 +1168,25 @@ document.getElementById('lockAllPendingBtn').addEventListener('click', async () 
 async function loadAdminWishlist() {
   const { data, error } = await sb
     .from('wishlist_requests')
-    .select('id, brand_name, description, created_at, profiles(display_name)')
+    .select('id, brand_name, description, created_at, user_id')
     .order('created_at', { ascending: false });
   const list = document.getElementById('adminWishlistList');
   if (error) { list.innerHTML = '<p>讀取許願失敗</p>'; console.error(error); return; }
+
+  const userIds = [...new Set((data || []).map(w => w.user_id))];
+  let nameMap = {};
+  if (userIds.length > 0) {
+    const { data: profs } = await sb.from('profiles').select('id, display_name').in('id', userIds);
+    (profs || []).forEach(p => { nameMap[p.id] = p.display_name; });
+  }
+
   if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有許願紀錄。</p>'; return; }
 
   list.innerHTML = data.map(w => `
     <div class="wish-row">
       <div class="wish-row-brand">${w.brand_name}</div>
       ${w.description ? `<div class="wish-row-desc">${w.description}</div>` : ''}
-      <div class="wish-row-meta">${(w.profiles && w.profiles.display_name) || '（未命名會員）'}　${new Date(w.created_at).toLocaleDateString('zh-Hant-TW')}</div>
+      <div class="wish-row-meta">${nameMap[w.user_id] || '（未命名會員）'}　${new Date(w.created_at).toLocaleDateString('zh-Hant-TW')}</div>
     </div>
   `).join('');
 }
