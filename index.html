@@ -315,6 +315,55 @@
   }
   .image-preview img { width: 100%; height: 100%; object-fit: cover; }
 
+  /* ============ Product card heart / variants ============ */
+  .card-image { position: relative; }
+  .heart-btn {
+    position: absolute; top: 10px; right: 10px; width: 30px; height: 30px;
+    background: rgba(251,248,242,0.9); border: 1px solid var(--line); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+    transition: transform .12s;
+  }
+  .heart-btn:active { transform: scale(0.85); }
+  .heart-btn svg { width: 16px; height: 16px; }
+  .heart-btn .heart-fill { fill: none; stroke: var(--danger); stroke-width: 2px; }
+  .heart-btn.active .heart-fill { fill: var(--danger); }
+  .heart-pop { animation: heartPop .3s ease; }
+  @keyframes heartPop { 0%{transform:scale(1);} 40%{transform:scale(1.35);} 100%{transform:scale(1);} }
+
+  .swatch-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+  .swatch {
+    width: 34px; height: 34px; border-radius: 6px; border: 2px solid var(--line);
+    cursor: pointer; position: relative; flex-shrink: 0;
+  }
+  .swatch.selected { border-color: var(--ink); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--ink); }
+  .swatch.unavailable { opacity: 0.35; cursor: not-allowed; }
+  .swatch.unavailable::after {
+    content: ''; position: absolute; inset: 0; background:
+      linear-gradient(to top right, transparent 46%, var(--danger) 48%, var(--danger) 52%, transparent 54%);
+    border-radius: 6px;
+  }
+  .size-chip {
+    padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--bg); font-size: 13px; cursor: pointer;
+  }
+  .size-chip.selected { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .size-chip.unavailable { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
+  .variant-label { font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; letter-spacing: 0.03em; }
+
+  .detail-image { width: 100%; aspect-ratio: 4/5; border-radius: var(--radius); overflow: hidden; background: #E4DCC9; margin-bottom: 16px; }
+  .detail-image img { width: 100%; height: 100%; object-fit: cover; }
+
+  .admin-variant-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px;
+  }
+  .admin-variant-swatch { width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--line); flex-shrink: 0; }
+  .admin-variant-name { flex: 1; }
+  .preset-btn {
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg);
+    font-size: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .preset-swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid var(--line); }
+
   /* ============ Modal (Auth) ============ */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(42, 40, 35, 0.45);
@@ -417,6 +466,10 @@
       <button class="icon-btn" id="acctBtn" aria-label="會員帳號">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
       </button>
+      <button class="icon-btn" id="favBtn" aria-label="我的收藏" title="我的收藏">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+        <span class="cart-badge" id="favBadge" style="display:none">0</span>
+      </button>
       <button class="icon-btn" id="cartBtn" aria-label="購物車">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 7H6"/></svg>
         <span class="cart-badge" id="cartBadge" style="display:none">0</span>
@@ -441,7 +494,7 @@
   <div class="hero-inner">
     <div class="hero-eyebrow">日本 · 韓國 · 越南　正品選品代購</div>
     <h1>只帶回，台灣買不到的那一件。</h1>
-    <p>濱水一湖不追大牌熱門款，只挑選台灣尚未引進、值得跨海帶回的品牌與單品。每一件都是實地採購的正品。</p>
+    <p>濱水一湖不追大牌熱門款，只挑選台灣尚未引進、值得跨海帶回的品牌與單品。每一件都是實地採購的正品，價差就是我們唯一的獲利方式。</p>
     <div class="hero-ctas">
       <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
       <a href="#wishlist" class="btn btn-outline">提出代購許願</a>
@@ -506,7 +559,7 @@
   <div class="wrap footer-inner">
     <div>
       <div class="footer-brand">濱水一湖</div>
-      <p class="footer-note">日本・韓國・越南正品選品代購。僅採購正品，絕不販售仿冒或黃牛轉賣商品。</p>
+      <p class="footer-note">日本・韓國・越南正品選品代購。僅採購正品，獲利僅來自價差與台灣未引進商品，絕不販售仿冒或黃牛轉賣商品。</p>
     </div>
     <div class="footer-links">
       <a href="#products">商品</a>
@@ -640,6 +693,49 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ============ Product Detail Modal（客戶查看放大圖+選款式） ============ -->
+<div class="modal-overlay product-modal" id="productDetailOverlay">
+  <div class="modal">
+    <button class="modal-close" id="productDetailClose" aria-label="關閉">×</button>
+    <div class="product-edit-layout">
+      <div>
+        <div class="detail-image" id="detailImage"></div>
+        <button class="heart-btn" id="detailHeartBtn" style="position:static; width:100%; height:auto; padding:10px; display:flex; gap:8px;">
+          <svg viewBox="0 0 24 24"><path class="heart-fill" d="M12 21s-7.5-4.9-10-9.3C0.3 8.4 1.6 5 5 4.2c2-.5 4 .3 5 2 1-1.7 3-2.5 5-2 3.4.8 4.7 4.2 3 7.5C19.5 16.1 12 21 12 21z"/></svg>
+          <span id="detailHeartLabel">加入收藏</span>
+        </button>
+      </div>
+      <div>
+        <div class="card-country" id="detailCountry"></div>
+        <div class="card-brand" id="detailBrand"></div>
+        <h3 id="detailName" style="margin:4px 0 10px;"></h3>
+        <div class="price-value" id="detailPrice" style="margin-bottom:14px;"></div>
+        <p id="detailDesc" style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;"></p>
+
+        <div id="detailColorSection" style="display:none">
+          <div class="variant-label">選擇顏色</div>
+          <div class="swatch-row" id="detailColorRow"></div>
+        </div>
+        <div id="detailSizeSection" style="display:none">
+          <div class="variant-label">選擇尺寸</div>
+          <div class="swatch-row" id="detailSizeRow"></div>
+        </div>
+
+        <button class="btn btn-primary" id="detailAddToCartBtn" style="width:100%; margin-top:10px;">加入購物車</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ My Favorites Modal ============ -->
+<div class="modal-overlay big-modal" id="favOverlay">
+  <div class="modal">
+    <button class="modal-close" id="favClose" aria-label="關閉">×</button>
+    <h3>我的收藏</h3>
+    <div id="favList"></div>
+  </div>
+</div>
+
 <!-- ============ Product Edit Modal（管理員新增/編輯商品用） ============ -->
 <div class="modal-overlay product-modal" id="productEditOverlay">
   <div class="modal">
@@ -697,6 +793,17 @@
         <div class="form-msg" id="productEditMsg"></div>
       </form>
     </div>
+
+    <div id="variantSection" style="display:none; margin-top:20px; border-top:1px solid var(--line); padding-top:16px;">
+      <h4 style="font-family:var(--font-display); font-size:15px; margin:0 0 10px;">顏色選項</h4>
+      <div class="filter-group" id="colorPresetRow" style="margin-bottom:10px;"></div>
+      <div id="colorVariantList"></div>
+
+      <h4 style="font-family:var(--font-display); font-size:15px; margin:20px 0 10px;">尺寸選項</h4>
+      <div class="filter-group" id="sizePresetRow" style="margin-bottom:10px;"></div>
+      <div id="sizeVariantList"></div>
+    </div>
+    <p id="variantHint" style="font-size:12px; color:var(--ink-soft); margin-top:16px;">請先儲存商品基本資料，儲存後即可在下方新增顏色/尺寸選項。</p>
   </div>
 </div>
 
@@ -720,7 +827,17 @@ const state = {
   user: null,      // Supabase auth user
   profile: null,   // profiles 資料表對應的一列，含 is_admin
   cart: [],        // [{id, product_id, quantity, products:{...}}]
+  variantsByProduct: {}, // { productId: { colors:[...], sizes:[...] } }
+  favoriteIds: new Set(),
+  detailSelection: { productId: null, color: null, size: null },
 };
+
+const PRESET_COLORS = [
+  { name: '黑色', hex: '#1a1a1a' }, { name: '白色', hex: '#f5f2ea' }, { name: '灰色', hex: '#8a8577' },
+  { name: '卡其', hex: '#96876A' }, { name: '棕色', hex: '#6b4a35' }, { name: '藍色', hex: '#2e4a6b' },
+  { name: '軍綠', hex: '#5a6b4a' }, { name: '丈青', hex: '#2b3a4a' }, { name: '米白', hex: '#ece4d3' }, { name: '紅色', hex: '#a8462f' },
+];
+const PRESET_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '均一尺寸'];
 
 const STATUS_LABEL = {
   available: '現貨',
@@ -763,6 +880,19 @@ async function loadProducts() {
     return;
   }
   state.products = data || [];
+
+  // 一併撈取這些商品的款式資料(顏色/尺寸)
+  const ids = state.products.map(p => p.id);
+  state.variantsByProduct = {};
+  if (ids.length > 0) {
+    const { data: variants } = await sb.from('product_variants').select('*').in('product_id', ids).order('sort_order');
+    (variants || []).forEach(v => {
+      if (!state.variantsByProduct[v.product_id]) state.variantsByProduct[v.product_id] = { colors: [], sizes: [] };
+      if (v.variant_type === 'color') state.variantsByProduct[v.product_id].colors.push(v);
+      else state.variantsByProduct[v.product_id].sizes.push(v);
+    });
+  }
+
   renderProducts();
 }
 
@@ -792,30 +922,46 @@ function renderProducts() {
     card.className = 'card';
     const depositPct = p.deposit_ratio ? Math.round(p.deposit_ratio * 100) : null;
     const canAdd = p.status === 'available' || p.status === 'preorder';
+    const hasVariants = !!(state.variantsByProduct[p.id] && (state.variantsByProduct[p.id].colors.length || state.variantsByProduct[p.id].sizes.length));
+    const isFav = state.favoriteIds.has(p.id);
 
     card.innerHTML = `
-      <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}">
+      <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}" data-open-detail="${p.id}">
         <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
+        <button class="heart-btn ${isFav ? 'active' : ''}" data-toggle-fav="${p.id}" aria-label="加入收藏">
+          <svg viewBox="0 0 24 24"><path class="heart-fill" d="M12 21s-7.5-4.9-10-9.3C0.3 8.4 1.6 5 5 4.2c2-.5 4 .3 5 2 1-1.7 3-2.5 5-2 3.4.8 4.7 4.2 3 7.5C19.5 16.1 12 21 12 21z"/></svg>
+        </button>
         ${!p.image_url ? '尚無商品圖' : ''}
       </div>
       <div class="card-body">
         <div class="card-country">${COUNTRY_LABEL[p.country] || p.country}</div>
         <div class="card-brand">${p.brand || ''}</div>
-        <div class="card-name">${p.name}</div>
+        <div class="card-name" data-open-detail="${p.id}" style="cursor:pointer;">${p.name}</div>
         <div class="card-price">
           <span class="price-value">${ntd(p.price_ntd)}</span>
           ${depositPct ? `<span class="deposit-note">訂金 ${depositPct}%</span>` : ''}
         </div>
-        <button class="card-add" data-product-id="${p.id}" ${canAdd ? '' : 'disabled'}>
-          ${canAdd ? '加入購物車' : STATUS_LABEL[p.status] || '無法購買'}
+        <button class="card-add" data-open-detail-btn="${p.id}" ${canAdd ? '' : 'disabled'}>
+          ${!canAdd ? (STATUS_LABEL[p.status] || '無法購買') : (hasVariants ? '選擇款式' : '加入購物車')}
         </button>
       </div>
     `;
     grid.appendChild(card);
   });
 
-  grid.querySelectorAll('.card-add:not([disabled])').forEach(btn => {
-    btn.addEventListener('click', () => addToCart(btn.dataset.productId));
+  grid.querySelectorAll('[data-open-detail]').forEach(el => {
+    el.addEventListener('click', () => openProductDetail(el.dataset.openDetail));
+  });
+  grid.querySelectorAll('[data-toggle-fav]').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.toggleFav, btn); });
+  });
+  grid.querySelectorAll('[data-open-detail-btn]:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = state.products.find(x => String(x.id) === btn.dataset.openDetailBtn);
+      const hasVariants = !!(state.variantsByProduct[p.id] && (state.variantsByProduct[p.id].colors.length || state.variantsByProduct[p.id].sizes.length));
+      if (hasVariants) { openProductDetail(p.id); }
+      else { confirmAndAddToCart(p.id); }
+    });
   });
 }
 
@@ -910,6 +1056,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   state.user = data.user;
   await loadProfile();
   await loadCart();
+  await loadFavorites();
   refreshAuthView();
   toast('歡迎加入濱水一湖');
 });
@@ -930,6 +1077,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   state.user = data.user;
   await loadProfile();
   await loadCart();
+  await loadFavorites();
   refreshAuthView();
   toast('登入成功');
 });
@@ -954,8 +1102,10 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   state.user = null;
   state.profile = null;
   state.cart = [];
+  state.favoriteIds = new Set();
   renderCart();
   updateAdminUI();
+  updateFavBadge();
   refreshAuthView();
   closeAuth();
   toast('已登出');
@@ -964,7 +1114,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 // 監聽登入狀態變化（包含 OAuth 導回）
 sb.auth.onAuthStateChange((event, session) => {
   state.user = session ? session.user : null;
-  if (state.user) { loadCart(); loadProfile(); }
+  if (state.user) { loadCart(); loadProfile(); loadFavorites(); }
 });
 
 /* ============================================================
@@ -978,17 +1128,23 @@ document.getElementById('cartBtn').addEventListener('click', openCart);
 document.getElementById('cartClose').addEventListener('click', closeCart);
 drawerOverlay.addEventListener('click', closeCart);
 
-async function addToCart(productId) {
+async function addToCart(productId, variant = {}) {
   if (!state.user) {
     toast('請先登入會員才能加入購物車');
     openAuth();
     return;
   }
-  const existing = state.cart.find(c => String(c.product_id) === String(productId));
+  const vColor = variant.variant_color || null;
+  const vSize = variant.variant_size || null;
+  const existing = state.cart.find(c =>
+    String(c.product_id) === String(productId) &&
+    (c.variant_color || null) === vColor &&
+    (c.variant_size || null) === vSize
+  );
   if (existing) {
     await sb.from('cart_items').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
   } else {
-    await sb.from('cart_items').insert({ user_id: state.user.id, product_id: productId, quantity: 1 });
+    await sb.from('cart_items').insert({ user_id: state.user.id, product_id: productId, quantity: 1, variant_color: vColor, variant_size: vSize });
   }
   await loadCart();
   toast('已加入購物車');
@@ -1033,11 +1189,12 @@ function renderCart() {
     const lineDeposit = lineTotal * (p.deposit_ratio || 0.5);
     grand += lineTotal;
     deposit += lineDeposit;
+    const variantDesc = [item.variant_color, item.variant_size].filter(Boolean).join(' / ');
     return `
       <div class="cart-item">
         <img src="${p.image_url || ''}" alt="">
         <div class="cart-item-info">
-          <div class="cart-item-name">${p.name || ''}</div>
+          <div class="cart-item-name">${p.name || ''}${variantDesc ? `<span style="color:var(--ink-soft); font-weight:400;">（${variantDesc}）</span>` : ''}</div>
           <div class="cart-item-meta">${ntd(p.price_ntd)} × ${item.quantity}</div>
           <button class="cart-item-remove" data-cart-id="${item.id}">移除</button>
         </div>
@@ -1071,6 +1228,7 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
     return {
       product_id: item.product_id, product_name: p.name, brand: p.brand,
       price_ntd: p.price_ntd, deposit_ratio: p.deposit_ratio, quantity: item.quantity,
+      variant_color: item.variant_color || null, variant_size: item.variant_size || null,
     };
   });
 
@@ -1105,6 +1263,153 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
   closeCart();
 });
+
+/* ============================================================
+   收藏（愛心）
+   ============================================================ */
+async function loadFavorites() {
+  if (!state.user) { state.favoriteIds = new Set(); updateFavBadge(); return; }
+  const { data } = await sb.from('favorites').select('product_id').eq('user_id', state.user.id);
+  state.favoriteIds = new Set((data || []).map(f => f.product_id));
+  updateFavBadge();
+}
+function updateFavBadge() {
+  const badge = document.getElementById('favBadge');
+  badge.style.display = state.favoriteIds.size > 0 ? 'flex' : 'none';
+  badge.textContent = state.favoriteIds.size;
+}
+async function toggleFavorite(productId, btnEl) {
+  if (!state.user) { toast('請先登入才能收藏商品'); openAuth(); return; }
+  const isFav = state.favoriteIds.has(Number(productId)) || state.favoriteIds.has(productId);
+  if (isFav) {
+    await sb.from('favorites').delete().eq('user_id', state.user.id).eq('product_id', productId);
+    state.favoriteIds.delete(Number(productId));
+  } else {
+    await sb.from('favorites').insert({ user_id: state.user.id, product_id: productId });
+    state.favoriteIds.add(Number(productId));
+    if (btnEl) { btnEl.classList.add('heart-pop'); setTimeout(() => btnEl.classList.remove('heart-pop'), 300); }
+  }
+  updateFavBadge();
+  renderProducts();
+}
+
+const favOverlay = document.getElementById('favOverlay');
+document.getElementById('favBtn').addEventListener('click', () => {
+  if (!state.user) { toast('請先登入才能查看收藏'); openAuth(); return; }
+  favOverlay.classList.add('open');
+  renderFavList();
+});
+document.getElementById('favClose').addEventListener('click', () => favOverlay.classList.remove('open'));
+favOverlay.addEventListener('click', (e) => { if (e.target === favOverlay) favOverlay.classList.remove('open'); });
+
+function renderFavList() {
+  const list = document.getElementById('favList');
+  const favProducts = state.products.filter(p => state.favoriteIds.has(p.id));
+  if (favProducts.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">還沒有收藏任何商品。</p>'; return; }
+  list.innerHTML = favProducts.map(p => `
+    <div class="prod-admin-row">
+      <img class="prod-admin-thumb" src="${p.image_url || ''}" alt="">
+      <div class="prod-admin-info">
+        <div class="prod-admin-name">${p.name}</div>
+        <div class="prod-admin-meta">${p.brand || ''}　${ntd(p.price_ntd)}</div>
+      </div>
+      <div class="prod-admin-actions">
+        <button class="btn btn-outline btn-sm" data-fav-view="${p.id}">查看</button>
+      </div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-fav-view]').forEach(btn => {
+    btn.addEventListener('click', () => { favOverlay.classList.remove('open'); openProductDetail(btn.dataset.favView); });
+  });
+}
+
+/* ============================================================
+   商品詳情彈窗（放大圖 + 選款式 + 加購物車確認）
+   ============================================================ */
+const productDetailOverlay = document.getElementById('productDetailOverlay');
+document.getElementById('productDetailClose').addEventListener('click', () => productDetailOverlay.classList.remove('open'));
+productDetailOverlay.addEventListener('click', (e) => { if (e.target === productDetailOverlay) productDetailOverlay.classList.remove('open'); });
+
+function openProductDetail(productId) {
+  const p = state.products.find(x => String(x.id) === String(productId));
+  if (!p) return;
+  state.detailSelection = { productId: p.id, color: null, size: null };
+
+  document.getElementById('detailImage').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="">` : '';
+  document.getElementById('detailCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
+  document.getElementById('detailBrand').textContent = p.brand || '';
+  document.getElementById('detailName').textContent = p.name;
+  document.getElementById('detailPrice').textContent = ntd(p.price_ntd);
+  document.getElementById('detailDesc').textContent = p.description || '';
+
+  const isFav = state.favoriteIds.has(p.id);
+  const heartBtn = document.getElementById('detailHeartBtn');
+  heartBtn.classList.toggle('active', isFav);
+  document.getElementById('detailHeartLabel').textContent = isFav ? '已收藏' : '加入收藏';
+  heartBtn.onclick = () => { toggleFavorite(p.id, heartBtn); heartBtn.classList.toggle('active'); document.getElementById('detailHeartLabel').textContent = heartBtn.classList.contains('active') ? '已收藏' : '加入收藏'; };
+
+  const variants = state.variantsByProduct[p.id] || { colors: [], sizes: [] };
+
+  const colorSection = document.getElementById('detailColorSection');
+  const colorRow = document.getElementById('detailColorRow');
+  if (variants.colors.length > 0) {
+    colorSection.style.display = 'block';
+    colorRow.innerHTML = variants.colors.map(v => `
+      <div class="swatch ${v.is_available ? '' : 'unavailable'}" style="background:${v.color_hex || '#ccc'}"
+           data-color="${v.value}" data-available="${v.is_available}" title="${v.value}"
+           data-msg="${(v.unavailable_message || '目前無此色系').replace(/"/g, '&quot;')}"></div>
+    `).join('');
+    colorRow.querySelectorAll('.swatch').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
+        colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+        state.detailSelection.color = el.dataset.color;
+      });
+    });
+  } else { colorSection.style.display = 'none'; }
+
+  const sizeSection = document.getElementById('detailSizeSection');
+  const sizeRow = document.getElementById('detailSizeRow');
+  if (variants.sizes.length > 0) {
+    sizeSection.style.display = 'block';
+    sizeRow.innerHTML = variants.sizes.map(v => `
+      <div class="size-chip ${v.is_available ? '' : 'unavailable'}" data-size="${v.value}" data-available="${v.is_available}"
+           data-msg="${(v.unavailable_message || '目前無此尺寸').replace(/"/g, '&quot;')}">${v.value}</div>
+    `).join('');
+    sizeRow.querySelectorAll('.size-chip').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
+        sizeRow.querySelectorAll('.size-chip').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+        state.detailSelection.size = el.dataset.size;
+      });
+    });
+  } else { sizeSection.style.display = 'none'; }
+
+  const addBtn = document.getElementById('detailAddToCartBtn');
+  const canAdd = p.status === 'available' || p.status === 'preorder';
+  addBtn.disabled = !canAdd;
+  addBtn.textContent = canAdd ? '加入購物車' : (STATUS_LABEL[p.status] || '無法購買');
+  addBtn.onclick = () => {
+    if (variants.colors.length > 0 && !state.detailSelection.color) { toast('請先選擇顏色'); return; }
+    if (variants.sizes.length > 0 && !state.detailSelection.size) { toast('請先選擇尺寸'); return; }
+    const desc = [state.detailSelection.color, state.detailSelection.size].filter(Boolean).join(' / ');
+    if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
+    addToCart(p.id, { variant_color: state.detailSelection.color, variant_size: state.detailSelection.size });
+    productDetailOverlay.classList.remove('open');
+  };
+
+  productDetailOverlay.classList.add('open');
+}
+
+// 給沒有款式選項的商品用：快速加入前一樣跳確認視窗
+function confirmAndAddToCart(productId) {
+  const p = state.products.find(x => String(x.id) === String(productId));
+  if (!p) return;
+  if (!confirm(`確定要將「${p.name}」加入購物車嗎？`)) return;
+  addToCart(productId, {});
+}
 
 /* ============================================================
    會員資料 / 管理員身份判斷
@@ -1337,7 +1642,103 @@ function openProductEditor(product) {
   title.textContent = product ? '編輯商品' : '新增商品';
   preview.innerHTML = product && product.image_url ? `<img src="${product.image_url}" alt="">` : '尚無圖片';
 
+  const variantSection = document.getElementById('variantSection');
+  const variantHint = document.getElementById('variantHint');
+  if (product && product.id) {
+    variantSection.style.display = 'block';
+    variantHint.style.display = 'none';
+    renderVariantPresets(product.id);
+    loadVariantsForEditor(product.id);
+  } else {
+    variantSection.style.display = 'none';
+    variantHint.style.display = 'block';
+  }
+
   document.getElementById('productEditOverlay').classList.add('open');
+}
+
+function renderVariantPresets(productId) {
+  document.getElementById('colorPresetRow').innerHTML = PRESET_COLORS.map(c => `
+    <button type="button" class="preset-btn" data-add-color="${c.name}" data-hex="${c.hex}">
+      <span class="preset-swatch" style="background:${c.hex}"></span>${c.name}
+    </button>
+  `).join('') + `<button type="button" class="preset-btn" id="addCustomColorBtn">+ 自訂顏色</button>`;
+
+  document.getElementById('sizePresetRow').innerHTML = PRESET_SIZES.map(s => `
+    <button type="button" class="preset-btn" data-add-size="${s}">${s}</button>
+  `).join('') + `<button type="button" class="preset-btn" id="addCustomSizeBtn">+ 自訂尺寸</button>`;
+
+  document.querySelectorAll('[data-add-color]').forEach(btn => {
+    btn.addEventListener('click', () => addVariant(productId, 'color', btn.dataset.addColor, btn.dataset.hex));
+  });
+  document.querySelectorAll('[data-add-size]').forEach(btn => {
+    btn.addEventListener('click', () => addVariant(productId, 'size', btn.dataset.addSize, null));
+  });
+  document.getElementById('addCustomColorBtn').addEventListener('click', () => {
+    const name = prompt('輸入自訂顏色名稱（例如：酒紅色）');
+    if (!name) return;
+    const hex = prompt('輸入顏色色碼（例如：#7a2e2e），取消則使用預設灰色', '#999999') || '#999999';
+    addVariant(productId, 'color', name, hex);
+  });
+  document.getElementById('addCustomSizeBtn').addEventListener('click', () => {
+    const name = prompt('輸入自訂尺寸名稱（例如：均一/兒童M）');
+    if (!name) return;
+    addVariant(productId, 'size', name, null);
+  });
+}
+
+async function addVariant(productId, type, value, hex) {
+  const { error } = await sb.from('product_variants').insert({
+    product_id: productId, variant_type: type, value, color_hex: hex,
+  });
+  if (error) { toast('新增款式失敗：' + error.message); return; }
+  loadVariantsForEditor(productId);
+}
+
+async function loadVariantsForEditor(productId) {
+  const { data, error } = await sb.from('product_variants').select('*').eq('product_id', productId).order('sort_order');
+  if (error) { console.error(error); return; }
+  const colors = (data || []).filter(v => v.variant_type === 'color');
+  const sizes = (data || []).filter(v => v.variant_type === 'size');
+
+  document.getElementById('colorVariantList').innerHTML = colors.map(v => renderVariantRow(v)).join('');
+  document.getElementById('sizeVariantList').innerHTML = sizes.map(v => renderVariantRow(v)).join('');
+
+  document.querySelectorAll('[data-toggle-variant]').forEach(btn => {
+    btn.addEventListener('click', () => toggleVariantAvailability(btn.dataset.toggleVariant, productId));
+  });
+  document.querySelectorAll('[data-delete-variant]').forEach(btn => {
+    btn.addEventListener('click', () => deleteVariant(btn.dataset.deleteVariant, productId));
+  });
+  document.querySelectorAll('[data-msg-variant]').forEach(input => {
+    input.addEventListener('change', () => updateVariantMessage(input.dataset.msgVariant, input.value, productId));
+  });
+}
+
+function renderVariantRow(v) {
+  return `
+    <div class="admin-variant-row">
+      ${v.variant_type === 'color' ? `<span class="admin-variant-swatch" style="background:${v.color_hex || '#ccc'}"></span>` : ''}
+      <span class="admin-variant-name">${v.value}</span>
+      <button type="button" class="btn btn-outline btn-sm" data-toggle-variant="${v.id}">${v.is_available ? '設為缺貨' : '設為有貨'}</button>
+      ${!v.is_available ? `<input type="text" data-msg-variant="${v.id}" placeholder="自訂缺貨提示(留空用預設)" value="${v.unavailable_message || ''}" style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-size:12px;">` : ''}
+      <button type="button" class="cart-item-remove" data-delete-variant="${v.id}">刪除</button>
+    </div>
+  `;
+}
+
+async function toggleVariantAvailability(variantId, productId) {
+  const { data } = await sb.from('product_variants').select('is_available').eq('id', variantId).single();
+  await sb.from('product_variants').update({ is_available: !data.is_available }).eq('id', variantId);
+  loadVariantsForEditor(productId);
+}
+async function updateVariantMessage(variantId, msg, productId) {
+  await sb.from('product_variants').update({ unavailable_message: msg }).eq('id', variantId);
+}
+async function deleteVariant(variantId, productId) {
+  if (!confirm('確定要刪除這個款式選項嗎？')) return;
+  await sb.from('product_variants').delete().eq('id', variantId);
+  loadVariantsForEditor(productId);
 }
 document.getElementById('productEditClose').addEventListener('click', () => {
   document.getElementById('productEditOverlay').classList.remove('open');
@@ -1381,11 +1782,13 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     image_url: document.getElementById('productEditForm').dataset.currentImage || '',
   };
 
-  let error;
+  let error, newId = id;
   if (id) {
     ({ error } = await sb.from('products').update(payload).eq('id', id));
   } else {
-    ({ error } = await sb.from('products').insert(payload));
+    const { data: inserted, error: insErr } = await sb.from('products').insert(payload).select().single();
+    error = insErr;
+    if (inserted) newId = inserted.id;
   }
 
   if (error) {
@@ -1393,10 +1796,21 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     return;
   }
   msg.textContent = '儲存成功'; msg.className = 'form-msg ok';
-  toast(id ? '商品已更新' : '商品已新增');
+  toast(id ? '商品已更新' : '商品已新增，可以繼續在下方新增顏色/尺寸');
   await loadAdminProducts();
   await loadProducts(); // 同步更新前台商品列表
-  setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
+
+  if (!id && newId) {
+    // 新增商品後不關窗，切換成編輯模式，露出款式管理區塊
+    document.getElementById('productEditId').value = newId;
+    document.getElementById('productEditTitle').textContent = '編輯商品';
+    document.getElementById('variantSection').style.display = 'block';
+    document.getElementById('variantHint').style.display = 'none';
+    renderVariantPresets(newId);
+    loadVariantsForEditor(newId);
+  } else {
+    setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
+  }
 });
 
 /* ============================================================
@@ -1440,6 +1854,7 @@ document.getElementById('navToggle').addEventListener('click', () => {
   await loadProducts();
   await loadProfile();
   await loadCart();
+  await loadFavorites();
 })();
 </script>
 </body>
