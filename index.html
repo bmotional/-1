@@ -290,6 +290,9 @@
   .wish-row-desc { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
   .wish-row-meta { font-size: 11px; color: var(--khaki-dark); margin-top: 6px; }
   .big-modal .modal { max-width: 640px; max-height: 82vh; overflow-y: auto; }
+  .product-modal .modal { max-width: 760px; max-height: 88vh; overflow-y: auto; }
+  .product-edit-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 640px) { .product-edit-layout { grid-template-columns: 1fr; } }
 
   .prod-admin-row {
     display: flex; gap: 14px; align-items: center; border: 1px solid var(--line);
@@ -638,58 +641,62 @@
 <div class="toast" id="toast"></div>
 
 <!-- ============ Product Edit Modal（管理員新增/編輯商品用） ============ -->
-<div class="modal-overlay" id="productEditOverlay">
+<div class="modal-overlay product-modal" id="productEditOverlay">
   <div class="modal">
     <button class="modal-close" id="productEditClose" aria-label="關閉">×</button>
     <h3 id="productEditTitle">編輯商品</h3>
 
-    <div class="image-preview" id="productImagePreview">尚無圖片</div>
-    <div class="field">
-      <label for="productImageFile">上傳/更換圖片</label>
-      <input type="file" id="productImageFile" accept="image/*">
-      <div class="form-msg" id="productImageMsg"></div>
-    </div>
+    <div class="product-edit-layout">
+      <div>
+        <div class="image-preview" id="productImagePreview">尚無圖片</div>
+        <div class="field">
+          <label for="productImageFile">上傳/更換圖片</label>
+          <input type="file" id="productImageFile" accept="image/*">
+          <div class="form-msg" id="productImageMsg"></div>
+        </div>
+      </div>
 
-    <form id="productEditForm">
-      <input type="hidden" id="productEditId">
-      <div class="field"><label for="pfName">商品名稱</label><input type="text" id="pfName" required></div>
-      <div class="form-grid-2">
-        <div class="field"><label for="pfBrand">品牌</label><input type="text" id="pfBrand"></div>
-        <div class="field"><label for="pfPrice">售價(NT$)</label><input type="number" id="pfPrice" required></div>
-      </div>
-      <div class="form-grid-2">
-        <div class="field">
-          <label for="pfCountry">產地</label>
-          <select id="pfCountry" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
-            <option value="japan">日本</option><option value="korea">韓國</option><option value="vietnam">越南</option>
-          </select>
+      <form id="productEditForm">
+        <input type="hidden" id="productEditId">
+        <div class="field"><label for="pfName">商品名稱</label><input type="text" id="pfName" required></div>
+        <div class="form-grid-2">
+          <div class="field"><label for="pfBrand">品牌</label><input type="text" id="pfBrand"></div>
+          <div class="field"><label for="pfPrice">售價(NT$)</label><input type="number" id="pfPrice" required></div>
         </div>
-        <div class="field">
-          <label for="pfCategory">分類</label>
-          <select id="pfCategory" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
-            <option value="男裝">男裝</option><option value="女裝">女裝</option><option value="飾品">飾品</option><option value="零食">零食</option>
-          </select>
+        <div class="form-grid-2">
+          <div class="field">
+            <label for="pfCountry">產地</label>
+            <select id="pfCountry" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+              <option value="japan">日本</option><option value="korea">韓國</option><option value="vietnam">越南</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="pfCategory">分類</label>
+            <select id="pfCategory" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+              <option value="男裝">男裝</option><option value="女裝">女裝</option><option value="飾品">飾品</option><option value="零食">零食</option>
+            </select>
+          </div>
         </div>
-      </div>
-      <div class="form-grid-2">
-        <div class="field">
-          <label for="pfStatus">狀態</label>
-          <select id="pfStatus" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
-            <option value="available">現貨</option><option value="preorder">預購中</option>
-            <option value="soldout">暫不供應</option><option value="coming_soon">即將上架</option>
-          </select>
+        <div class="form-grid-2">
+          <div class="field">
+            <label for="pfStatus">狀態</label>
+            <select id="pfStatus" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+              <option value="available">現貨</option><option value="preorder">預購中</option>
+              <option value="soldout">暫不供應</option><option value="coming_soon">即將上架</option>
+            </select>
+          </div>
+          <div class="field"><label for="pfDeposit">訂金比例(0-1，如0.75)</label><input type="number" id="pfDeposit" step="0.05" min="0" max="1"></div>
         </div>
-        <div class="field"><label for="pfDeposit">訂金比例(0-1，如0.75)</label><input type="number" id="pfDeposit" step="0.05" min="0" max="1"></div>
-      </div>
-      <div class="field"><label for="pfDesc">商品說明</label><textarea id="pfDesc"></textarea></div>
-      <div class="field">
-        <label style="display:flex; align-items:center; gap:8px;">
-          <input type="checkbox" id="pfHidden" style="width:auto;"> 隱藏此商品（客戶完全看不到，但資料保留）
-        </label>
-      </div>
-      <button type="submit" class="btn btn-primary" style="width:100%">儲存商品</button>
-      <div class="form-msg" id="productEditMsg"></div>
-    </form>
+        <div class="field"><label for="pfDesc">商品說明</label><textarea id="pfDesc" style="min-height:56px;"></textarea></div>
+        <div class="field">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="pfHidden" style="width:auto;"> 隱藏此商品（客戶完全看不到，但資料保留）
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">儲存商品</button>
+        <div class="form-msg" id="productEditMsg"></div>
+      </form>
+    </div>
   </div>
 </div>
 
