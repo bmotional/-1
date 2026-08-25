@@ -1,111 +1,938 @@
-
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>濱水一湖｜東亞選品代購</title>
+<meta name="description" content="濱水一湖 — 日本・韓國・越南正品選品代購">
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日本嚴選代購 | 潮流選品與生活雜貨</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #333; background-color: #f9f9f9; line-height: 1.6; }
-        
-        /* Header */
-        header { background-color: #fff; border-bottom: 1px solid #eaeaea; padding: 20px 0; text-align: center; position: sticky; top: 0; z-index: 100; }
-        header h1 { font-size: 1.5rem; letter-spacing: 2px; color: #1a1a1a; font-weight: 600; }
-        header p { font-size: 0.85rem; color: #666; margin-top: 4px; }
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
-        /* Banner */
-        .banner { background: linear-gradient(135deg, #2c3e50, #4ca1af); color: white; text-align: center; padding: 60px 20px; }
-        .banner h2 { font-size: 2rem; margin-bottom: 12px; font-weight: 500; }
-        .banner p { font-size: 1rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+<!-- Fonts: Noto Serif TC (display) + Noto Sans TC (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
 
-        /* Container */
-        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+<style>
+  /* ============================================
+     設計 Token — 生成り煎茶 (Kinari & Sencha)
+     ============================================ */
+  :root {
+    --bg:        #F2EDE3;   /* 生成り 未染棉布 */
+    --bg-raised: #FBF8F2;   /* 卡片底色，稍亮 */
+    --khaki:     #96876A;   /* 主色：卡其 */
+    --khaki-dark:#7A6D54;
+    --ink:       #2A2823;   /* 文字：墨色 */
+    --ink-soft:  #5C5850;   /* 次要文字 */
+    --sencha:    #6B7A52;   /* 點綴：煎茶綠 */
+    --brass:     #B08D57;   /* 強調：黃銅金（按鈕/CTA） */
+    --brass-dark:#96763F;
+    --line:      #D8D0BF;   /* 分隔線 */
+    --danger:    #A8462F;
 
-        /* Section Title */
-        .section-title { text-align: center; font-size: 1.4rem; margin-bottom: 30px; letter-spacing: 1px; position: relative; }
-        .section-title::after { content: ''; display: block; width: 40px; height: 2px; background: #333; margin: 10px auto 0; }
+    --radius: 2px;
+    --shadow: 0 2px 12px rgba(42, 40, 35, 0.06);
+    --font-display: 'Noto Serif TC', serif;
+    --font-body: 'Noto Sans TC', sans-serif;
+  }
 
-        /* Product Grid */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
-        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s; }
-        .card:hover { transform: translateY(-4px); }
-        .card-img { height: 200px; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem; }
-        .card-body { padding: 20px; }
-        .card-tag { display: inline-block; background-color: #f0f0f0; color: #555; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; }
-        .card-title { font-size: 1.1rem; margin-bottom: 8px; font-weight: 600; }
-        .card-desc { font-size: 0.85rem; color: #666; margin-bottom: 15px; }
-        .card-price { font-size: 1.1rem; color: #d9534f; font-weight: bold; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: var(--font-body); cursor: pointer; }
+  img { max-width: 100%; display: block; }
 
-        /* Call to Action Section */
-        .cta-section { background-color: #fff; border-radius: 12px; padding: 40px 20px; text-align: center; margin-top: 50px; border: 1px solid #eee; }
-        .cta-btn { display: inline-block; background-color: #06c755; color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 1rem; margin-top: 15px; box-shadow: 0 4px 10px rgba(6,199,85,0.3); }
+  /* Focus visibility for accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--sencha);
+    outline-offset: 2px;
+  }
 
-        /* Footer */
-        footer { text-align: center; padding: 30px 0; font-size: 0.8rem; color: #888; border-top: 1px solid #eaeaea; margin-top: 60px; }
-    </style>
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+  /* ============ Header ============ */
+  header.site-header {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(242, 237, 227, 0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+  }
+  .header-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 76px;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--ink);
+  }
+  .brand small {
+    display: block; font-family: var(--font-body); font-weight: 400;
+    font-size: 10px; letter-spacing: 0.25em; color: var(--khaki-dark);
+    margin-top: 2px; text-transform: uppercase;
+  }
+  nav.main-nav {
+    display: flex; gap: 28px; list-style: none;
+    margin: 0; padding: 0;
+  }
+  nav.main-nav button {
+    background: none; border: none; padding: 8px 0;
+    font-size: 15px; color: var(--ink-soft);
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  nav.main-nav button:hover,
+  nav.main-nav button.active {
+    color: var(--ink); border-color: var(--brass);
+  }
+  .header-actions { display: flex; align-items: center; gap: 16px; }
+  .icon-btn {
+    background: none; border: 1px solid var(--line); border-radius: var(--radius);
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    position: relative; color: var(--ink); transition: border-color .15s, background .15s;
+  }
+  .icon-btn:hover { border-color: var(--khaki); background: var(--bg-raised); }
+  .cart-badge {
+    position: absolute; top: -6px; right: -6px;
+    background: var(--brass); color: #fff;
+    font-size: 10px; font-weight: 600;
+    min-width: 16px; height: 16px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px;
+  }
+  .mobile-nav-toggle { display: none; }
+
+  /* ============ Hero ============ */
+  .hero {
+    padding: 72px 0 56px;
+    position: relative; overflow: hidden;
+  }
+  .hero-inner { position: relative; z-index: 2; max-width: 640px; }
+  .hero-eyebrow {
+    font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--sencha); margin-bottom: 18px; font-weight: 600;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 5vw, 48px);
+    line-height: 1.35; font-weight: 600;
+    margin: 0 0 20px;
+  }
+  .hero p {
+    font-size: 16px; color: var(--ink-soft); max-width: 480px; margin: 0 0 28px;
+  }
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px; border-radius: var(--radius);
+    font-size: 14px; font-weight: 600; letter-spacing: 0.03em;
+    border: 1px solid transparent; transition: transform .15s, background .15s, border-color .15s;
+  }
+  .btn-primary { background: var(--brass); color: #fff; }
+  .btn-primary:hover { background: var(--brass-dark); }
+  .btn-outline { border-color: var(--khaki); color: var(--ink); background: transparent; }
+  .btn-outline:hover { background: var(--bg-raised); border-color: var(--ink); }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn:active { transform: scale(0.98); }
+
+  /* Signature: 水波紋 SVG，呼應「濱水一湖」 */
+  .ripple-svg {
+    position: absolute; right: -60px; top: 0; width: 560px; height: 100%;
+    opacity: 0.9; pointer-events: none;
+  }
+  @media (max-width: 780px) { .ripple-svg { display: none; } }
+
+  /* ============ Country / Category filter ============ */
+  .filter-bar {
+    padding: 8px 0 28px;
+    display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-label { font-size: 12px; color: var(--ink-soft); letter-spacing: 0.05em; margin-right: 4px; }
+  .chip {
+    padding: 7px 16px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--bg-raised); font-size: 13px; color: var(--ink-soft);
+    transition: all .15s;
+  }
+  .chip:hover { border-color: var(--khaki); }
+  .chip.active {
+    background: var(--ink); color: var(--bg); border-color: var(--ink);
+  }
+
+  /* ============ Product grid ============ */
+  .section { padding: 40px 0; }
+  .section-title {
+    font-family: var(--font-display); font-size: 22px; font-weight: 600;
+    margin: 0 0 24px; display: flex; align-items: baseline; gap: 12px;
+  }
+  .section-title .count { font-family: var(--font-body); font-size: 13px; color: var(--ink-soft); font-weight: 400; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: var(--bg-raised); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+  .card-image {
+    aspect-ratio: 4 / 5; background: #E4DCC9;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--khaki-dark); font-size: 12px; position: relative;
+    background-size: cover; background-position: center;
+  }
+  .status-badge {
+    position: absolute; top: 10px; left: 10px;
+    font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .status-available { background: var(--sencha); color: #fff; }
+  .status-preorder   { background: var(--brass); color: #fff; }
+  .status-soldout     { background: #B7B2A6; color: #fff; }
+  .status-coming_soon { background: var(--ink); color: var(--bg); }
+
+  .card-body { padding: 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card-country { font-size: 11px; color: var(--sencha); font-weight: 600; letter-spacing: 0.08em; }
+  .card-brand { font-size: 13px; color: var(--ink-soft); }
+  .card-name { font-size: 15px; font-weight: 600; line-height: 1.4; }
+  .card-price { margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .price-value { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+  .deposit-note { font-size: 11px; color: var(--ink-soft); }
+  .card-add {
+    width: 100%; margin-top: 10px; padding: 10px; border-radius: var(--radius);
+    background: transparent; border: 1px solid var(--ink); color: var(--ink);
+    font-size: 13px; font-weight: 600; transition: background .15s, color .15s;
+  }
+  .card-add:hover { background: var(--ink); color: var(--bg); }
+  .card-add:disabled { opacity: 0.4; cursor: not-allowed; }
+  .card-add:disabled:hover { background: transparent; color: var(--ink); }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--ink-soft);
+    border: 1px dashed var(--line); border-radius: var(--radius);
+  }
+
+  /* ============ Wishlist section ============ */
+  .wishlist-section {
+    background: var(--bg-raised); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .wishlist-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  @media (max-width: 780px) { .wishlist-inner { grid-template-columns: 1fr; gap: 24px; } }
+  .wishlist-copy h2 { font-family: var(--font-display); font-size: 24px; margin: 0 0 12px; }
+  .wishlist-copy p { color: var(--ink-soft); font-size: 14px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; letter-spacing: 0.03em; }
+  .field input, .field textarea {
+    width: 100%; padding: 11px 14px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--bg); font-family: var(--font-body); font-size: 14px; color: var(--ink);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field input:focus, .field textarea:focus { border-color: var(--khaki); }
+  .form-msg { font-size: 13px; margin-top: 10px; }
+  .form-msg.ok { color: var(--sencha); }
+  .form-msg.err { color: var(--danger); }
+
+  /* ============ Footer ============ */
+  footer {
+    border-top: 1px solid var(--line); padding: 40px 0; margin-top: 20px;
+  }
+  .footer-inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+  .footer-brand { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+  .footer-note { font-size: 12px; color: var(--ink-soft); max-width: 420px; }
+  .footer-links { display: flex; gap: 18px; font-size: 13px; color: var(--ink-soft); }
+  .footer-links a:hover { color: var(--ink); }
+
+  /* ============ Modal (Auth) ============ */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(42, 40, 35, 0.45);
+    display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-raised); border-radius: var(--radius); max-width: 400px; width: 100%;
+    padding: 32px; position: relative; box-shadow: 0 12px 40px rgba(42,40,35,0.2);
+  }
+  .modal-close {
+    position: absolute; top: 14px; right: 14px; background: none; border: none;
+    font-size: 20px; color: var(--ink-soft); width: 32px; height: 32px;
+  }
+  .modal h3 { font-family: var(--font-display); font-size: 20px; margin: 0 0 6px; }
+  .modal .sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 22px; }
+  .oauth-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .oauth-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 11px; border-radius: var(--radius); border: 1px solid var(--line);
+    background: var(--bg); font-size: 14px; font-weight: 500; color: var(--ink);
+  }
+  .oauth-btn:hover { border-color: var(--khaki); }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--ink-soft); font-size: 12px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .auth-switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
+  .auth-switch button { background: none; border: none; color: var(--brass-dark); font-weight: 600; }
+
+  /* ============ Cart drawer ============ */
+  .drawer-overlay {
+    position: fixed; inset: 0; background: rgba(42,40,35,0.35);
+    display: none; z-index: 90;
+  }
+  .drawer-overlay.open { display: block; }
+  .cart-drawer {
+    position: fixed; top: 0; right: -420px; width: 400px; max-width: 92vw; height: 100%;
+    background: var(--bg); z-index: 95; box-shadow: -8px 0 30px rgba(0,0,0,0.12);
+    transition: right .25s ease; display: flex; flex-direction: column;
+  }
+  .cart-drawer.open { right: 0; }
+  .cart-header {
+    padding: 22px 24px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cart-header h3 { font-family: var(--font-display); font-size: 18px; margin: 0; }
+  .cart-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .cart-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .cart-item img { width: 64px; height: 76px; object-fit: cover; border-radius: var(--radius); background: #E4DCC9; }
+  .cart-item-info { flex: 1; }
+  .cart-item-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .cart-item-meta { font-size: 12px; color: var(--ink-soft); }
+  .cart-item-remove { background: none; border: none; font-size: 12px; color: var(--danger); text-decoration: underline; padding: 0; }
+  .cart-footer { padding: 20px 24px; border-top: 1px solid var(--line); }
+  .cart-total { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+  .cart-total.grand { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+  .cart-note { font-size: 11px; color: var(--ink-soft); margin-bottom: 14px; }
+
+  /* ============ Toast ============ */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 13px 22px; border-radius: var(--radius);
+    font-size: 13px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============ Responsive nav ============ */
+  @media (max-width: 860px) {
+    nav.main-nav { display: none; }
+    .mobile-nav-toggle {
+      display: flex; background: none; border: none; color: var(--ink);
+      width: 38px; height: 38px; align-items: center; justify-content: center;
+    }
+    nav.main-nav.mobile-open {
+      display: flex; flex-direction: column; position: absolute; top: 76px; left: 0; right: 0;
+      background: var(--bg); border-bottom: 1px solid var(--line); padding: 8px 24px 20px; gap: 4px;
+    }
+    nav.main-nav.mobile-open button { text-align: left; padding: 12px 0; width: 100%; }
+  }
+</style>
 </head>
 <body>
 
-    <header>
-        <h1>JAPAN SELECT SHOP</h1>
-        <p>東京 / 大阪 現場連線嚴選代購</p>
-    </header>
+<!-- ============ Header ============ -->
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div class="brand">濱水一湖<small>Waterside &amp; the Lake Select</small></div>
 
-    <section class="banner">
-        <h2>日本限定選品 ‧ 直送到府</h2>
-        <p>提供藥妝選品、潮流品牌與限時預購服務，讓你輕鬆入手與日本同步的優質好物。</p>
-    </section>
+    <button class="mobile-nav-toggle" id="navToggle" aria-label="開啟選單">☰</button>
 
-    <div class="container">
-        <h3 class="section-title">熱門代購選品</h3>
-        
-        <div class="grid">
-            <!-- 商品卡片 1 -->
-            <div class="card">
-                <div class="card-img">日本專櫃美妝 / 藥妝選品</div>
-                <div class="card-body">
-                    <span class="card-tag">限時連線</span>
-                    <div class="card-title">專櫃彩妝與話題藥妝</div>
-                    <div class="card-desc">親自採購保障正品，包含限定色號與熱門保養品。</div>
-                    <div class="card-price">私訊報價 / 甜甜價</div>
-                </div>
-            </div>
+    <nav class="main-nav" id="mainNav">
+      <button data-filter-category="all" class="active">全部商品</button>
+      <button data-filter-category="男裝">男裝</button>
+      <button data-filter-category="女裝">女裝</button>
+      <button data-filter-category="飾品">飾品</button>
+      <button data-filter-category="零食">零食</button>
+      <button data-filter-category="許願專區">許願專區</button>
+    </nav>
 
-            <!-- 商品卡片 2 -->
-            <div class="card">
-                <div class="card-img">潮流服飾 / 鞋款</div>
-                <div class="card-body">
-                    <span class="card-tag">專櫃直購</span>
-                    <div class="card-title">日本限定 潮流服飾</div>
-                    <div class="card-desc">代找各大品牌日本限定發售款式與限定顏色。</div>
-                    <div class="card-price">依款式現場報價</div>
-                </div>
-            </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="acctBtn" aria-label="會員帳號">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </button>
+      <button class="icon-btn" id="cartBtn" aria-label="購物車">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 7H6"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+      </button>
+    </div>
+  </div>
+</header>
 
-            <!-- 商品卡片 3 -->
-            <div class="card">
-                <div class="card-img">精緻生活雜貨 / 零食</div>
-                <div class="card-body">
-                    <span class="card-tag">人氣推薦</span>
-                    <div class="card-title">生活質感選物 & 伴手禮</div>
-                    <div class="card-desc">嚴選日本質感家居、文具與地方限時伴手禮。</div>
-                    <div class="card-price">歡迎傳圖詢價</div>
-                </div>
-            </div>
+<!-- ============ Hero ============ -->
+<section class="hero wrap">
+  <svg class="ripple-svg" viewBox="0 0 560 400" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="#96876A" stroke-width="1.2" opacity="0.55">
+      <path d="M40 120 Q 160 90 280 120 T 520 120"/>
+      <path d="M20 170 Q 150 135 280 170 T 540 170"/>
+      <path d="M60 220 Q 170 190 280 220 T 500 220"/>
+      <path d="M10 270 Q 150 235 280 270 T 550 270"/>
+    </g>
+  </svg>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">日本 · 韓國 · 越南　正品選品代購</div>
+    <h1>只帶回，台灣買不到的那一件。</h1>
+    <p>濱水一湖不追大牌熱門款，只挑選台灣尚未引進、值得跨海帶回的品牌與單品。每一件都是實地採購的正品，價差就是我們唯一的獲利方式。</p>
+    <div class="hero-ctas">
+      <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
+      <a href="#wishlist" class="btn btn-outline">提出代購許願</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Filter bar ============ -->
+<div class="wrap filter-bar">
+  <div class="filter-group" id="countryFilters">
+    <span class="filter-label">產地</span>
+    <button class="chip active" data-filter-country="all">全部</button>
+    <button class="chip" data-filter-country="japan">日本</button>
+    <button class="chip" data-filter-country="korea">韓國</button>
+    <button class="chip" data-filter-country="vietnam">越南</button>
+  </div>
+  <div class="filter-group" id="statusFilters">
+    <span class="filter-label">狀態</span>
+    <button class="chip active" data-filter-status="all">全部</button>
+    <button class="chip" data-filter-status="available">現貨</button>
+    <button class="chip" data-filter-status="preorder">預購中</button>
+    <button class="chip" data-filter-status="coming_soon">即將上架</button>
+  </div>
+</div>
+
+<!-- ============ Product grid ============ -->
+<section class="section wrap" id="products">
+  <h2 class="section-title">本季選品 <span class="count" id="productCount"></span></h2>
+  <div class="grid" id="productGrid">
+    <!-- 商品卡片由 JS 從 Supabase 動態產生 -->
+  </div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    目前沒有符合篩選條件的商品，換個分類看看，或到下方許願專區提出你想要的品牌。
+  </div>
+</section>
+
+<!-- ============ Wishlist ============ -->
+<section class="wishlist-section" id="wishlist">
+  <div class="wrap section wishlist-inner">
+    <div class="wishlist-copy">
+      <h2>許願專區</h2>
+      <p>沒看到你想要的品牌嗎？留下品牌名稱與想要的款式，下次出國採購時我們會優先評估。</p>
+      <p style="margin-top:16px; font-size:12px;">需要先登入會員才能送出許願（方便我們回覆通知你）。</p>
+    </div>
+    <form id="wishlistForm">
+      <div class="field">
+        <label for="wishBrand">品牌 / 商品名稱</label>
+        <input type="text" id="wishBrand" required placeholder="例如：depound、Datt">
+      </div>
+      <div class="field">
+        <label for="wishDesc">補充說明（款式、尺寸、預算等）</label>
+        <textarea id="wishDesc" placeholder="想要的款式、顏色、尺寸或其他細節"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">送出許願</button>
+      <div class="form-msg" id="wishMsg"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============ Footer ============ -->
+<footer>
+  <div class="wrap footer-inner">
+    <div>
+      <div class="footer-brand">濱水一湖</div>
+      <p class="footer-note">日本・韓國・越南正品選品代購。僅採購正品，獲利僅來自價差與台灣未引進商品，絕不販售仿冒或黃牛轉賣商品。</p>
+    </div>
+    <div class="footer-links">
+      <a href="#products">商品</a>
+      <a href="#wishlist">許願專區</a>
+      <a href="#" id="footerAcctLink">會員登入</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ Auth Modal ============ -->
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose" aria-label="關閉">×</button>
+
+    <div id="authLoginView">
+      <h3>會員登入</h3>
+      <p class="sub">登入後才能加入購物車與提出許願</p>
+
+      <div class="oauth-row">
+        <button class="oauth-btn" id="fbLoginBtn">使用 Facebook 繼續</button>
+        <button class="oauth-btn" id="lineLoginBtn">使用 LINE 繼續</button>
+      </div>
+      <div class="divider">或使用 Email</div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required>
         </div>
-
-        <div class="cta-section">
-            <h3>想找特定商品？或者需要即時連線報價？</h3>
-            <p>點擊下方按鈕加入官方 Line，傳送圖片即可為您報價與預購。</p>
-            <a href="#" class="cta-btn">加入 Line 專人客服諮詢</a>
+        <div class="field">
+          <label for="loginPassword">密碼</label>
+          <input type="password" id="loginPassword" required>
         </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">登入</button>
+        <div class="form-msg" id="loginMsg"></div>
+      </form>
+      <div class="auth-switch">還沒有帳號？<button id="toSignup">立即註冊</button></div>
     </div>
 
-    <footer>
-        <p>&copy; 2026 Japan Select Shop. All Rights Reserved.</p>
-    </footer>
+    <div id="authSignupView" style="display:none">
+      <h3>建立帳號</h3>
+      <p class="sub">此階段測試不需要Email驗證，註冊後可直接使用</p>
+      <form id="signupForm">
+        <div class="field">
+          <label for="signupName">顯示名稱</label>
+          <input type="text" id="signupName" required>
+        </div>
+        <div class="field">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" required>
+        </div>
+        <div class="field">
+          <label for="signupPassword">密碼（至少6碼）</label>
+          <input type="password" id="signupPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">註冊</button>
+        <div class="form-msg" id="signupMsg"></div>
+      </form>
+      <div class="auth-switch">已經有帳號？<button id="toLogin">前往登入</button></div>
+    </div>
 
+    <div id="authLoggedInView" style="display:none">
+      <h3>會員中心</h3>
+      <p class="sub" id="loggedInEmail"></p>
+      <button class="btn btn-outline" id="logoutBtn" style="width:100%">登出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Cart Drawer ============ -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <h3>購物車</h3>
+    <button class="modal-close" id="cartClose" aria-label="關閉">×</button>
+  </div>
+  <div class="cart-body" id="cartBody">
+    <p style="color:var(--ink-soft); font-size:13px;">購物車是空的。</p>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total"><span>預估訂金合計</span><span id="cartDepositTotal">NT$0</span></div>
+    <div class="cart-total grand"><span>商品總額</span><span id="cartGrandTotal">NT$0</span></div>
+    <p class="cart-note">此為預購委任代購，實際收款以訂金比例為準，出國採購後將另行通知尾款。</p>
+    <button class="btn btn-primary" style="width:100%" id="checkoutBtn">送出預購需求</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   濱水一湖 — Supabase 設定
+   ============================================================ */
+const SUPABASE_URL = 'https://orjahmwedxlbqtdwijma.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yamFobXdlZHhsYnF0ZHdpam1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2Mjk1MjAsImV4cCI6MjEwMzIwNTUyMH0.UL2HjA0o3sin0iP5bveyRoiJxRwKraSiBVHH6k-KWv4';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================================================
+   全域狀態
+   ============================================================ */
+const state = {
+  products: [],
+  filterCategory: 'all',
+  filterCountry: 'all',
+  filterStatus: 'all',
+  user: null,      // Supabase auth user
+  cart: [],        // [{id, product_id, quantity, products:{...}}]
+};
+
+const STATUS_LABEL = {
+  available: '現貨',
+  preorder: '預購中',
+  soldout: '暫不供應',
+  coming_soon: '即將上架',
+};
+const COUNTRY_LABEL = { japan: '日本', korea: '韓國', vietnam: '越南' };
+
+/* ============================================================
+   工具函式
+   ============================================================ */
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+function ntd(n) {
+  return 'NT$' + Number(n || 0).toLocaleString('zh-Hant-TW');
+}
+
+/* ============================================================
+   商品：讀取 + 篩選 + 渲染
+   ------------------------------------------------------------
+   讀取 public.products 資料表。要新增/調整/下架商品，
+   直接到 Supabase Table Editor 編輯這張表即可，
+   不需要修改這支程式碼、不需要重新部署。
+   ============================================================ */
+async function loadProducts() {
+  const { data, error } = await sb
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('讀取商品失敗', error);
+    toast('商品讀取失敗，請稍後再試');
+    return;
+  }
+  state.products = data || [];
+  renderProducts();
+}
+
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  const empty = document.getElementById('emptyState');
+  const countEl = document.getElementById('productCount');
+
+  const filtered = state.products.filter(p => {
+    if (state.filterCategory !== 'all' && p.category !== state.filterCategory) return false;
+    if (state.filterCountry !== 'all' && p.country !== state.filterCountry) return false;
+    if (state.filterStatus !== 'all' && p.status !== state.filterStatus) return false;
+    return true;
+  });
+
+  countEl.textContent = `（${filtered.length} 件）`;
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  filtered.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const depositPct = p.deposit_ratio ? Math.round(p.deposit_ratio * 100) : null;
+    const canAdd = p.status === 'available' || p.status === 'preorder';
+
+    card.innerHTML = `
+      <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}">
+        <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
+        ${!p.image_url ? '尚無商品圖' : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-country">${COUNTRY_LABEL[p.country] || p.country}</div>
+        <div class="card-brand">${p.brand || ''}</div>
+        <div class="card-name">${p.name}</div>
+        <div class="card-price">
+          <span class="price-value">${ntd(p.price_ntd)}</span>
+          ${depositPct ? `<span class="deposit-note">訂金 ${depositPct}%</span>` : ''}
+        </div>
+        <button class="card-add" data-product-id="${p.id}" ${canAdd ? '' : 'disabled'}>
+          ${canAdd ? '加入購物車' : STATUS_LABEL[p.status] || '無法購買'}
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  grid.querySelectorAll('.card-add:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => addToCart(btn.dataset.productId));
+  });
+}
+
+/* ============================================================
+   分類 / 產地 / 狀態篩選
+   ============================================================ */
+document.querySelectorAll('[data-filter-category]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter-category]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.filterCategory = btn.dataset.filterCategory;
+    if (state.filterCategory === '許願專區') {
+      document.getElementById('wishlist').scrollIntoView({ behavior: 'smooth' });
+    } else {
+      renderProducts();
+    }
+  });
+});
+document.querySelectorAll('[data-filter-country]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter-country]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.filterCountry = btn.dataset.filterCountry;
+    renderProducts();
+  });
+});
+document.querySelectorAll('[data-filter-status]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter-status]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.filterStatus = btn.dataset.filterStatus;
+    renderProducts();
+  });
+});
+
+/* ============================================================
+   會員系統（Supabase Auth）
+   ============================================================ */
+const authOverlay = document.getElementById('authOverlay');
+function openAuth() { authOverlay.classList.add('open'); refreshAuthView(); }
+function closeAuth() { authOverlay.classList.remove('open'); }
+
+document.getElementById('acctBtn').addEventListener('click', openAuth);
+document.getElementById('footerAcctLink').addEventListener('click', (e) => { e.preventDefault(); openAuth(); });
+document.getElementById('authClose').addEventListener('click', closeAuth);
+authOverlay.addEventListener('click', (e) => { if (e.target === authOverlay) closeAuth(); });
+
+document.getElementById('toSignup').addEventListener('click', () => {
+  document.getElementById('authLoginView').style.display = 'none';
+  document.getElementById('authSignupView').style.display = 'block';
+});
+document.getElementById('toLogin').addEventListener('click', () => {
+  document.getElementById('authSignupView').style.display = 'none';
+  document.getElementById('authLoginView').style.display = 'block';
+});
+
+function refreshAuthView() {
+  const loginV = document.getElementById('authLoginView');
+  const signupV = document.getElementById('authSignupView');
+  const loggedInV = document.getElementById('authLoggedInView');
+  if (state.user) {
+    loginV.style.display = 'none';
+    signupV.style.display = 'none';
+    loggedInV.style.display = 'block';
+    document.getElementById('loggedInEmail').textContent = state.user.email || '';
+  } else {
+    loggedInV.style.display = 'none';
+    loginV.style.display = 'block';
+    signupV.style.display = 'none';
+  }
+}
+
+// Email + 密碼 註冊
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const displayName = document.getElementById('signupName').value.trim();
+  const msg = document.getElementById('signupMsg');
+  msg.textContent = '處理中...'; msg.className = 'form-msg';
+
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) {
+    msg.textContent = error.message; msg.className = 'form-msg err';
+    return;
+  }
+  // 建立對應的 profiles 資料
+  if (data.user) {
+    await sb.from('profiles').upsert({ id: data.user.id, display_name: displayName });
+  }
+  msg.textContent = '註冊成功！'; msg.className = 'form-msg ok';
+  state.user = data.user;
+  await loadCart();
+  refreshAuthView();
+  toast('歡迎加入濱水一湖');
+});
+
+// Email + 密碼 登入
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMsg');
+  msg.textContent = '登入中...'; msg.className = 'form-msg';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    msg.textContent = '帳號或密碼錯誤'; msg.className = 'form-msg err';
+    return;
+  }
+  state.user = data.user;
+  await loadCart();
+  refreshAuthView();
+  toast('登入成功');
+});
+
+// 第三方登入
+// 注意：Facebook / LINE 登入要能運作，必須先到 Supabase 後台
+// Authentication → Providers 分別啟用並填入 App ID / Channel ID 等憑證，
+// 這兩個平台的開發者後台申請需要你自己另外註冊。
+document.getElementById('fbLoginBtn').addEventListener('click', async () => {
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'facebook' });
+  if (error) toast('Facebook 登入尚未設定，請先在 Supabase 後台啟用');
+});
+document.getElementById('lineLoginBtn').addEventListener('click', async () => {
+  // Supabase 目前的內建 OAuth 供應商列表若尚未涵蓋 LINE，
+  // 需改用「自訂 OAuth (OIDC)」的方式串接 LINE Login，屆時再回來調整這段。
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'line' });
+  if (error) toast('LINE 登入尚未設定，請先確認 Supabase 是否支援並完成設定');
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  state.user = null;
+  state.cart = [];
+  renderCart();
+  refreshAuthView();
+  closeAuth();
+  toast('已登出');
+});
+
+// 監聽登入狀態變化（包含 OAuth 導回）
+sb.auth.onAuthStateChange((event, session) => {
+  state.user = session ? session.user : null;
+  if (state.user) loadCart();
+});
+
+/* ============================================================
+   購物車（需登入，資料存 Supabase cart_items）
+   ============================================================ */
+const cartDrawer = document.getElementById('cartDrawer');
+const drawerOverlay = document.getElementById('drawerOverlay');
+function openCart() { cartDrawer.classList.add('open'); drawerOverlay.classList.add('open'); }
+function closeCart() { cartDrawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
+document.getElementById('cartBtn').addEventListener('click', openCart);
+document.getElementById('cartClose').addEventListener('click', closeCart);
+drawerOverlay.addEventListener('click', closeCart);
+
+async function addToCart(productId) {
+  if (!state.user) {
+    toast('請先登入會員才能加入購物車');
+    openAuth();
+    return;
+  }
+  const existing = state.cart.find(c => String(c.product_id) === String(productId));
+  if (existing) {
+    await sb.from('cart_items').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
+  } else {
+    await sb.from('cart_items').insert({ user_id: state.user.id, product_id: productId, quantity: 1 });
+  }
+  await loadCart();
+  toast('已加入購物車');
+  openCart();
+}
+
+async function loadCart() {
+  if (!state.user) { state.cart = []; renderCart(); return; }
+  const { data, error } = await sb
+    .from('cart_items')
+    .select('id, quantity, product_id, products(*)')
+    .eq('user_id', state.user.id);
+  if (error) { console.error(error); return; }
+  state.cart = data || [];
+  renderCart();
+}
+
+async function removeCartItem(cartItemId) {
+  await sb.from('cart_items').delete().eq('id', cartItemId);
+  await loadCart();
+}
+
+function renderCart() {
+  const body = document.getElementById('cartBody');
+  const badge = document.getElementById('cartBadge');
+  const totalCount = state.cart.reduce((s, c) => s + c.quantity, 0);
+
+  badge.style.display = totalCount > 0 ? 'flex' : 'none';
+  badge.textContent = totalCount;
+
+  if (state.cart.length === 0) {
+    body.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">購物車是空的。</p>';
+    document.getElementById('cartGrandTotal').textContent = ntd(0);
+    document.getElementById('cartDepositTotal').textContent = ntd(0);
+    return;
+  }
+
+  let grand = 0, deposit = 0;
+  body.innerHTML = state.cart.map(item => {
+    const p = item.products || {};
+    const lineTotal = (p.price_ntd || 0) * item.quantity;
+    const lineDeposit = lineTotal * (p.deposit_ratio || 0.5);
+    grand += lineTotal;
+    deposit += lineDeposit;
+    return `
+      <div class="cart-item">
+        <img src="${p.image_url || ''}" alt="">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${p.name || ''}</div>
+          <div class="cart-item-meta">${ntd(p.price_ntd)} × ${item.quantity}</div>
+          <button class="cart-item-remove" data-cart-id="${item.id}">移除</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('cartGrandTotal').textContent = ntd(grand);
+  document.getElementById('cartDepositTotal').textContent = ntd(deposit);
+
+  body.querySelectorAll('.cart-item-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeCartItem(btn.dataset.cartId));
+  });
+}
+
+document.getElementById('checkoutBtn').addEventListener('click', () => {
+  if (!state.user) { toast('請先登入'); openAuth(); return; }
+  if (state.cart.length === 0) { toast('購物車是空的'); return; }
+  // 階段一僅收集預購需求，尚未串接金流。
+  // 之後接入 LINE Pay / 綠界 / 藍新時，把實際付款流程接在這個函式裡即可。
+  toast('已收到你的預購需求，我們會透過 LINE 與你確認訂金付款方式');
+  closeCart();
+});
+
+/* ============================================================
+   許願專區
+   ============================================================ */
+document.getElementById('wishlistForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('wishMsg');
+  if (!state.user) {
+    msg.textContent = '請先登入會員才能送出許願'; msg.className = 'form-msg err';
+    openAuth();
+    return;
+  }
+  const brand_name = document.getElementById('wishBrand').value.trim();
+  const description = document.getElementById('wishDesc').value.trim();
+
+  const { error } = await sb.from('wishlist_requests').insert({
+    user_id: state.user.id, brand_name, description,
+  });
+  if (error) {
+    msg.textContent = '送出失敗，請稍後再試'; msg.className = 'form-msg err';
+    return;
+  }
+  msg.textContent = '收到你的許願了，謝謝！'; msg.className = 'form-msg ok';
+  e.target.reset();
+});
+
+/* ============================================================
+   手機版導覽選單
+   ============================================================ */
+document.getElementById('navToggle').addEventListener('click', () => {
+  document.getElementById('mainNav').classList.toggle('mobile-open');
+});
+
+/* ============================================================
+   初始化
+   ============================================================ */
+(async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  state.user = session ? session.user : null;
+  await loadProducts();
+  await loadCart();
+})();
+</script>
 </body>
 </html>
