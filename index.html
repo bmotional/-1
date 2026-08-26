@@ -401,12 +401,21 @@
   .chat-file-preview button { border:0; background:transparent; color:var(--danger); font-size:18px; padding:3px 7px; }
   @media (max-width:780px) { .chat-shell { grid-template-columns:1fr; } .chat-shell.show-thread .chat-inbox { display:none; } .chat-shell:not(.show-thread) .chat-thread { display:none; } }
 
-  .admin-chat-user-row {
-    display: flex; justify-content: space-between; align-items: center; padding: 12px 14px;
+  .admin-chat-preview-list { max-height: 320px; overflow-y: auto; }
+  .admin-chat-preview-row {
+    display: block; padding: 10px 12px;
     border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; background: var(--bg);
+    transition: border-color .15s;
   }
-  .admin-chat-user-row:hover { border-color: var(--khaki); }
-  .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); display: inline-block; margin-right: 6px; }
+  .admin-chat-preview-row:hover { border-color: var(--khaki); }
+  .admin-chat-preview-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; margin-bottom: 4px; }
+  .admin-chat-preview-top span { font-size: 11px; color: var(--ink-soft); flex-shrink: 0; }
+  .admin-chat-preview-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .admin-chat-preview-text { font-size: 12px; color: var(--ink-soft); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .admin-chat-preview-bottom .chat-unread {
+    flex-shrink: 0; background: var(--danger); color: #fff; min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 11px;
+  }
 
   .tag-select {
     font-size: 12px; padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg);
@@ -868,8 +877,8 @@
     </div>
 
     <div id="adminChatTab" style="display:none">
-      <p style="color:var(--ink-soft); font-size:13px;">完整聊天室包含搜尋、未讀數與最新對話排序。</p>
-      <button class="btn btn-primary" id="openAdminMessagesBtn">開啟完整收件匣</button>
+      <div id="adminChatPreviewList" class="admin-chat-preview-list"></div>
+      <button class="btn btn-primary" id="openAdminMessagesBtn" style="width:100%; margin-top:12px;">開啟完整收件匣</button>
     </div>
 
     <div id="adminProductsTab" style="display:none">
@@ -937,7 +946,10 @@
 <div class="modal-overlay big-modal" id="chatOverlay">
   <div class="modal">
     <button class="modal-close" id="chatClose" aria-label="關閉">×</button>
-    <h3>聯絡我們</h3>
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+      <h3 style="margin:0;">聯絡我們</h3>
+      <button type="button" id="chatExpandBtn" class="btn btn-outline btn-sm" style="flex-shrink:0;">展開完整畫面</button>
+    </div>
     <p class="sub">有任何問題都可以在這裡留言，我們會盡快回覆</p>
     <div id="chatMessages" style="max-height:340px; overflow-y:auto; margin-bottom:14px; padding:4px;"></div>
     <form id="chatForm" style="display:flex; gap:8px;">
@@ -951,7 +963,10 @@
 <div class="modal-overlay big-modal" id="notifOverlay">
   <div class="modal">
     <button class="modal-close" id="notifClose" aria-label="關閉">×</button>
-    <h3>通知</h3>
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+      <h3 style="margin:0;">通知</h3>
+      <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm" style="flex-shrink:0;">展開完整畫面</button>
+    </div>
     <div id="notifList"></div>
   </div>
 </div>
@@ -1539,6 +1554,10 @@ document.getElementById('chatBtn').addEventListener('click', () => {
 });
 document.getElementById('chatClose').addEventListener('click', () => chatOverlay.classList.remove('open'));
 chatOverlay.addEventListener('click', (e) => { if (e.target === chatOverlay) chatOverlay.classList.remove('open'); });
+document.getElementById('chatExpandBtn').addEventListener('click', () => {
+  chatOverlay.classList.remove('open');
+  location.hash = '#messages';
+});
 
 async function loadChatMessages() {
   const { data, error } = await sb.from('messages').select('*').eq('user_id', state.user.id).order('created_at');
@@ -1661,6 +1680,10 @@ document.getElementById('notifBtn').addEventListener('click', () => {
 });
 document.getElementById('notifClose').addEventListener('click', () => notifOverlay.classList.remove('open'));
 notifOverlay.addEventListener('click', (e) => { if (e.target === notifOverlay) notifOverlay.classList.remove('open'); });
+document.getElementById('notifExpandBtn').addEventListener('click', () => {
+  notifOverlay.classList.remove('open');
+  location.hash = '#notifications';
+});
 
 async function loadNotifications() {
   const { data, error } = await sb.from('notifications').select('*').eq('user_id', state.user.id).order('created_at', { ascending: false });
@@ -2091,9 +2114,9 @@ document.querySelectorAll('[data-admin-tab]').forEach(btn => {
     document.getElementById('adminProductsTab').style.display = tab === 'products' ? 'block' : 'none';
     document.getElementById('adminDemandTab').style.display = tab === 'demand' ? 'block' : 'none';
     if (tab === 'wishlist') loadAdminWishlist();
+    if (tab === 'chat') loadAdminChatPreview();
     if (tab === 'products') loadAdminProducts();
     if (tab === 'demand') loadAdminDemand();
-    // 客服訊息改由完整收件匣頁面處理。
   });
 });
 
@@ -2253,72 +2276,6 @@ document.querySelectorAll('[data-wish-tag-filter]').forEach(btn => {
     state.wishTagFilter = btn.dataset.wishTagFilter;
     loadAdminWishlist();
   });
-});
-
-/* ============================================================
-   客服訊息（管理員）
-   ============================================================ */
-async function loadAdminChatList() {
-  document.getElementById('adminChatThreadView').style.display = 'none';
-  document.getElementById('adminChatUserList').style.display = 'block';
-  const { data, error } = await sb.from('messages').select('user_id, sender, is_read, created_at').order('created_at', { ascending: false });
-  const list = document.getElementById('adminChatUserList');
-  if (error) { list.innerHTML = '<p>讀取訊息失敗</p>'; console.error(error); return; }
-
-  const byUser = {};
-  (data || []).forEach(m => {
-    if (!byUser[m.user_id]) byUser[m.user_id] = { lastAt: m.created_at, unread: 0 };
-    if (m.sender === 'customer' && !m.is_read) byUser[m.user_id].unread++;
-  });
-  const userIds = Object.keys(byUser);
-  if (userIds.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有任何客服對話。</p>'; return; }
-
-  const { data: profs } = await sb.from('profiles').select('id, display_name').in('id', userIds);
-  const nameMap = {}; (profs || []).forEach(p => { nameMap[p.id] = p.display_name; });
-
-  list.innerHTML = userIds.map(uid => `
-    <div class="admin-chat-user-row" data-open-thread="${uid}">
-      <span>${byUser[uid].unread > 0 ? '<span class="unread-dot"></span>' : ''}${nameMap[uid] || '（未命名會員）'}</span>
-      <span style="font-size:11px; color:var(--ink-soft);">${byUser[uid].unread > 0 ? byUser[uid].unread + ' 則未讀' : ''}</span>
-    </div>
-  `).join('');
-  list.querySelectorAll('[data-open-thread]').forEach(row => {
-    row.addEventListener('click', () => openAdminChatThread(row.dataset.openThread));
-  });
-}
-
-async function openAdminChatThread(userId) {
-  state.adminChatActiveUser = userId;
-  document.getElementById('adminChatUserList').style.display = 'none';
-  document.getElementById('adminChatThreadView').style.display = 'block';
-  await renderAdminChatThread();
-  await sb.from('messages').update({ is_read: true }).eq('user_id', userId).eq('sender', 'customer').eq('is_read', false);
-}
-
-async function renderAdminChatThread() {
-  const { data } = await sb.from('messages').select('*').eq('user_id', state.adminChatActiveUser).order('created_at');
-  const box = document.getElementById('adminChatMessages');
-  box.innerHTML = (data || []).map(m => `
-    <div class="chat-bubble-row ${m.sender === 'admin' ? 'mine' : ''}">
-      <div>
-        <div class="chat-bubble">${m.content}</div>
-        <div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div>
-      </div>
-    </div>
-  `).join('');
-  box.scrollTop = box.scrollHeight;
-}
-
-document.getElementById('adminChatBackBtn')?.addEventListener('click', loadAdminChatList);
-
-document.getElementById('adminChatForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const input = document.getElementById('adminChatInput');
-  const content = input.value.trim();
-  if (!content || !state.adminChatActiveUser) return;
-  await sb.from('messages').insert({ user_id: state.adminChatActiveUser, sender: 'admin', content });
-  input.value = '';
-  renderAdminChatThread();
 });
 
 /* ============================================================
@@ -2646,6 +2603,72 @@ document.getElementById('wishlistForm').addEventListener('submit', async (e) => 
    手機版導覽選單
    ============================================================ */
 /* ============================================================
+   管理者「客服訊息」小視窗預覽（後台面板內，顯示前幾則對話）
+   ============================================================ */
+async function loadAdminChatPreview() {
+  const box = document.getElementById('adminChatPreviewList');
+  box.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">載入中...</p>';
+
+  const { data: messages, error } = await sb
+    .from('messages')
+    .select('user_id,sender,is_read,content,image_path,product_name,created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) { box.innerHTML = '<p style="font-size:12px;color:var(--danger);">讀取失敗</p>'; console.error(error); return; }
+
+  const grouped = new Map();
+  (messages || []).forEach(m => {
+    if (!grouped.has(m.user_id)) grouped.set(m.user_id, { last: m, unread: 0 });
+    if (m.sender === 'customer' && !m.is_read) grouped.get(m.user_id).unread++;
+  });
+
+  const ids = [...grouped.keys()]
+    .sort((a, b) => new Date(grouped.get(b).last.created_at) - new Date(grouped.get(a).last.created_at))
+    .slice(0, 5);
+
+  if (ids.length === 0) {
+    box.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">目前沒有任何客服對話。</p>';
+    return;
+  }
+
+  const { data: profs } = await sb.from('profiles').select('id, display_name').in('id', ids);
+  const nameMap = new Map((profs || []).map(p => [p.id, p.display_name]));
+
+  box.innerHTML = ids.map(id => {
+    const g = grouped.get(id);
+    const name = nameMap.get(id) || '（未命名會員）';
+    return `
+      <div class="admin-chat-preview-row" data-preview-user="${id}" data-preview-name="${escapeHtml(name)}">
+        <div class="admin-chat-preview-top">
+          <strong>${escapeHtml(name)}</strong>
+          <span>${new Date(g.last.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        </div>
+        <div class="admin-chat-preview-bottom">
+          <span class="admin-chat-preview-text">${escapeHtml(previewText(g.last))}</span>
+          ${g.unread > 0 ? `<span class="chat-unread">${g.unread}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  box.querySelectorAll('[data-preview-user]').forEach(row => {
+    row.addEventListener('click', () => {
+      openAdminChatFromPreview(row.dataset.previewUser, { id: row.dataset.previewUser, display_name: row.dataset.previewName });
+    });
+  });
+}
+
+async function openAdminChatFromPreview(userId, profile) {
+  state.adminChatActiveUser = userId;
+  state.adminChatProfile = profile || null;
+  document.getElementById('adminChatShell').classList.add('show-thread');
+  document.getElementById('adminChatInput').disabled = false;
+  document.getElementById('adminChatSendBtn').disabled = false;
+  await sb.from('messages').update({ is_read: true }).eq('user_id', userId).eq('sender', 'customer').eq('is_read', false);
+  location.hash = '#admin-messages';
+}
+
+/* ============================================================
    管理者完整收件匣
    ============================================================ */
 let adminSearchTimer;
@@ -2717,6 +2740,8 @@ document.getElementById('navToggle').addEventListener('click', () => {
     updateChatBadge();
     if (location.hash === '#messages') renderMessagesPage();
     if (location.hash === '#admin-messages') renderAdminMessagesPage();
+    const chatTab = document.getElementById('adminChatTab');
+    if (chatTab && chatTab.style.display !== 'none') loadAdminChatPreview();
   }).subscribe();
 })();
 </script>
