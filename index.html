@@ -395,6 +395,10 @@
   .chat-unread { color:var(--danger); font-size:12px; font-weight:700; }
   .chat-image-input { width:38px; height:42px; overflow:hidden; position:relative; border:1px solid var(--line); display:grid; place-items:center; }
   .chat-image-input input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .chat-file-preview { display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--line); background:var(--bg); }
+  .chat-file-preview img { width:48px; height:48px; object-fit:cover; border-radius:4px; border:1px solid var(--line); }
+  .chat-file-preview span { flex:1; font-size:12px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chat-file-preview button { border:0; background:transparent; color:var(--danger); font-size:18px; padding:3px 7px; }
   @media (max-width:780px) { .chat-shell { grid-template-columns:1fr; } .chat-shell.show-thread .chat-inbox { display:none; } .chat-shell:not(.show-thread) .chat-thread { display:none; } }
 
   .admin-chat-user-row {
@@ -505,7 +509,7 @@
 <!-- ============ Header ============ -->
 <header class="site-header">
   <div class="wrap header-inner">
-    <div class="brand">濱水一湖<small>Waterside &amp; the Lake Select</small></div>
+    <a class="brand" href="#" aria-label="回到首頁">濱水一湖<small>Waterside &amp; the Lake Select</small></a>
 
     <button class="mobile-nav-toggle" id="navToggle" aria-label="開啟選單">☰</button>
 
@@ -560,8 +564,8 @@
   </svg>
   <div class="hero-inner">
     <div class="hero-eyebrow">日本 · 韓國 · 越南　正品選品代購</div>
-    <h1>只帶回，台灣買不到的那一件。</h1>
-    <p>濱水一湖不追大牌熱門款，只挑選台灣尚未引進、值得跨海帶回的品牌與單品。每一件都是實地採購的正品，價差就是我們唯一的獲利方式。</p>
+    <h1>買不累的 一修尼去日本</h1>
+    <p>我能習慣遠距離，多遠都要在購物車裡。希望我們能像鴨血豆腐一樣，一直ㄗㄞˋ一塊</p>
     <div class="hero-ctas">
       <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
       <a href="#wishlist" class="btn btn-outline">提出代購許願</a>
@@ -673,6 +677,7 @@
     <div class="chat-thread">
       <div class="chat-thread-head">濱水一湖｜聯絡我們</div>
       <div class="chat-log" id="messagesPageMessages"></div>
+      <div class="chat-file-preview" id="messagesPageImagePreview" hidden></div>
       <form class="chat-compose" id="messagesPageForm">
         <label class="chat-image-input" title="傳送圖片">🖼️<input type="file" id="messagesPageImage" accept="image/jpeg,image/png,image/webp"></label>
         <textarea id="messagesPageInput" placeholder="輸入訊息..."></textarea>
@@ -693,6 +698,7 @@
     <section class="chat-thread">
       <div class="chat-thread-head" id="adminChatThreadTitle">選擇一位會員開始對話</div>
       <div class="chat-log" id="adminChatMessages"></div>
+      <div class="chat-file-preview" id="adminChatImagePreview" hidden></div>
       <form class="chat-compose" id="adminMessagesForm">
         <label class="chat-image-input" title="傳送圖片">🖼️<input type="file" id="adminChatImage" accept="image/jpeg,image/png,image/webp"></label>
         <textarea id="adminChatInput" placeholder="輸入訊息..." disabled></textarea>
@@ -714,7 +720,7 @@
   <div class="wrap footer-inner">
     <div>
       <div class="footer-brand">濱水一湖</div>
-      <p class="footer-note">日本・韓國・越南正品選品代購。僅採購正品，獲利僅來自價差與台灣未引進商品，絕不販售仿冒或黃牛轉賣商品。</p>
+      <p class="footer-note">日本・韓國・越南正品選品代購，僅採購正品，絕不販售仿冒或黃牛轉賣商品。</p>
     </div>
     <div class="footer-links">
       <a href="#products">商品</a>
@@ -1572,6 +1578,27 @@ async function uploadChatImage(file) {
   if (error) { toast('圖片上傳失敗'); return null; }
   return path;
 }
+function bindChatImagePreview(inputId, previewId) {
+  const input = document.getElementById(inputId), preview = document.getElementById(previewId);
+  let objectUrl = null;
+  const clear = () => {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = null; input.value = ''; preview.hidden = true; preview.replaceChildren();
+  };
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) { clear(); return; }
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024) { toast('請選擇 JPG、PNG 或 WEBP 圖片，且不可超過 8MB'); clear(); return; }
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(file);
+    const image = document.createElement('img'), label = document.createElement('span'), remove = document.createElement('button');
+    image.src = objectUrl; image.alt = '已選擇的圖片預覽'; label.textContent = file.name; remove.type = 'button'; remove.textContent = '×'; remove.title = '取消選擇圖片'; remove.addEventListener('click', clear);
+    preview.replaceChildren(image, label, remove); preview.hidden = false;
+  });
+  return clear;
+}
+const clearCustomerImagePreview = bindChatImagePreview('messagesPageImage', 'messagesPageImagePreview');
+const clearAdminImagePreview = bindChatImagePreview('adminChatImage', 'adminChatImagePreview');
 document.getElementById('messagesPageForm').addEventListener('submit', async e => {
   e.preventDefault();
   const input = document.getElementById('messagesPageInput'), file = document.getElementById('messagesPageImage').files[0];
@@ -1579,7 +1606,7 @@ document.getElementById('messagesPageForm').addEventListener('submit', async e =
   if (!content && !image_path && !draft) return;
   const { error } = await sb.from('messages').insert({ user_id:state.user.id, sender:'customer', content:content || null, image_path, product_id:draft?.product_id || null, product_name:draft?.product_name || null, product_image_url:draft?.product_image_url || null });
   if (error) { toast('訊息送出失敗'); return; }
-  state.pendingProductInquiry = null; input.value = ''; document.getElementById('messagesPageImage').value = ''; renderMessagesPage();
+  state.pendingProductInquiry = null; input.value = ''; clearCustomerImagePreview(); renderMessagesPage();
 });
 
 /* ============================================================
@@ -2622,7 +2649,7 @@ async function renderAdminMessagesThread() {
   box.querySelectorAll('[data-product-link]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.productLink)location.hash=`#product=${el.dataset.productLink}`;}));
   const name=state.adminChatProfile?.display_name || '會員'; document.getElementById('adminChatThreadTitle').textContent=`與 ${name} 的對話`; box.scrollTop=box.scrollHeight;
 }
-document.getElementById('adminMessagesForm').addEventListener('submit',async e=>{e.preventDefault(); if(!state.adminChatActiveUser)return; const input=document.getElementById('adminChatInput'),file=document.getElementById('adminChatImage').files[0],content=input.value.trim(),image_path=await uploadChatImage(file); if(!content&&!image_path)return; const {error}=await sb.from('messages').insert({user_id:state.adminChatActiveUser,sender:'admin',content:content||null,image_path}); if(error){toast('訊息送出失敗');return;} input.value='';document.getElementById('adminChatImage').value='';renderAdminMessagesPage();});
+document.getElementById('adminMessagesForm').addEventListener('submit',async e=>{e.preventDefault(); if(!state.adminChatActiveUser)return; const input=document.getElementById('adminChatInput'),file=document.getElementById('adminChatImage').files[0],content=input.value.trim(),image_path=await uploadChatImage(file); if(!content&&!image_path)return; const {error}=await sb.from('messages').insert({user_id:state.adminChatActiveUser,sender:'admin',content:content||null,image_path}); if(error){toast('訊息送出失敗');return;} input.value='';clearAdminImagePreview();renderAdminMessagesPage();});
 
 document.getElementById('navToggle').addEventListener('click', () => {
   document.getElementById('mainNav').classList.toggle('mobile-open');
