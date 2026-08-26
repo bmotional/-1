@@ -747,8 +747,8 @@
 
       <form id="loginForm">
         <div class="field">
-          <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" required>
+          <label for="loginIdentifier">帳號或 Email</label>
+          <input type="text" id="loginIdentifier" required>
         </div>
         <div class="field">
           <label for="loginPassword">密碼</label>
@@ -765,16 +765,24 @@
       <p class="sub">此階段測試不需要Email驗證，註冊後可直接使用</p>
       <form id="signupForm">
         <div class="field">
-          <label for="signupName">顯示名稱</label>
+          <label for="signupName">用戶名稱</label>
           <input type="text" id="signupName" required>
         </div>
         <div class="field">
-          <label for="signupEmail">Email</label>
-          <input type="email" id="signupEmail" required>
+          <label for="signupInstagram">Instagram帳號（選填）</label>
+          <input type="text" id="signupInstagram" placeholder="@yourname">
+        </div>
+        <div class="field">
+          <label for="signupAccount">帳號（登入用，僅限英數字與底線）</label>
+          <input type="text" id="signupAccount" required pattern="[a-zA-Z0-9_]+" title="僅限英文字母、數字與底線">
         </div>
         <div class="field">
           <label for="signupPassword">密碼（至少6碼）</label>
           <input type="password" id="signupPassword" required minlength="6">
+        </div>
+        <div class="field">
+          <label for="signupEmail">電子信箱（選填）</label>
+          <input type="email" id="signupEmail">
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%">註冊</button>
         <div class="form-msg" id="signupMsg"></div>
@@ -785,6 +793,7 @@
     <div id="authLoggedInView" style="display:none">
       <h3>會員中心</h3>
       <p class="sub" id="loggedInEmail"></p>
+      <p class="sub" id="loggedInUid" style="font-size:11px;"></p>
       <button class="btn btn-outline" id="myOrdersBtn" style="width:100%; margin-bottom:10px;">查看我的訂單</button>
       <button class="btn btn-outline" id="logoutBtn" style="width:100%">登出</button>
     </div>
@@ -1243,7 +1252,10 @@ function refreshAuthView() {
     loginV.style.display = 'none';
     signupV.style.display = 'none';
     loggedInV.style.display = 'block';
-    document.getElementById('loggedInEmail').textContent = state.user.email || '';
+    const isPlaceholderEmail = (state.user.email || '').endsWith('@internal.local');
+    document.getElementById('loggedInEmail').textContent = isPlaceholderEmail
+      ? `帳號：${state.profile?.account || ''}`
+      : (state.user.email || '');
   } else {
     loggedInV.style.display = 'none';
     loginV.style.display = 'block';
@@ -1251,23 +1263,45 @@ function refreshAuthView() {
   }
 }
 
-// Email + 密碼 註冊
+// 帳號 + 密碼(信箱選填) 註冊
 document.getElementById('signupForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value;
   const displayName = document.getElementById('signupName').value.trim();
+  const instagram = document.getElementById('signupInstagram').value.trim();
+  const account = document.getElementById('signupAccount').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const emailInput = document.getElementById('signupEmail').value.trim();
   const msg = document.getElementById('signupMsg');
+
+  if (!/^[a-zA-Z0-9_]+$/.test(account)) {
+    msg.textContent = '帳號僅能使用英文字母、數字與底線'; msg.className = 'form-msg err';
+    return;
+  }
   msg.textContent = '處理中...'; msg.className = 'form-msg';
 
-  const { data, error } = await sb.auth.signUp({ email, password });
+  // 先檢查帳號是否已被使用，避免建立了登入帳號卻因帳號重複而卡住
+  const { data: taken } = await sb.rpc('is_account_taken', { check_account: account });
+  if (taken) {
+    msg.textContent = '這個帳號已經被使用了，請換一個'; msg.className = 'form-msg err';
+    return;
+  }
+
+  // 若沒填信箱，系統自動產生一組使用者看不到的內部信箱，僅用來滿足登入系統的需求
+  const authEmail = emailInput || `${account}_${Date.now()}@internal.local`;
+
+  const { data, error } = await sb.auth.signUp({ email: authEmail, password });
   if (error) {
     msg.textContent = error.message; msg.className = 'form-msg err';
     return;
   }
-  // 建立對應的 profiles 資料
   if (data.user) {
-    await sb.from('profiles').upsert({ id: data.user.id, display_name: displayName });
+    const { error: profErr } = await sb.from('profiles').upsert({
+      id: data.user.id, display_name: displayName, instagram: instagram || null, account,
+    });
+    if (profErr) {
+      msg.textContent = '註冊帳號時發生問題：' + profErr.message; msg.className = 'form-msg err';
+      return;
+    }
   }
   msg.textContent = '註冊成功！'; msg.className = 'form-msg ok';
   state.user = data.user;
@@ -1280,15 +1314,22 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   toast('歡迎加入濱水一湖');
 });
 
-// Email + 密碼 登入
+// 帳號或Email + 密碼 登入
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('loginEmail').value.trim();
+  const identifier = document.getElementById('loginIdentifier').value.trim();
   const password = document.getElementById('loginPassword').value;
   const msg = document.getElementById('loginMsg');
   msg.textContent = '登入中...'; msg.className = 'form-msg';
 
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  // 先把「帳號或Email」轉換成真正登入用的Email
+  const { data: resolvedEmail, error: resolveErr } = await sb.rpc('resolve_login_email', { identifier });
+  if (resolveErr || !resolvedEmail) {
+    msg.textContent = '帳號或密碼錯誤'; msg.className = 'form-msg err';
+    return;
+  }
+
+  const { data, error } = await sb.auth.signInWithPassword({ email: resolvedEmail, password });
   if (error) {
     msg.textContent = '帳號或密碼錯誤'; msg.className = 'form-msg err';
     return;
@@ -1973,12 +2014,14 @@ async function loadProfile() {
   if (!state.user) { state.profile = null; updateAdminUI(); return; }
   const { data, error } = await sb
     .from('profiles')
-    .select('is_admin, display_name')
+    .select('is_admin, display_name, uid, account')
     .eq('id', state.user.id)
     .single();
   if (error) { console.error('讀取會員資料失敗', error); state.profile = null; }
   else { state.profile = data; }
   updateAdminUI();
+  const uidEl = document.getElementById('loggedInUid');
+  if (uidEl) uidEl.textContent = state.profile?.uid ? `會員編號：${state.profile.uid}` : '';
 }
 function updateAdminUI() {
   const adminBtn = document.getElementById('adminBtn');
