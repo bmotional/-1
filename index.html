@@ -364,6 +364,12 @@
   }
   .preset-swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid var(--line); }
 
+  .demand-group { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; background: var(--bg); }
+  .demand-group-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .demand-group-name { font-weight: 600; font-size: 15px; }
+  .demand-group-total { font-family: var(--font-display); font-size: 15px; color: var(--brass-dark); }
+  .demand-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); padding: 3px 0 3px 14px; }
+
   /* ============ Modal (Auth) ============ */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(42, 40, 35, 0.45);
@@ -667,6 +673,7 @@
       <button class="admin-tab active" data-admin-tab="orders">訂單管理</button>
       <button class="admin-tab" data-admin-tab="wishlist">許願管理</button>
       <button class="admin-tab" data-admin-tab="products">商品管理</button>
+      <button class="admin-tab" data-admin-tab="demand">需求統計</button>
     </div>
 
     <div id="adminOrdersTab">
@@ -688,6 +695,11 @@
       </div>
       <div id="adminProductsList"></div>
     </div>
+
+    <div id="adminDemandTab" style="display:none">
+      <p class="sub" style="margin-bottom:14px;">依所有已成立訂單（不含已取消）加總，方便你決定下趟該多進哪些商品/顏色/尺寸。</p>
+      <div id="adminDemandList"></div>
+    </div>
   </div>
 </div>
 
@@ -701,7 +713,7 @@
       <div>
         <div class="detail-image" id="detailImage"></div>
         <button class="heart-btn" id="detailHeartBtn" style="position:static; width:100%; height:auto; padding:10px; display:flex; gap:8px;">
-          <svg viewBox="0 0 24 24"><path class="heart-fill" d="M12 21s-7.5-4.9-10-9.3C0.3 8.4 1.6 5 5 4.2c2-.5 4 .3 5 2 1-1.7 3-2.5 5-2 3.4.8 4.7 4.2 3 7.5C19.5 16.1 12 21 12 21z"/></svg>
+          <svg viewBox="0 0 24 24"><path class="heart-fill" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           <span id="detailHeartLabel">加入收藏</span>
         </button>
       </div>
@@ -722,6 +734,7 @@
         </div>
 
         <button class="btn btn-primary" id="detailAddToCartBtn" style="width:100%; margin-top:10px;">加入購物車</button>
+        <button class="btn btn-outline" id="detailShareBtn" style="width:100%; margin-top:8px;">🔗 分享這件商品</button>
       </div>
     </div>
   </div>
@@ -929,7 +942,7 @@ function renderProducts() {
       <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}" data-open-detail="${p.id}">
         <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
         <button class="heart-btn ${isFav ? 'active' : ''}" data-toggle-fav="${p.id}" aria-label="加入收藏">
-          <svg viewBox="0 0 24 24"><path class="heart-fill" d="M12 21s-7.5-4.9-10-9.3C0.3 8.4 1.6 5 5 4.2c2-.5 4 .3 5 2 1-1.7 3-2.5 5-2 3.4.8 4.7 4.2 3 7.5C19.5 16.1 12 21 12 21z"/></svg>
+          <svg viewBox="0 0 24 24"><path class="heart-fill" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
         </button>
         ${!p.image_url ? '尚無商品圖' : ''}
       </div>
@@ -1327,8 +1340,16 @@ function renderFavList() {
    商品詳情彈窗（放大圖 + 選款式 + 加購物車確認）
    ============================================================ */
 const productDetailOverlay = document.getElementById('productDetailOverlay');
-document.getElementById('productDetailClose').addEventListener('click', () => productDetailOverlay.classList.remove('open'));
-productDetailOverlay.addEventListener('click', (e) => { if (e.target === productDetailOverlay) productDetailOverlay.classList.remove('open'); });
+document.getElementById('productDetailClose').addEventListener('click', () => {
+  productDetailOverlay.classList.remove('open');
+  history.replaceState(null, '', location.pathname);
+});
+productDetailOverlay.addEventListener('click', (e) => {
+  if (e.target === productDetailOverlay) {
+    productDetailOverlay.classList.remove('open');
+    history.replaceState(null, '', location.pathname);
+  }
+});
 
 function openProductDetail(productId) {
   const p = state.products.find(x => String(x.id) === String(productId));
@@ -1401,6 +1422,20 @@ function openProductDetail(productId) {
   };
 
   productDetailOverlay.classList.add('open');
+  history.replaceState(null, '', `#product=${p.id}`);
+
+  document.getElementById('detailShareBtn').onclick = async () => {
+    const url = `${location.origin}${location.pathname}#product=${p.id}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: p.name, text: `濱水一湖｜${p.name}`, url }); return; } catch (e) { /* 使用者取消分享,不當作錯誤 */ }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('連結已複製，可以貼給朋友囉');
+    } catch (e) {
+      toast('複製失敗，請手動複製網址列上的連結');
+    }
+  };
 }
 
 // 給沒有款式選項的商品用：快速加入前一樣跳確認視窗
@@ -1493,8 +1528,10 @@ document.querySelectorAll('[data-admin-tab]').forEach(btn => {
     document.getElementById('adminOrdersTab').style.display = tab === 'orders' ? 'block' : 'none';
     document.getElementById('adminWishlistTab').style.display = tab === 'wishlist' ? 'block' : 'none';
     document.getElementById('adminProductsTab').style.display = tab === 'products' ? 'block' : 'none';
+    document.getElementById('adminDemandTab').style.display = tab === 'demand' ? 'block' : 'none';
     if (tab === 'wishlist') loadAdminWishlist();
     if (tab === 'products') loadAdminProducts();
+    if (tab === 'demand') loadAdminDemand();
   });
 });
 
@@ -1813,6 +1850,44 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
   }
 });
 
+async function loadAdminDemand() {
+  const { data, error } = await sb
+    .from('order_items')
+    .select('product_id, product_name, variant_color, variant_size, quantity, orders(status)');
+  const list = document.getElementById('adminDemandList');
+  if (error) { list.innerHTML = '<p>讀取需求統計失敗</p>'; console.error(error); return; }
+
+  // 排除已取消的訂單(目前雖然還沒有取消功能,先寫好邏輯備用)
+  const validItems = (data || []).filter(it => !it.orders || it.orders.status !== 'cancelled');
+
+  const groups = {};
+  validItems.forEach(it => {
+    const key = it.product_name || `商品#${it.product_id}`;
+    if (!groups[key]) groups[key] = { total: 0, variants: {} };
+    groups[key].total += it.quantity;
+    const variantKey = [it.variant_color, it.variant_size].filter(Boolean).join(' ') || '（無款式）';
+    groups[key].variants[variantKey] = (groups[key].variants[variantKey] || 0) + it.quantity;
+  });
+
+  const keys = Object.keys(groups).sort((a, b) => groups[b].total - groups[a].total);
+  if (keys.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有訂單資料。</p>'; return; }
+
+  list.innerHTML = keys.map(name => {
+    const g = groups[name];
+    const variantRows = Object.keys(g.variants).sort((a, b) => g.variants[b] - g.variants[a])
+      .map(vk => `<div class="demand-row"><span>${vk}</span><span>${g.variants[vk]} 件</span></div>`).join('');
+    return `
+      <div class="demand-group">
+        <div class="demand-group-top">
+          <span class="demand-group-name">${name}</span>
+          <span class="demand-group-total">共 ${g.total} 件</span>
+        </div>
+        ${variantRows}
+      </div>
+    `;
+  }).join('');
+}
+
 /* ============================================================
    許願專區
    ============================================================ */
@@ -1855,6 +1930,10 @@ document.getElementById('navToggle').addEventListener('click', () => {
   await loadProfile();
   await loadCart();
   await loadFavorites();
+
+  // 若網址帶有分享連結(#product=商品id)，自動開啟該商品的詳情彈窗
+  const match = location.hash.match(/#product=(\d+)/);
+  if (match) openProductDetail(match[1]);
 })();
 </script>
 </body>
