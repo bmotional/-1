@@ -527,6 +527,9 @@
   </div>
 </header>
 
+<!-- ============ 首頁主視圖(瀏覽商品用) ============ -->
+<div id="mainView">
+
 <!-- ============ Hero ============ -->
 <section class="hero wrap">
   <svg class="ripple-svg" viewBox="0 0 560 400" xmlns="http://www.w3.org/2000/svg">
@@ -599,6 +602,68 @@
     </form>
   </div>
 </section>
+
+</div><!-- /mainView -->
+
+<!-- ============ 商品專屬頁面(取代原本的小視窗,點圖片會切換到這裡) ============ -->
+<div id="productPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="productPageBackBtn" style="margin-bottom:20px;">← 返回商品列表</button>
+  <div class="product-edit-layout" style="grid-template-columns: 1fr 1fr; gap:40px;">
+    <div>
+      <div class="detail-image" id="pageDetailImage" style="aspect-ratio:3/4;"></div>
+      <button class="heart-btn" id="pageHeartBtn" style="position:static; width:100%; height:auto; padding:12px; display:flex; gap:8px; margin-top:12px;">
+        <svg viewBox="0 0 24 24"><path class="heart-fill" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+        <span id="pageHeartLabel">加入收藏</span>
+      </button>
+      <button class="btn btn-outline" id="pageShareBtn" style="width:100%; margin-top:8px;">🔗 分享這件商品</button>
+    </div>
+    <div>
+      <div class="card-country" id="pageCountry"></div>
+      <div class="card-brand" id="pageBrand"></div>
+      <h1 id="pageName" style="font-family:var(--font-display); margin:6px 0 14px;"></h1>
+      <div class="price-value" id="pagePrice" style="font-size:22px; margin-bottom:16px;"></div>
+      <p id="pageDesc" style="font-size:14px; color:var(--ink-soft); margin-bottom:20px; line-height:1.7;"></p>
+
+      <div id="pageColorSection" style="display:none">
+        <div class="variant-label">選擇顏色</div>
+        <div class="swatch-row" id="pageColorRow"></div>
+      </div>
+      <div id="pageSizeSection" style="display:none">
+        <div class="variant-label">選擇尺寸</div>
+        <div class="swatch-row" id="pageSizeRow"></div>
+      </div>
+
+      <button class="btn btn-primary" id="pageAddToCartBtn" style="width:100%; margin-top:14px;">加入購物車</button>
+
+      <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line);">
+        <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:10px;">留言區</h3>
+        <p style="font-size:12px; color:var(--ink-soft);">（規劃中，之後客戶可以在這裡針對商品留言討論）</p>
+      </div>
+      <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--line);">
+        <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:10px;">你可能也喜歡</h3>
+        <p style="font-size:12px; color:var(--ink-soft);">（規劃中，之後這裡會推薦相似風格/同品牌的其他商品）</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 聯絡我們 全頁畫面 ============ -->
+<div id="messagesPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="messagesPageBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">聯絡我們</h2>
+  <div id="messagesPageMessages" style="max-width:640px; max-height:60vh; overflow-y:auto; margin-bottom:16px;"></div>
+  <form id="messagesPageForm" style="display:flex; gap:8px; max-width:640px;">
+    <input type="text" id="messagesPageInput" placeholder="輸入訊息..." style="flex:1; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);" required>
+    <button type="submit" class="btn btn-primary btn-sm">送出</button>
+  </form>
+</div>
+
+<!-- ============ 通知 全頁畫面 ============ -->
+<div id="notificationsPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="notifPageBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">通知</h2>
+  <div id="notifPageList" style="max-width:640px;"></div>
+</div>
 
 <!-- ============ Footer ============ -->
 <footer>
@@ -1058,12 +1123,9 @@ function renderProducts() {
     grid.appendChild(card);
   });
 
-  // 點圖片/名稱：在新分頁開啟這件商品的專屬連結（可分享）
+  // 點圖片/名稱：切換畫面到這件商品的專屬頁面（同一分頁，不是新分頁、不是彈窗）
   grid.querySelectorAll('[data-open-page]').forEach(el => {
-    el.addEventListener('click', () => {
-      const url = `${location.origin}${location.pathname}#product=${el.dataset.openPage}`;
-      window.open(url, '_blank');
-    });
+    el.addEventListener('click', () => { location.hash = `#product=${el.dataset.openPage}`; });
   });
   grid.querySelectorAll('[data-toggle-fav]').forEach(btn => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.toggleFav, btn); });
@@ -1468,6 +1530,35 @@ async function updateNotifBadge() {
 }
 
 /* ============================================================
+   頁面路由（首頁 / 商品專屬頁 / 聯絡我們 / 通知）
+   ------------------------------------------------------------
+   用網址的 # 標記切換要顯示哪個畫面，同一個index.html內完成，
+   不用另外開分頁、也不是彈出視窗。
+   ============================================================ */
+function renderRoute() {
+  const hash = location.hash;
+  const productMatch = hash.match(/^#product=(\d+)/);
+  const isMessages = hash === '#messages';
+  const isNotifications = hash === '#notifications';
+
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications) ? 'none' : 'block';
+  document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
+  document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
+  document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
+
+  window.scrollTo(0, 0);
+
+  if (productMatch) renderProductPage(productMatch[1]);
+  if (isMessages) renderMessagesPage();
+  if (isNotifications) renderNotifPage();
+}
+window.addEventListener('hashchange', renderRoute);
+
+document.getElementById('productPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('messagesPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('notifPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+
+/* ============================================================
    收藏（愛心）
    ============================================================ */
 async function loadFavorites() {
@@ -1643,6 +1734,102 @@ function confirmAndAddToCart(productId) {
   if (!p) return;
   if (!confirm(`確定要將「${p.name}」加入購物車嗎？`)) return;
   addToCart(productId, {});
+}
+
+/* ============================================================
+   商品專屬頁面（點圖片切換到這裡；渲染邏輯跟彈窗版共用同一套選規格規則）
+   ============================================================ */
+let pageSelection = { color: null, size: null };
+
+function renderProductPage(productId) {
+  const p = state.products.find(x => String(x.id) === String(productId));
+  if (!p) { document.getElementById('productPageView').innerHTML = '<p>找不到這件商品，可能已下架。</p>'; return; }
+  pageSelection = { color: null, size: null };
+
+  document.getElementById('pageDetailImage').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '';
+  document.getElementById('pageCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
+  document.getElementById('pageBrand').textContent = p.brand || '';
+  document.getElementById('pageName').textContent = p.name;
+  document.getElementById('pagePrice').textContent = ntd(p.price_ntd);
+  document.getElementById('pageDesc').textContent = p.description || '';
+
+  const isFav = state.favoriteIds.has(p.id);
+  const heartBtn = document.getElementById('pageHeartBtn');
+  heartBtn.classList.toggle('active', isFav);
+  document.getElementById('pageHeartLabel').textContent = isFav ? '已收藏' : '加入收藏';
+  heartBtn.onclick = () => {
+    toggleFavorite(p.id, heartBtn);
+    heartBtn.classList.toggle('active');
+    document.getElementById('pageHeartLabel').textContent = heartBtn.classList.contains('active') ? '已收藏' : '加入收藏';
+  };
+
+  document.getElementById('pageShareBtn').onclick = async () => {
+    const url = `${location.origin}${location.pathname}#product=${p.id}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: p.name, text: `濱水一湖｜${p.name}`, url }); return; } catch (e) {}
+    }
+    try { await navigator.clipboard.writeText(url); toast('連結已複製，可以貼給朋友囉'); }
+    catch (e) { toast('複製失敗，請手動複製網址列上的連結'); }
+  };
+
+  const variants = state.variantsByProduct[p.id] || { colors: [], sizes: [] };
+
+  const colorSection = document.getElementById('pageColorSection');
+  const colorRow = document.getElementById('pageColorRow');
+  if (variants.colors.length > 0) {
+    colorSection.style.display = 'block';
+    colorRow.innerHTML = variants.colors.map(v => `
+      <div class="swatch ${v.is_available ? '' : 'unavailable'}" style="background:${v.color_hex || '#ccc'}"
+           data-color="${v.value}" data-available="${v.is_available}" title="${v.value}"
+           data-msg="${(v.unavailable_message || '目前無此色系').replace(/"/g, '&quot;')}"></div>
+    `).join('');
+    colorRow.querySelectorAll('.swatch').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
+        colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+        pageSelection.color = el.dataset.color;
+      });
+    });
+    if (variants.colors.length === 1 && variants.colors[0].is_available) {
+      colorRow.querySelector('.swatch').classList.add('selected');
+      pageSelection.color = variants.colors[0].value;
+    }
+  } else { colorSection.style.display = 'none'; }
+
+  const sizeSection = document.getElementById('pageSizeSection');
+  const sizeRow = document.getElementById('pageSizeRow');
+  if (variants.sizes.length > 0) {
+    sizeSection.style.display = 'block';
+    sizeRow.innerHTML = variants.sizes.map(v => `
+      <div class="size-chip ${v.is_available ? '' : 'unavailable'}" data-size="${v.value}" data-available="${v.is_available}"
+           data-msg="${(v.unavailable_message || '目前無此尺寸').replace(/"/g, '&quot;')}">${v.value}</div>
+    `).join('');
+    sizeRow.querySelectorAll('.size-chip').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
+        sizeRow.querySelectorAll('.size-chip').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+        pageSelection.size = el.dataset.size;
+      });
+    });
+    if (variants.sizes.length === 1 && variants.sizes[0].is_available) {
+      sizeRow.querySelector('.size-chip').classList.add('selected');
+      pageSelection.size = variants.sizes[0].value;
+    }
+  } else { sizeSection.style.display = 'none'; }
+
+  const addBtn = document.getElementById('pageAddToCartBtn');
+  const canAdd = p.status === 'available' || p.status === 'preorder';
+  addBtn.disabled = !canAdd;
+  addBtn.textContent = canAdd ? '加入購物車' : (STATUS_LABEL[p.status] || '無法購買');
+  addBtn.onclick = () => {
+    if (variants.colors.length > 0 && !pageSelection.color) { toast('請先選擇顏色'); return; }
+    if (variants.sizes.length > 0 && !pageSelection.size) { toast('請先選擇尺寸'); return; }
+    const desc = [pageSelection.color, pageSelection.size].filter(Boolean).join(' / ');
+    if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
+    addToCart(p.id, { variant_color: pageSelection.color, variant_size: pageSelection.size });
+  };
 }
 
 /* ============================================================
