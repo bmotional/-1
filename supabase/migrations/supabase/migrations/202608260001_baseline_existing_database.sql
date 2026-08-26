@@ -1,1 +1,12 @@
 
+-- 濱水一湖 Supabase 基線紀錄
+-- 建立日期：2026-08-26
+-- 狀態：已存在於正式 Supabase 專案，請勿直接對正式資料庫重複執行。
+--
+-- 後續所有資料庫變更，請以新的 migration 檔追加。
+-- 命名方式：YYYYMMDD四位流水號_英文說明.sql
+--
+-- 已知功能：
+-- products、profiles、cart_items、orders、order_items
+-- wishlist_requests、favorites、product_variants
+-- messages、notifications、product-images Storage
