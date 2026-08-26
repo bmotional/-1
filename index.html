@@ -370,6 +370,38 @@
   .demand-group-total { font-family: var(--font-display); font-size: 15px; color: var(--brass-dark); }
   .demand-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); padding: 3px 0 3px 14px; }
 
+  .chat-bubble-row { display: flex; margin-bottom: 10px; }
+  .chat-bubble-row.mine { justify-content: flex-end; }
+  .chat-bubble {
+    max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5;
+  }
+  .chat-bubble-row.mine .chat-bubble { background: var(--ink); color: var(--bg); border-bottom-right-radius: 3px; }
+  .chat-bubble-row:not(.mine) .chat-bubble { background: var(--bg-raised); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+  .chat-bubble-time { font-size: 10px; color: var(--ink-soft); margin-top: 3px; }
+
+  .admin-chat-user-row {
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; background: var(--bg);
+  }
+  .admin-chat-user-row:hover { border-color: var(--khaki); }
+  .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); display: inline-block; margin-right: 6px; }
+
+  .tag-select {
+    font-size: 12px; padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg);
+  }
+  .unread-row { border-left: 3px solid var(--brass); }
+
+  .notif-row { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
+  .notif-row.unread { background: var(--bg-raised); border-left: 3px solid var(--brass); }
+  .notif-time { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
+
+  .gallery-thumbs { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .gallery-thumb { width: 52px; height: 62px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer; }
+  .gallery-thumb.selected { border-color: var(--ink); }
+
+  .admin-img-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .admin-img-thumb { width: 44px; height: 54px; object-fit: cover; border-radius: 4px; }
+
   /* ============ Modal (Auth) ============ */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(42, 40, 35, 0.45);
@@ -471,6 +503,14 @@
     <div class="header-actions">
       <button class="icon-btn" id="acctBtn" aria-label="會員帳號">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </button>
+      <button class="icon-btn" id="chatBtn" aria-label="聯絡我們" title="聯絡我們">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <span class="cart-badge" id="chatBadge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" id="notifBtn" aria-label="通知" title="到貨/訂單通知">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m21 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L1 7"/></svg>
+        <span class="cart-badge" id="notifBadge" style="display:none">0</span>
       </button>
       <button class="icon-btn" id="favBtn" aria-label="我的收藏" title="我的收藏">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
@@ -672,6 +712,7 @@
     <div class="admin-tabs">
       <button class="admin-tab active" data-admin-tab="orders">訂單管理</button>
       <button class="admin-tab" data-admin-tab="wishlist">許願管理</button>
+      <button class="admin-tab" data-admin-tab="chat">客服訊息</button>
       <button class="admin-tab" data-admin-tab="products">商品管理</button>
       <button class="admin-tab" data-admin-tab="demand">需求統計</button>
     </div>
@@ -681,11 +722,37 @@
         <span class="filter-label" id="adminOrdersCount"></span>
         <button class="btn btn-primary btn-sm" id="lockAllPendingBtn">一鍵鎖定所有待確認訂單</button>
       </div>
+      <div class="filter-group" id="orderTagFilters" style="margin-bottom:14px;">
+        <button class="chip active" data-order-tag-filter="all">全部（不含垃圾訊息）</button>
+        <button class="chip" data-order-tag-filter="unread">未讀</button>
+        <button class="chip" data-order-tag-filter="future">未來可做方案</button>
+        <button class="chip" data-order-tag-filter="watch">再觀察</button>
+        <button class="chip" data-order-tag-filter="spam">垃圾訊息</button>
+      </div>
       <div id="adminOrdersList"></div>
     </div>
 
     <div id="adminWishlistTab" style="display:none">
+      <div class="filter-group" id="wishTagFilters" style="margin-bottom:14px;">
+        <button class="chip active" data-wish-tag-filter="all">全部（不含垃圾訊息）</button>
+        <button class="chip" data-wish-tag-filter="unread">未讀</button>
+        <button class="chip" data-wish-tag-filter="future">未來可做方案</button>
+        <button class="chip" data-wish-tag-filter="watch">再觀察</button>
+        <button class="chip" data-wish-tag-filter="spam">垃圾訊息</button>
+      </div>
       <div id="adminWishlistList"></div>
+    </div>
+
+    <div id="adminChatTab" style="display:none">
+      <div id="adminChatUserList"></div>
+      <div id="adminChatThreadView" style="display:none">
+        <button class="btn btn-outline btn-sm" id="adminChatBackBtn" style="margin-bottom:12px;">← 返回列表</button>
+        <div id="adminChatMessages" style="max-height:320px; overflow-y:auto; margin-bottom:14px;"></div>
+        <form id="adminChatForm" style="display:flex; gap:8px;">
+          <input type="text" id="adminChatInput" placeholder="回覆客戶..." style="flex:1; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);" required>
+          <button type="submit" class="btn btn-primary btn-sm">送出</button>
+        </form>
+      </div>
     </div>
 
     <div id="adminProductsTab" style="display:none">
@@ -746,6 +813,29 @@
     <button class="modal-close" id="favClose" aria-label="關閉">×</button>
     <h3>我的收藏</h3>
     <div id="favList"></div>
+  </div>
+</div>
+
+<!-- ============ Chat Modal（客戶與客服的一對一對話） ============ -->
+<div class="modal-overlay big-modal" id="chatOverlay">
+  <div class="modal">
+    <button class="modal-close" id="chatClose" aria-label="關閉">×</button>
+    <h3>聯絡我們</h3>
+    <p class="sub">有任何問題都可以在這裡留言，我們會盡快回覆</p>
+    <div id="chatMessages" style="max-height:340px; overflow-y:auto; margin-bottom:14px; padding:4px;"></div>
+    <form id="chatForm" style="display:flex; gap:8px;">
+      <input type="text" id="chatInput" placeholder="輸入訊息..." style="flex:1; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);" required>
+      <button type="submit" class="btn btn-primary btn-sm">送出</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Notification Modal ============ -->
+<div class="modal-overlay big-modal" id="notifOverlay">
+  <div class="modal">
+    <button class="modal-close" id="notifClose" aria-label="關閉">×</button>
+    <h3>通知</h3>
+    <div id="notifList"></div>
   </div>
 </div>
 
@@ -816,7 +906,7 @@
       <div class="filter-group" id="sizePresetRow" style="margin-bottom:10px;"></div>
       <div id="sizeVariantList"></div>
     </div>
-    <p id="variantHint" style="font-size:12px; color:var(--ink-soft); margin-top:16px;">請先儲存商品基本資料，儲存後即可在下方新增顏色/尺寸選項。</p>
+    <p id="variantHint" style="display:none; font-size:12px; color:var(--ink-soft); margin-top:16px;"></p>
   </div>
 </div>
 
@@ -843,7 +933,14 @@ const state = {
   variantsByProduct: {}, // { productId: { colors:[...], sizes:[...] } }
   favoriteIds: new Set(),
   detailSelection: { productId: null, color: null, size: null },
+  orderTagFilter: 'all',
+  wishTagFilter: 'all',
+  adminChatActiveUser: null,
+  detailImages: [],
+  productEditImages: [], // 目前編輯中商品的圖片庫
 };
+
+const ADMIN_TAG_LABEL = { future: '未來可做方案', watch: '再觀察', spam: '垃圾訊息' };
 
 const PRESET_COLORS = [
   { name: '黑色', hex: '#1a1a1a' }, { name: '白色', hex: '#f5f2ea' }, { name: '灰色', hex: '#8a8577' },
@@ -935,11 +1032,10 @@ function renderProducts() {
     card.className = 'card';
     const depositPct = p.deposit_ratio ? Math.round(p.deposit_ratio * 100) : null;
     const canAdd = p.status === 'available' || p.status === 'preorder';
-    const hasVariants = !!(state.variantsByProduct[p.id] && (state.variantsByProduct[p.id].colors.length || state.variantsByProduct[p.id].sizes.length));
     const isFav = state.favoriteIds.has(p.id);
 
     card.innerHTML = `
-      <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}" data-open-detail="${p.id}">
+      <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}" data-open-page="${p.id}" title="查看大圖與詳情（開新分頁）">
         <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
         <button class="heart-btn ${isFav ? 'active' : ''}" data-toggle-fav="${p.id}" aria-label="加入收藏">
           <svg viewBox="0 0 24 24"><path class="heart-fill" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
@@ -949,32 +1045,32 @@ function renderProducts() {
       <div class="card-body">
         <div class="card-country">${COUNTRY_LABEL[p.country] || p.country}</div>
         <div class="card-brand">${p.brand || ''}</div>
-        <div class="card-name" data-open-detail="${p.id}" style="cursor:pointer;">${p.name}</div>
+        <div class="card-name" data-open-page="${p.id}" style="cursor:pointer;" title="查看大圖與詳情（開新分頁）">${p.name}</div>
         <div class="card-price">
           <span class="price-value">${ntd(p.price_ntd)}</span>
           ${depositPct ? `<span class="deposit-note">訂金 ${depositPct}%</span>` : ''}
         </div>
-        <button class="card-add" data-open-detail-btn="${p.id}" ${canAdd ? '' : 'disabled'}>
-          ${!canAdd ? (STATUS_LABEL[p.status] || '無法購買') : (hasVariants ? '選擇款式' : '加入購物車')}
+        <button class="card-add" data-open-modal="${p.id}" ${canAdd ? '' : 'disabled'}>
+          ${canAdd ? '加入購物車' : (STATUS_LABEL[p.status] || '無法購買')}
         </button>
       </div>
     `;
     grid.appendChild(card);
   });
 
-  grid.querySelectorAll('[data-open-detail]').forEach(el => {
-    el.addEventListener('click', () => openProductDetail(el.dataset.openDetail));
+  // 點圖片/名稱：在新分頁開啟這件商品的專屬連結（可分享）
+  grid.querySelectorAll('[data-open-page]').forEach(el => {
+    el.addEventListener('click', () => {
+      const url = `${location.origin}${location.pathname}#product=${el.dataset.openPage}`;
+      window.open(url, '_blank');
+    });
   });
   grid.querySelectorAll('[data-toggle-fav]').forEach(btn => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.toggleFav, btn); });
   });
-  grid.querySelectorAll('[data-open-detail-btn]:not([disabled])').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const p = state.products.find(x => String(x.id) === btn.dataset.openDetailBtn);
-      const hasVariants = !!(state.variantsByProduct[p.id] && (state.variantsByProduct[p.id].colors.length || state.variantsByProduct[p.id].sizes.length));
-      if (hasVariants) { openProductDetail(p.id); }
-      else { confirmAndAddToCart(p.id); }
-    });
+  // 點「加入購物車」：在目前這頁開啟選規格彈窗
+  grid.querySelectorAll('[data-open-modal]:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => openProductDetail(btn.dataset.openModal));
   });
 }
 
@@ -1070,6 +1166,8 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   await loadProfile();
   await loadCart();
   await loadFavorites();
+  await updateChatBadge();
+  await updateNotifBadge();
   refreshAuthView();
   toast('歡迎加入濱水一湖');
 });
@@ -1091,6 +1189,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   await loadProfile();
   await loadCart();
   await loadFavorites();
+  await updateChatBadge();
+  await updateNotifBadge();
   refreshAuthView();
   toast('登入成功');
 });
@@ -1119,6 +1219,8 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   renderCart();
   updateAdminUI();
   updateFavBadge();
+  document.getElementById('chatBadge').style.display = 'none';
+  document.getElementById('notifBadge').style.display = 'none';
   refreshAuthView();
   closeAuth();
   toast('已登出');
@@ -1278,6 +1380,94 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
 });
 
 /* ============================================================
+   客服訊息（客戶端：與客服的一對一對話）
+   ============================================================ */
+const chatOverlay = document.getElementById('chatOverlay');
+document.getElementById('chatBtn').addEventListener('click', () => {
+  if (!state.user) { toast('請先登入才能聯絡我們'); openAuth(); return; }
+  chatOverlay.classList.add('open');
+  loadChatMessages();
+});
+document.getElementById('chatClose').addEventListener('click', () => chatOverlay.classList.remove('open'));
+chatOverlay.addEventListener('click', (e) => { if (e.target === chatOverlay) chatOverlay.classList.remove('open'); });
+
+async function loadChatMessages() {
+  const { data, error } = await sb.from('messages').select('*').eq('user_id', state.user.id).order('created_at');
+  const box = document.getElementById('chatMessages');
+  if (error) { box.innerHTML = '<p>讀取訊息失敗</p>'; return; }
+  if (!data || data.length === 0) { box.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前還沒有對話紀錄，有任何問題都可以在下面留言給我們！</p>'; }
+  else {
+    box.innerHTML = data.map(m => `
+      <div class="chat-bubble-row ${m.sender === 'customer' ? 'mine' : ''}">
+        <div>
+          <div class="chat-bubble">${m.content}</div>
+          <div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div>
+        </div>
+      </div>
+    `).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+  // 把客服(admin)發的訊息標記為已讀
+  await sb.from('messages').update({ is_read: true }).eq('user_id', state.user.id).eq('sender', 'admin').eq('is_read', false);
+  updateChatBadge();
+}
+
+async function updateChatBadge() {
+  if (!state.user) { document.getElementById('chatBadge').style.display = 'none'; return; }
+  const { count } = await sb.from('messages').select('id', { count: 'exact', head: true }).eq('user_id', state.user.id).eq('sender', 'admin').eq('is_read', false);
+  const badge = document.getElementById('chatBadge');
+  badge.style.display = count > 0 ? 'flex' : 'none';
+  badge.textContent = count;
+}
+
+document.getElementById('chatForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('chatInput');
+  const content = input.value.trim();
+  if (!content) return;
+  await sb.from('messages').insert({ user_id: state.user.id, sender: 'customer', content });
+  input.value = '';
+  loadChatMessages();
+});
+
+/* ============================================================
+   通知中心（客戶端）
+   ============================================================ */
+const notifOverlay = document.getElementById('notifOverlay');
+document.getElementById('notifBtn').addEventListener('click', () => {
+  if (!state.user) { toast('請先登入才能查看通知'); openAuth(); return; }
+  notifOverlay.classList.add('open');
+  loadNotifications();
+});
+document.getElementById('notifClose').addEventListener('click', () => notifOverlay.classList.remove('open'));
+notifOverlay.addEventListener('click', (e) => { if (e.target === notifOverlay) notifOverlay.classList.remove('open'); });
+
+async function loadNotifications() {
+  const { data, error } = await sb.from('notifications').select('*').eq('user_id', state.user.id).order('created_at', { ascending: false });
+  const list = document.getElementById('notifList');
+  if (error) { list.innerHTML = '<p>讀取通知失敗</p>'; return; }
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有通知。</p>'; }
+  else {
+    list.innerHTML = data.map(n => `
+      <div class="notif-row ${n.is_read ? '' : 'unread'}">
+        <div>${n.content}</div>
+        <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-Hant-TW')}</div>
+      </div>
+    `).join('');
+  }
+  await sb.from('notifications').update({ is_read: true }).eq('user_id', state.user.id).eq('is_read', false);
+  updateNotifBadge();
+}
+
+async function updateNotifBadge() {
+  if (!state.user) { document.getElementById('notifBadge').style.display = 'none'; return; }
+  const { count } = await sb.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', state.user.id).eq('is_read', false);
+  const badge = document.getElementById('notifBadge');
+  badge.style.display = count > 0 ? 'flex' : 'none';
+  badge.textContent = count;
+}
+
+/* ============================================================
    收藏（愛心）
    ============================================================ */
 async function loadFavorites() {
@@ -1388,6 +1578,11 @@ function openProductDetail(productId) {
         state.detailSelection.color = el.dataset.color;
       });
     });
+    // 只有一個選項時，直接預選（減少不必要的點擊）
+    if (variants.colors.length === 1 && variants.colors[0].is_available) {
+      colorRow.querySelector('.swatch').classList.add('selected');
+      state.detailSelection.color = variants.colors[0].value;
+    }
   } else { colorSection.style.display = 'none'; }
 
   const sizeSection = document.getElementById('detailSizeSection');
@@ -1406,6 +1601,10 @@ function openProductDetail(productId) {
         state.detailSelection.size = el.dataset.size;
       });
     });
+    if (variants.sizes.length === 1 && variants.sizes[0].is_available) {
+      sizeRow.querySelector('.size-chip').classList.add('selected');
+      state.detailSelection.size = variants.sizes[0].value;
+    }
   } else { sizeSection.style.display = 'none'; }
 
   const addBtn = document.getElementById('detailAddToCartBtn');
@@ -1527,24 +1726,25 @@ document.querySelectorAll('[data-admin-tab]').forEach(btn => {
     const tab = btn.dataset.adminTab;
     document.getElementById('adminOrdersTab').style.display = tab === 'orders' ? 'block' : 'none';
     document.getElementById('adminWishlistTab').style.display = tab === 'wishlist' ? 'block' : 'none';
+    document.getElementById('adminChatTab').style.display = tab === 'chat' ? 'block' : 'none';
     document.getElementById('adminProductsTab').style.display = tab === 'products' ? 'block' : 'none';
     document.getElementById('adminDemandTab').style.display = tab === 'demand' ? 'block' : 'none';
     if (tab === 'wishlist') loadAdminWishlist();
     if (tab === 'products') loadAdminProducts();
     if (tab === 'demand') loadAdminDemand();
+    if (tab === 'chat') loadAdminChatList();
   });
 });
 
 async function loadAdminOrders() {
   const { data, error } = await sb
     .from('orders')
-    .select('id, status, total_ntd, deposit_ntd, created_at, user_id, order_items(*)')
+    .select('id, status, total_ntd, deposit_ntd, created_at, user_id, admin_read, admin_tag, order_items(*)')
     .order('created_at', { ascending: false });
   const list = document.getElementById('adminOrdersList');
   const countEl = document.getElementById('adminOrdersCount');
   if (error) { list.innerHTML = '<p>讀取訂單失敗，請確認管理員權限是否設定正確</p>'; console.error(error); return; }
 
-  // 另外撈出所有相關會員的暱稱，自己在前端合併(避免依賴資料庫的關聯查詢)
   const userIds = [...new Set((data || []).map(o => o.user_id))];
   let nameMap = {};
   if (userIds.length > 0) {
@@ -1555,36 +1755,64 @@ async function loadAdminOrders() {
   const pendingCount = (data || []).filter(o => o.status === 'pending').length;
   countEl.textContent = `共 ${data.length} 筆訂單，${pendingCount} 筆待確認`;
 
-  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有訂單。</p>'; return; }
+  const filtered = (data || []).filter(o => {
+    if (state.orderTagFilter === 'all') return o.admin_tag !== 'spam';
+    if (state.orderTagFilter === 'unread') return !o.admin_read;
+    return o.admin_tag === state.orderTagFilter;
+  });
 
-  list.innerHTML = data.map(o => `
-    <div class="order-row">
+  if (filtered.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的訂單。</p>'; return; }
+
+  list.innerHTML = filtered.map(o => `
+    <div class="order-row ${o.admin_read ? '' : 'unread-row'}">
       <div class="order-row-top">
         <span class="order-id">訂單 #${o.id}　${nameMap[o.user_id] || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
         <span class="order-status order-status-${o.status}">${ORDER_STATUS_LABEL[o.status] || o.status}</span>
       </div>
       <div class="order-items-list">
-        ${(o.order_items || []).map(it => `<div>${it.product_name} × ${it.quantity}（${it.brand || ''}）</div>`).join('')}
+        ${(o.order_items || []).map(it => `<div>${it.product_name}${[it.variant_color, it.variant_size].filter(Boolean).length ? '（' + [it.variant_color, it.variant_size].filter(Boolean).join('/') + '）' : ''} × ${it.quantity}</div>`).join('')}
       </div>
       <div class="order-total"><span>訂金</span><span>${ntd(o.deposit_ntd)}</span></div>
       <div class="order-total"><span>總額</span><span>${ntd(o.total_ntd)}</span></div>
-      <div class="order-admin-actions">
+      <div class="order-admin-actions" style="flex-wrap:wrap;">
         ${o.status === 'pending' ? `<button class="btn btn-outline btn-sm" data-lock-order="${o.id}">鎖定此筆訂單</button>` : ''}
         ${o.status === 'locked' ? `<button class="btn btn-outline btn-sm" data-fulfill-order="${o.id}">標記為已完成</button><button class="btn btn-outline btn-sm" data-unlock-order="${o.id}">解除鎖定</button>` : ''}
+        <button class="btn btn-outline btn-sm" data-toggle-read-order="${o.id}" data-current-read="${o.admin_read}">${o.admin_read ? '標記未讀' : '標記已讀'}</button>
+        <select class="tag-select" data-tag-order="${o.id}">
+          <option value="" ${!o.admin_tag ? 'selected' : ''}>不分類</option>
+          <option value="future" ${o.admin_tag === 'future' ? 'selected' : ''}>未來可做方案</option>
+          <option value="watch" ${o.admin_tag === 'watch' ? 'selected' : ''}>再觀察</option>
+          <option value="spam" ${o.admin_tag === 'spam' ? 'selected' : ''}>垃圾訊息</option>
+        </select>
       </div>
     </div>
   `).join('');
 
-  list.querySelectorAll('[data-lock-order]').forEach(btn => {
-    btn.addEventListener('click', () => updateOrderStatus(btn.dataset.lockOrder, 'locked'));
+  list.querySelectorAll('[data-lock-order]').forEach(btn => btn.addEventListener('click', () => updateOrderStatus(btn.dataset.lockOrder, 'locked')));
+  list.querySelectorAll('[data-fulfill-order]').forEach(btn => btn.addEventListener('click', () => updateOrderStatus(btn.dataset.fulfillOrder, 'fulfilled')));
+  list.querySelectorAll('[data-unlock-order]').forEach(btn => btn.addEventListener('click', () => updateOrderStatus(btn.dataset.unlockOrder, 'pending')));
+  list.querySelectorAll('[data-toggle-read-order]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sb.from('orders').update({ admin_read: btn.dataset.currentRead !== 'true' }).eq('id', btn.dataset.toggleReadOrder);
+      loadAdminOrders();
+    });
   });
-  list.querySelectorAll('[data-fulfill-order]').forEach(btn => {
-    btn.addEventListener('click', () => updateOrderStatus(btn.dataset.fulfillOrder, 'fulfilled'));
-  });
-  list.querySelectorAll('[data-unlock-order]').forEach(btn => {
-    btn.addEventListener('click', () => updateOrderStatus(btn.dataset.unlockOrder, 'pending'));
+  list.querySelectorAll('[data-tag-order]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      await sb.from('orders').update({ admin_tag: sel.value || null }).eq('id', sel.dataset.tagOrder);
+      loadAdminOrders();
+    });
   });
 }
+
+document.querySelectorAll('[data-order-tag-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-order-tag-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.orderTagFilter = btn.dataset.orderTagFilter;
+    loadAdminOrders();
+  });
+});
 
 async function updateOrderStatus(orderId, status) {
   const payload = { status };
@@ -1606,7 +1834,7 @@ document.getElementById('lockAllPendingBtn').addEventListener('click', async () 
 async function loadAdminWishlist() {
   const { data, error } = await sb
     .from('wishlist_requests')
-    .select('id, brand_name, description, created_at, user_id')
+    .select('id, brand_name, description, created_at, user_id, admin_read, admin_tag')
     .order('created_at', { ascending: false });
   const list = document.getElementById('adminWishlistList');
   if (error) { list.innerHTML = '<p>讀取許願失敗</p>'; console.error(error); return; }
@@ -1618,16 +1846,119 @@ async function loadAdminWishlist() {
     (profs || []).forEach(p => { nameMap[p.id] = p.display_name; });
   }
 
-  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有許願紀錄。</p>'; return; }
+  const filtered = (data || []).filter(w => {
+    if (state.wishTagFilter === 'all') return w.admin_tag !== 'spam';
+    if (state.wishTagFilter === 'unread') return !w.admin_read;
+    return w.admin_tag === state.wishTagFilter;
+  });
 
-  list.innerHTML = data.map(w => `
-    <div class="wish-row">
+  if (filtered.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的許願紀錄。</p>'; return; }
+
+  list.innerHTML = filtered.map(w => `
+    <div class="wish-row ${w.admin_read ? '' : 'unread-row'}">
       <div class="wish-row-brand">${w.brand_name}</div>
       ${w.description ? `<div class="wish-row-desc">${w.description}</div>` : ''}
       <div class="wish-row-meta">${nameMap[w.user_id] || '（未命名會員）'}　${new Date(w.created_at).toLocaleDateString('zh-Hant-TW')}</div>
+      <div class="order-admin-actions" style="flex-wrap:wrap; margin-top:8px;">
+        <button class="btn btn-outline btn-sm" data-toggle-read-wish="${w.id}" data-current-read="${w.admin_read}">${w.admin_read ? '標記未讀' : '標記已讀'}</button>
+        <select class="tag-select" data-tag-wish="${w.id}">
+          <option value="" ${!w.admin_tag ? 'selected' : ''}>不分類</option>
+          <option value="future" ${w.admin_tag === 'future' ? 'selected' : ''}>未來可做方案</option>
+          <option value="watch" ${w.admin_tag === 'watch' ? 'selected' : ''}>再觀察</option>
+          <option value="spam" ${w.admin_tag === 'spam' ? 'selected' : ''}>垃圾訊息</option>
+        </select>
+      </div>
     </div>
   `).join('');
+
+  list.querySelectorAll('[data-toggle-read-wish]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sb.from('wishlist_requests').update({ admin_read: btn.dataset.currentRead !== 'true' }).eq('id', btn.dataset.toggleReadWish);
+      loadAdminWishlist();
+    });
+  });
+  list.querySelectorAll('[data-tag-wish]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      await sb.from('wishlist_requests').update({ admin_tag: sel.value || null }).eq('id', sel.dataset.tagWish);
+      loadAdminWishlist();
+    });
+  });
 }
+
+document.querySelectorAll('[data-wish-tag-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-wish-tag-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.wishTagFilter = btn.dataset.wishTagFilter;
+    loadAdminWishlist();
+  });
+});
+
+/* ============================================================
+   客服訊息（管理員）
+   ============================================================ */
+async function loadAdminChatList() {
+  document.getElementById('adminChatThreadView').style.display = 'none';
+  document.getElementById('adminChatUserList').style.display = 'block';
+  const { data, error } = await sb.from('messages').select('user_id, sender, is_read, created_at').order('created_at', { ascending: false });
+  const list = document.getElementById('adminChatUserList');
+  if (error) { list.innerHTML = '<p>讀取訊息失敗</p>'; console.error(error); return; }
+
+  const byUser = {};
+  (data || []).forEach(m => {
+    if (!byUser[m.user_id]) byUser[m.user_id] = { lastAt: m.created_at, unread: 0 };
+    if (m.sender === 'customer' && !m.is_read) byUser[m.user_id].unread++;
+  });
+  const userIds = Object.keys(byUser);
+  if (userIds.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有任何客服對話。</p>'; return; }
+
+  const { data: profs } = await sb.from('profiles').select('id, display_name').in('id', userIds);
+  const nameMap = {}; (profs || []).forEach(p => { nameMap[p.id] = p.display_name; });
+
+  list.innerHTML = userIds.map(uid => `
+    <div class="admin-chat-user-row" data-open-thread="${uid}">
+      <span>${byUser[uid].unread > 0 ? '<span class="unread-dot"></span>' : ''}${nameMap[uid] || '（未命名會員）'}</span>
+      <span style="font-size:11px; color:var(--ink-soft);">${byUser[uid].unread > 0 ? byUser[uid].unread + ' 則未讀' : ''}</span>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-open-thread]').forEach(row => {
+    row.addEventListener('click', () => openAdminChatThread(row.dataset.openThread));
+  });
+}
+
+async function openAdminChatThread(userId) {
+  state.adminChatActiveUser = userId;
+  document.getElementById('adminChatUserList').style.display = 'none';
+  document.getElementById('adminChatThreadView').style.display = 'block';
+  await renderAdminChatThread();
+  await sb.from('messages').update({ is_read: true }).eq('user_id', userId).eq('sender', 'customer').eq('is_read', false);
+}
+
+async function renderAdminChatThread() {
+  const { data } = await sb.from('messages').select('*').eq('user_id', state.adminChatActiveUser).order('created_at');
+  const box = document.getElementById('adminChatMessages');
+  box.innerHTML = (data || []).map(m => `
+    <div class="chat-bubble-row ${m.sender === 'admin' ? 'mine' : ''}">
+      <div>
+        <div class="chat-bubble">${m.content}</div>
+        <div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div>
+      </div>
+    </div>
+  `).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+document.getElementById('adminChatBackBtn').addEventListener('click', loadAdminChatList);
+
+document.getElementById('adminChatForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('adminChatInput');
+  const content = input.value.trim();
+  if (!content || !state.adminChatActiveUser) return;
+  await sb.from('messages').insert({ user_id: state.adminChatActiveUser, sender: 'admin', content });
+  input.value = '';
+  renderAdminChatThread();
+});
 
 /* ============================================================
    商品管理（管理員）
@@ -1679,103 +2010,119 @@ function openProductEditor(product) {
   title.textContent = product ? '編輯商品' : '新增商品';
   preview.innerHTML = product && product.image_url ? `<img src="${product.image_url}" alt="">` : '尚無圖片';
 
-  const variantSection = document.getElementById('variantSection');
-  const variantHint = document.getElementById('variantHint');
+  document.getElementById('variantSection').style.display = 'block';
+  document.getElementById('variantHint').style.display = 'none';
+
   if (product && product.id) {
-    variantSection.style.display = 'block';
-    variantHint.style.display = 'none';
-    renderVariantPresets(product.id);
-    loadVariantsForEditor(product.id);
+    loadVariantsIntoStage(product.id);
   } else {
-    variantSection.style.display = 'none';
-    variantHint.style.display = 'block';
+    state.productEditVariants = { colors: [], sizes: [] };
+    state.productEditVariantsOriginalIds = [];
+    renderVariantPresets();
+    renderVariantStage();
   }
 
   document.getElementById('productEditOverlay').classList.add('open');
 }
 
-function renderVariantPresets(productId) {
+async function loadVariantsIntoStage(productId) {
+  const { data } = await sb.from('product_variants').select('*').eq('product_id', productId).order('sort_order');
+  state.productEditVariants = {
+    colors: (data || []).filter(v => v.variant_type === 'color').map(v => ({ ...v })),
+    sizes: (data || []).filter(v => v.variant_type === 'size').map(v => ({ ...v })),
+  };
+  state.productEditVariantsOriginalIds = (data || []).map(v => v.id);
+  renderVariantPresets();
+  renderVariantStage();
+}
+
+function renderVariantPresets() {
+  const colorNames = state.productEditVariants.colors.map(v => v.value);
+  const sizeNames = state.productEditVariants.sizes.map(v => v.value);
+
   document.getElementById('colorPresetRow').innerHTML = PRESET_COLORS.map(c => `
-    <button type="button" class="preset-btn" data-add-color="${c.name}" data-hex="${c.hex}">
-      <span class="preset-swatch" style="background:${c.hex}"></span>${c.name}
+    <button type="button" class="preset-btn ${colorNames.includes(c.name) ? 'active' : ''}" data-toggle-color="${c.name}" data-hex="${c.hex}" style="${colorNames.includes(c.name) ? 'background:var(--ink); color:var(--bg);' : ''}">
+      <span class="preset-swatch" style="background:${c.hex}"></span>${c.name}${colorNames.includes(c.name) ? ' ✓' : ''}
     </button>
   `).join('') + `<button type="button" class="preset-btn" id="addCustomColorBtn">+ 自訂顏色</button>`;
 
   document.getElementById('sizePresetRow').innerHTML = PRESET_SIZES.map(s => `
-    <button type="button" class="preset-btn" data-add-size="${s}">${s}</button>
+    <button type="button" class="preset-btn ${sizeNames.includes(s) ? 'active' : ''}" data-toggle-size="${s}" style="${sizeNames.includes(s) ? 'background:var(--ink); color:var(--bg);' : ''}">${s}${sizeNames.includes(s) ? ' ✓' : ''}</button>
   `).join('') + `<button type="button" class="preset-btn" id="addCustomSizeBtn">+ 自訂尺寸</button>`;
 
-  document.querySelectorAll('[data-add-color]').forEach(btn => {
-    btn.addEventListener('click', () => addVariant(productId, 'color', btn.dataset.addColor, btn.dataset.hex));
+  document.querySelectorAll('[data-toggle-color]').forEach(btn => {
+    btn.addEventListener('click', () => togglePresetVariant('color', btn.dataset.toggleColor, btn.dataset.hex));
   });
-  document.querySelectorAll('[data-add-size]').forEach(btn => {
-    btn.addEventListener('click', () => addVariant(productId, 'size', btn.dataset.addSize, null));
+  document.querySelectorAll('[data-toggle-size]').forEach(btn => {
+    btn.addEventListener('click', () => togglePresetVariant('size', btn.dataset.toggleSize, null));
   });
   document.getElementById('addCustomColorBtn').addEventListener('click', () => {
     const name = prompt('輸入自訂顏色名稱（例如：酒紅色）');
     if (!name) return;
     const hex = prompt('輸入顏色色碼（例如：#7a2e2e），取消則使用預設灰色', '#999999') || '#999999';
-    addVariant(productId, 'color', name, hex);
+    togglePresetVariant('color', name, hex, true);
   });
   document.getElementById('addCustomSizeBtn').addEventListener('click', () => {
     const name = prompt('輸入自訂尺寸名稱（例如：均一/兒童M）');
     if (!name) return;
-    addVariant(productId, 'size', name, null);
+    togglePresetVariant('size', name, null, true);
   });
 }
 
-async function addVariant(productId, type, value, hex) {
-  const { error } = await sb.from('product_variants').insert({
-    product_id: productId, variant_type: type, value, color_hex: hex,
-  });
-  if (error) { toast('新增款式失敗：' + error.message); return; }
-  loadVariantsForEditor(productId);
+// 勾選概念：不存在就加入(打勾)，已存在就移除(取消勾選)。forceAdd用於自訂輸入,永遠新增一筆。
+function togglePresetVariant(type, value, hex, forceAdd) {
+  const key = type === 'color' ? 'colors' : 'sizes';
+  const arr = state.productEditVariants[key];
+  const idx = arr.findIndex(v => v.value === value);
+  if (idx >= 0 && !forceAdd) {
+    arr.splice(idx, 1);
+  } else if (idx < 0) {
+    arr.push({ value, color_hex: hex, is_available: true, unavailable_message: null, id: null });
+  } else {
+    toast('這個選項已經加入過了');
+    return;
+  }
+  renderVariantPresets();
+  renderVariantStage();
 }
 
-async function loadVariantsForEditor(productId) {
-  const { data, error } = await sb.from('product_variants').select('*').eq('product_id', productId).order('sort_order');
-  if (error) { console.error(error); return; }
-  const colors = (data || []).filter(v => v.variant_type === 'color');
-  const sizes = (data || []).filter(v => v.variant_type === 'size');
+function renderVariantStage() {
+  document.getElementById('colorVariantList').innerHTML = state.productEditVariants.colors.map((v, i) => renderVariantRow(v, 'colors', i)).join('');
+  document.getElementById('sizeVariantList').innerHTML = state.productEditVariants.sizes.map((v, i) => renderVariantRow(v, 'sizes', i)).join('');
 
-  document.getElementById('colorVariantList').innerHTML = colors.map(v => renderVariantRow(v)).join('');
-  document.getElementById('sizeVariantList').innerHTML = sizes.map(v => renderVariantRow(v)).join('');
-
-  document.querySelectorAll('[data-toggle-variant]').forEach(btn => {
-    btn.addEventListener('click', () => toggleVariantAvailability(btn.dataset.toggleVariant, productId));
+  document.querySelectorAll('[data-stage-toggle-avail]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [key, idx] = btn.dataset.stageToggleAvail.split(':');
+      state.productEditVariants[key][idx].is_available = !state.productEditVariants[key][idx].is_available;
+      renderVariantStage();
+    });
   });
-  document.querySelectorAll('[data-delete-variant]').forEach(btn => {
-    btn.addEventListener('click', () => deleteVariant(btn.dataset.deleteVariant, productId));
+  document.querySelectorAll('[data-stage-msg]').forEach(input => {
+    input.addEventListener('change', () => {
+      const [key, idx] = input.dataset.stageMsg.split(':');
+      state.productEditVariants[key][idx].unavailable_message = input.value;
+    });
   });
-  document.querySelectorAll('[data-msg-variant]').forEach(input => {
-    input.addEventListener('change', () => updateVariantMessage(input.dataset.msgVariant, input.value, productId));
+  document.querySelectorAll('[data-stage-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [key, idx] = btn.dataset.stageDelete.split(':');
+      state.productEditVariants[key].splice(idx, 1);
+      renderVariantPresets();
+      renderVariantStage();
+    });
   });
 }
 
-function renderVariantRow(v) {
+function renderVariantRow(v, key, i) {
   return `
     <div class="admin-variant-row">
-      ${v.variant_type === 'color' ? `<span class="admin-variant-swatch" style="background:${v.color_hex || '#ccc'}"></span>` : ''}
+      ${key === 'colors' ? `<span class="admin-variant-swatch" style="background:${v.color_hex || '#ccc'}"></span>` : ''}
       <span class="admin-variant-name">${v.value}</span>
-      <button type="button" class="btn btn-outline btn-sm" data-toggle-variant="${v.id}">${v.is_available ? '設為缺貨' : '設為有貨'}</button>
-      ${!v.is_available ? `<input type="text" data-msg-variant="${v.id}" placeholder="自訂缺貨提示(留空用預設)" value="${v.unavailable_message || ''}" style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-size:12px;">` : ''}
-      <button type="button" class="cart-item-remove" data-delete-variant="${v.id}">刪除</button>
+      <button type="button" class="btn btn-outline btn-sm" data-stage-toggle-avail="${key}:${i}">${v.is_available ? '設為缺貨' : '設為有貨'}</button>
+      ${!v.is_available ? `<input type="text" data-stage-msg="${key}:${i}" placeholder="自訂缺貨提示(留空用預設)" value="${v.unavailable_message || ''}" style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-size:12px;">` : ''}
+      <button type="button" class="cart-item-remove" data-stage-delete="${key}:${i}">移除</button>
     </div>
   `;
-}
-
-async function toggleVariantAvailability(variantId, productId) {
-  const { data } = await sb.from('product_variants').select('is_available').eq('id', variantId).single();
-  await sb.from('product_variants').update({ is_available: !data.is_available }).eq('id', variantId);
-  loadVariantsForEditor(productId);
-}
-async function updateVariantMessage(variantId, msg, productId) {
-  await sb.from('product_variants').update({ unavailable_message: msg }).eq('id', variantId);
-}
-async function deleteVariant(variantId, productId) {
-  if (!confirm('確定要刪除這個款式選項嗎？')) return;
-  await sb.from('product_variants').delete().eq('id', variantId);
-  loadVariantsForEditor(productId);
 }
 document.getElementById('productEditClose').addEventListener('click', () => {
   document.getElementById('productEditOverlay').classList.remove('open');
@@ -1819,6 +2166,14 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     image_url: document.getElementById('productEditForm').dataset.currentImage || '',
   };
 
+  // 確保一定至少有一個顏色、一個尺寸(即便只有一個預設選項)，避免客戶不用選規格就能下單
+  if (state.productEditVariants.colors.length === 0) {
+    state.productEditVariants.colors.push({ value: '單一顏色', color_hex: '#96876A', is_available: true, unavailable_message: null, id: null });
+  }
+  if (state.productEditVariants.sizes.length === 0) {
+    state.productEditVariants.sizes.push({ value: '均一尺寸', color_hex: null, is_available: true, unavailable_message: null, id: null });
+  }
+
   let error, newId = id;
   if (id) {
     ({ error } = await sb.from('products').update(payload).eq('id', id));
@@ -1832,22 +2187,35 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     msg.textContent = '儲存失敗：' + error.message; msg.className = 'form-msg err';
     return;
   }
+
+  // 一次性把暫存的款式異動寫入資料庫：先刪除被移除的，再新增/更新剩下的
+  const allStaged = [
+    ...state.productEditVariants.colors.map(v => ({ ...v, variant_type: 'color' })),
+    ...state.productEditVariants.sizes.map(v => ({ ...v, variant_type: 'size' })),
+  ];
+  const stagedIds = allStaged.map(v => v.id).filter(Boolean);
+  const toDelete = (state.productEditVariantsOriginalIds || []).filter(oid => !stagedIds.includes(oid));
+  if (toDelete.length > 0) {
+    await sb.from('product_variants').delete().in('id', toDelete);
+  }
+  for (const v of allStaged) {
+    if (v.id) {
+      await sb.from('product_variants').update({
+        value: v.value, color_hex: v.color_hex, is_available: v.is_available, unavailable_message: v.unavailable_message,
+      }).eq('id', v.id);
+    } else {
+      await sb.from('product_variants').insert({
+        product_id: newId, variant_type: v.variant_type, value: v.value,
+        color_hex: v.color_hex, is_available: v.is_available, unavailable_message: v.unavailable_message,
+      });
+    }
+  }
+
   msg.textContent = '儲存成功'; msg.className = 'form-msg ok';
-  toast(id ? '商品已更新' : '商品已新增，可以繼續在下方新增顏色/尺寸');
+  toast('商品已儲存');
   await loadAdminProducts();
   await loadProducts(); // 同步更新前台商品列表
-
-  if (!id && newId) {
-    // 新增商品後不關窗，切換成編輯模式，露出款式管理區塊
-    document.getElementById('productEditId').value = newId;
-    document.getElementById('productEditTitle').textContent = '編輯商品';
-    document.getElementById('variantSection').style.display = 'block';
-    document.getElementById('variantHint').style.display = 'none';
-    renderVariantPresets(newId);
-    loadVariantsForEditor(newId);
-  } else {
-    setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
-  }
+  setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
 });
 
 async function loadAdminDemand() {
@@ -1930,6 +2298,8 @@ document.getElementById('navToggle').addEventListener('click', () => {
   await loadProfile();
   await loadCart();
   await loadFavorites();
+  await updateChatBadge();
+  await updateNotifBadge();
 
   // 若網址帶有分享連結(#product=商品id)，自動開啟該商品的詳情彈窗
   const match = location.hash.match(/#product=(\d+)/);
