@@ -75,12 +75,12 @@
   }
   .header-inner {
     display: flex; align-items: center; justify-content: space-between;
-    height: 76px;
+    min-height: 76px; gap: 12px; flex-wrap: nowrap;
   }
   .brand {
     font-family: var(--font-display);
     font-size: 22px; font-weight: 700; letter-spacing: 0.08em;
-    color: var(--ink);
+    color: var(--ink); flex-shrink: 0; line-height: 1.2;
   }
   .brand small {
     display: block; font-family: var(--font-body); font-weight: 400;
@@ -532,6 +532,12 @@
     }
     nav.main-nav.mobile-open button { text-align: left; padding: 12px 0; width: 100%; }
   }
+  @media (max-width: 480px) {
+    .wrap { padding: 0 16px; }
+    .brand { font-size: 16px; letter-spacing: 0.04em; }
+    .brand small { display: none; }
+    .header-actions { gap: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -572,6 +578,10 @@
       <button class="icon-btn" id="cartBtn" aria-label="購物車">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 7H6"/></svg>
         <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" id="activeOrdersBtn" aria-label="進行中訂單" title="進行中訂單">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+        <span class="cart-badge" id="activeOrdersBadge" style="display:none">0</span>
       </button>
       <button class="icon-btn" id="adminBtn" style="display:none" aria-label="管理後台" title="管理後台">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
@@ -744,6 +754,28 @@
   <button class="btn btn-outline btn-sm" id="notifPageBackBtn" style="margin-bottom:20px;">← 返回</button>
   <h2 class="section-title">通知</h2>
   <div id="notifPageList" style="max-width:640px;"></div>
+</div>
+
+<!-- ============ 歷史訂單 全頁畫面 ============ -->
+<div id="historyOrdersPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="historyOrdersPageBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">歷史訂單</h2>
+  <p class="sub" style="margin-bottom:14px;">僅顯示狀態為「已完成」的訂單紀錄</p>
+  <div class="filter-group" id="historyOrdersPageFilters" style="margin-bottom:20px;">
+    <button class="chip active" data-history-page-range="all">全部</button>
+    <button class="chip" data-history-page-range="7d">近7天</button>
+    <button class="chip" data-history-page-range="1m">一個月</button>
+    <button class="chip" data-history-page-range="1y">今年</button>
+  </div>
+  <div id="historyOrdersPageList" style="max-width:640px;"></div>
+</div>
+
+<!-- ============ 進行中訂單 全頁畫面 ============ -->
+<div id="activeOrdersPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="activeOrdersPageBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">進行中訂單</h2>
+  <p class="sub" style="margin-bottom:20px;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
+  <div id="activeOrdersPageList" style="max-width:640px;"></div>
 </div>
 
 <!-- ============ Edit Profile Page（編輯個人資料，獨立分頁） ============ -->
@@ -950,7 +982,7 @@
       <p class="sub" id="loggedInEmail"></p>
       <p class="sub" id="loggedInUid" style="font-size:11px;"></p>
       <button class="btn btn-outline" id="editProfileBtn" style="width:100%; margin-bottom:10px;">編輯個人資料</button>
-      <button class="btn btn-outline" id="myOrdersBtn" style="width:100%; margin-bottom:10px;">查看我的訂單</button>
+      <button class="btn btn-outline" id="myOrdersBtn" style="width:100%; margin-bottom:10px;">查看歷史訂單</button>
       <button class="btn btn-outline" id="logoutBtn" style="width:100%">登出</button>
     </div>
   </div>
@@ -974,13 +1006,31 @@
   </div>
 </aside>
 
-<!-- ============ My Orders Modal (客戶查看自己的訂單) ============ -->
+<!-- ============ 歷史訂單 Modal（只顯示「已完成」的訂單） ============ -->
 <div class="modal-overlay big-modal" id="myOrdersOverlay">
-  <div class="modal">
+  <div class="modal" style="display:flex; flex-direction:column; height:70vh; max-height:600px;">
     <button class="modal-close" id="myOrdersClose" aria-label="關閉">×</button>
-    <h3>我的訂單</h3>
-    <p class="sub">訂單狀態：待確認 → 已鎖定(採購中) → 已完成</p>
-    <div id="myOrdersList"></div>
+    <h3 style="flex-shrink:0;">歷史訂單</h3>
+    <p class="sub" style="flex-shrink:0;">僅顯示狀態為「已完成」的訂單紀錄</p>
+    <div class="filter-group" id="historyOrdersFilters" style="flex-shrink:0; margin-bottom:14px;">
+      <button class="chip active" data-history-range="all">全部</button>
+      <button class="chip" data-history-range="7d">近7天</button>
+      <button class="chip" data-history-range="1m">一個月</button>
+      <button class="chip" data-history-range="1y">今年</button>
+    </div>
+    <div id="myOrdersList" style="flex:1; overflow-y:auto; min-height:0;"></div>
+    <button class="btn btn-outline" id="historyOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整歷史訂單頁面</button>
+  </div>
+</div>
+
+<!-- ============ 進行中訂單 Modal（待確認/已鎖定，尚未完成或取消） ============ -->
+<div class="modal-overlay big-modal" id="activeOrdersOverlay">
+  <div class="modal" style="display:flex; flex-direction:column; height:70vh; max-height:600px;">
+    <button class="modal-close" id="activeOrdersClose" aria-label="關閉">×</button>
+    <h3 style="flex-shrink:0;">進行中訂單</h3>
+    <p class="sub" style="flex-shrink:0;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
+    <div id="activeOrdersList" style="flex:1; overflow-y:auto; min-height:0;"></div>
+    <button class="btn btn-outline" id="activeOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整進行中訂單頁面</button>
   </div>
 </div>
 
@@ -1216,6 +1266,7 @@ const state = {
   favoriteIds: new Set(),
   detailSelection: { productId: null, color: null, size: null },
   orderTagFilter: 'all',
+  historyRange: 'all',
   wishTagFilter: 'all',
   adminChatActiveUser: null,
   pendingProductInquiry: null,
@@ -1398,7 +1449,8 @@ function closeAuth() { authOverlay.classList.remove('open'); }
 document.getElementById('acctBtn').addEventListener('click', openAuth);
 document.getElementById('footerAcctLink').addEventListener('click', (e) => { e.preventDefault(); openAuth(); });
 document.getElementById('authClose').addEventListener('click', closeAuth);
-authOverlay.addEventListener('click', (e) => { if (e.target === authOverlay) closeAuth(); });
+// 登入/註冊彈窗刻意不做「點外部關閉」，避免使用者填到一半不小心點到外面把表單關掉，
+// 只能用右上角的關閉按鈕離開。
 
 document.getElementById('toSignup').addEventListener('click', () => {
   document.getElementById('authLoginView').style.display = 'none';
@@ -1477,6 +1529,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   await loadFavorites();
   await updateChatBadge();
   await updateNotifBadge();
+  if (state.user) loadActiveOrders("activeOrdersList").catch(()=>{});
   refreshAuthView();
   toast('歡迎加入濱水一湖');
 });
@@ -1507,6 +1560,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   await loadFavorites();
   await updateChatBadge();
   await updateNotifBadge();
+  if (state.user) loadActiveOrders("activeOrdersList").catch(()=>{});
   refreshAuthView();
   toast('登入成功');
 });
@@ -1875,13 +1929,17 @@ function renderRoute() {
   const isNotifications = hash === '#notifications';
   const isAdminMessages = hash === '#admin-messages';
   const isEditProfile = hash === '#edit-profile';
+  const isHistoryOrders = hash === '#order-history';
+  const isActiveOrders = hash === '#active-orders';
 
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || isEditProfile) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || isEditProfile || isHistoryOrders || isActiveOrders) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
   document.getElementById('adminMessagesPageView').style.display = isAdminMessages ? 'block' : 'none';
   document.getElementById('editProfilePageView').style.display = isEditProfile ? 'block' : 'none';
+  document.getElementById('historyOrdersPageView').style.display = isHistoryOrders ? 'block' : 'none';
+  document.getElementById('activeOrdersPageView').style.display = isActiveOrders ? 'block' : 'none';
 
   window.scrollTo(0, 0);
 
@@ -1890,6 +1948,8 @@ function renderRoute() {
   if (isNotifications) renderNotifPage();
   if (isAdminMessages) renderAdminMessagesPage();
   if (isEditProfile) { if (!state.user) { location.hash = ''; } else { populateEditProfileFields(); } }
+  if (isHistoryOrders) loadHistoryOrders(state.historyRange, 'historyOrdersPageList');
+  if (isActiveOrders) loadActiveOrders('activeOrdersPageList');
 }
 window.addEventListener('hashchange', () => {
   // 商品詢問預覽只存在於正在開啟的聊天室；離開即不保留也不送出。
@@ -1898,6 +1958,8 @@ window.addEventListener('hashchange', () => {
 });
 
 document.getElementById('productPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('historyOrdersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('activeOrdersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('messagesPageBackBtn').addEventListener('click', () => { state.pendingProductInquiry = null; location.hash = state.chatReturnHash || ''; });
 document.getElementById('notifPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('adminMessagesPageBackBtn').addEventListener('click', () => { location.hash = ''; });
@@ -2222,16 +2284,8 @@ function updateAdminUI() {
 }
 
 /* ============================================================
-   我的訂單（客戶端）
+   我的訂單（客戶端）— 實際綁定邏輯在下方「歷史訂單/進行中訂單」區塊
    ============================================================ */
-const myOrdersOverlay = document.getElementById('myOrdersOverlay');
-document.getElementById('myOrdersBtn').addEventListener('click', () => {
-  closeAuth();
-  myOrdersOverlay.classList.add('open');
-  loadMyOrders();
-});
-document.getElementById('myOrdersClose').addEventListener('click', () => myOrdersOverlay.classList.remove('open'));
-myOrdersOverlay.addEventListener('click', (e) => { if (e.target === myOrdersOverlay) myOrdersOverlay.classList.remove('open'); });
 
 /* ============================================================
    編輯個人資料
@@ -2450,18 +2504,8 @@ document.getElementById('epAvatarRemoveBtn').addEventListener('click', async () 
 
 const ORDER_STATUS_LABEL = { pending: '待確認', locked: '已鎖定(採購中)', fulfilled: '已完成', cancelled: '已取消' };
 
-async function loadMyOrders() {
-  if (!state.user) return;
-  const { data, error } = await sb
-    .from('orders')
-    .select('id, status, total_ntd, deposit_ntd, created_at, order_items(*)')
-    .eq('user_id', state.user.id)
-    .order('created_at', { ascending: false });
-  const list = document.getElementById('myOrdersList');
-  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; return; }
-  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有訂單紀錄。</p>'; return; }
-
-  list.innerHTML = data.map(o => `
+function renderOrderRowsHtml(data) {
+  return data.map(o => `
     <div class="order-row">
       <div class="order-row-top">
         <span class="order-id">訂單 #${o.id}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
@@ -2475,6 +2519,87 @@ async function loadMyOrders() {
     </div>
   `).join('');
 }
+
+function rangeToDate(range) {
+  const now = new Date();
+  if (range === '7d') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (range === '1m') return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  if (range === '1y') return new Date(now.getFullYear(), 0, 1);
+  return null; // 'all'
+}
+
+/* ---------- 歷史訂單（僅「已完成」，可依日期範圍篩選） ---------- */
+async function loadHistoryOrders(range, targetListId) {
+  if (!state.user) return;
+  let query = sb.from('orders').select('id, status, total_ntd, deposit_ntd, created_at, order_items(*)')
+    .eq('user_id', state.user.id).eq('status', 'fulfilled').order('created_at', { ascending: false });
+  const fromDate = rangeToDate(range);
+  if (fromDate) query = query.gte('created_at', fromDate.toISOString());
+
+  const { data, error } = await query;
+  const list = document.getElementById(targetListId);
+  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; return; }
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">這個區間沒有已完成的訂單紀錄。</p>'; return; }
+  list.innerHTML = renderOrderRowsHtml(data);
+}
+
+/* ---------- 進行中訂單（待確認、已鎖定，尚未完成或取消） ---------- */
+async function loadActiveOrders(targetListId) {
+  if (!state.user) return;
+  const { data, error } = await sb.from('orders').select('id, status, total_ntd, deposit_ntd, created_at, order_items(*)')
+    .eq('user_id', state.user.id).in('status', ['pending', 'locked']).order('created_at', { ascending: false });
+  const list = document.getElementById(targetListId);
+  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; return; }
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有進行中的訂單。</p>'; }
+  else { list.innerHTML = renderOrderRowsHtml(data); }
+
+  const badge = document.getElementById('activeOrdersBadge');
+  const count = (data || []).length;
+  badge.style.display = count > 0 ? 'flex' : 'none';
+  badge.textContent = count;
+}
+
+/* ---------- 歷史訂單 Modal ---------- */
+document.getElementById('myOrdersBtn').addEventListener('click', () => {
+  closeAuth();
+  document.getElementById('myOrdersOverlay').classList.add('open');
+  loadHistoryOrders(state.historyRange, 'myOrdersList');
+});
+document.getElementById('myOrdersClose').addEventListener('click', () => document.getElementById('myOrdersOverlay').classList.remove('open'));
+document.getElementById('myOrdersOverlay').addEventListener('click', (e) => { if (e.target === document.getElementById('myOrdersOverlay')) document.getElementById('myOrdersOverlay').classList.remove('open'); });
+document.getElementById('historyOrdersFullPageBtn').addEventListener('click', () => {
+  document.getElementById('myOrdersOverlay').classList.remove('open');
+  location.hash = '#order-history';
+});
+document.querySelectorAll('[data-history-range]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-history-range]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.historyRange = btn.dataset.historyRange;
+    loadHistoryOrders(state.historyRange, 'myOrdersList');
+  });
+});
+document.querySelectorAll('[data-history-page-range]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-history-page-range]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.historyRange = btn.dataset.historyPageRange;
+    loadHistoryOrders(state.historyRange, 'historyOrdersPageList');
+  });
+});
+
+/* ---------- 進行中訂單 Modal ---------- */
+document.getElementById('activeOrdersBtn').addEventListener('click', () => {
+  if (!state.user) { toast('請先登入才能查看訂單'); openAuth(); return; }
+  document.getElementById('activeOrdersOverlay').classList.add('open');
+  loadActiveOrders('activeOrdersList');
+});
+document.getElementById('activeOrdersClose').addEventListener('click', () => document.getElementById('activeOrdersOverlay').classList.remove('open'));
+document.getElementById('activeOrdersOverlay').addEventListener('click', (e) => { if (e.target === document.getElementById('activeOrdersOverlay')) document.getElementById('activeOrdersOverlay').classList.remove('open'); });
+document.getElementById('activeOrdersFullPageBtn').addEventListener('click', () => {
+  document.getElementById('activeOrdersOverlay').classList.remove('open');
+  location.hash = '#active-orders';
+});
 
 /* ============================================================
    管理後台（is_admin = true 才會看到入口）
@@ -3117,6 +3242,7 @@ document.getElementById('navToggle').addEventListener('click', () => {
   await loadFavorites();
   await updateChatBadge();
   await updateNotifBadge();
+  if (state.user) loadActiveOrders("activeOrdersList").catch(()=>{});
 
   renderRoute();
   // 有新訊息時，更新目前開啟的聊天室與未讀數。
