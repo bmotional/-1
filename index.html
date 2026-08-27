@@ -283,6 +283,24 @@
   }
   .admin-tab.active { color: var(--ink); border-color: var(--brass); font-weight: 600; }
   .admin-panel-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+  /* ============ 編輯個人資料 ============ */
+  .edit-profile-tabs { display: flex; gap: 6px; margin: 14px 0 18px; flex-wrap: wrap; }
+  .edit-profile-tab {
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--bg); font-size: 12px; color: var(--ink-soft);
+  }
+  .edit-profile-tab.active { background: var(--brass); color: #fff; border-color: var(--brass); font-weight: 600; }
+  .ep-pane {}
+  .ep-field-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
+  .ep-pencil {
+    background: none; border: none; font-size: 15px; color: var(--ink-soft);
+    cursor: pointer; padding: 8px; flex-shrink: 0; line-height: 1;
+  }
+  .ep-pencil:hover { color: var(--ink); }
+  .ep-section-edit { background: none; border: none; font-size: 13px; font-weight: 600; color: var(--brass-dark); cursor: pointer; }
+  .ep-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .ep-pane input:disabled { background: var(--bg-raised); color: var(--ink-soft); cursor: default; }
   .wish-row {
     border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 10px; background: var(--bg);
   }
@@ -774,16 +792,16 @@
       <p class="sub">此階段測試不需要Email驗證，註冊後可直接使用</p>
       <form id="signupForm">
         <div class="field">
-          <label for="signupName">用戶名稱</label>
-          <input type="text" id="signupName" required>
+          <label for="signupName">用戶名稱（2～20字元）</label>
+          <input type="text" id="signupName" required minlength="2" maxlength="20">
         </div>
         <div class="field">
           <label for="signupInstagram">Instagram帳號（選填）</label>
           <input type="text" id="signupInstagram" placeholder="@yourname">
         </div>
         <div class="field">
-          <label for="signupAccount">帳號（登入用，僅限英數字與底線）</label>
-          <input type="text" id="signupAccount" required pattern="[a-zA-Z0-9_]+" title="僅限英文字母、數字與底線">
+          <label for="signupAccount">帳號（登入用，至少6碼，可用英數字與符號）</label>
+          <input type="text" id="signupAccount" required pattern="[A-Za-z0-9_.\-!@#$%^&amp;*]{6,}" title="至少6個字元，可用英文字母、數字與符號">
         </div>
         <div class="field">
           <label for="signupPassword">密碼（至少6碼）</label>
@@ -803,6 +821,7 @@
       <h3>會員中心</h3>
       <p class="sub" id="loggedInEmail"></p>
       <p class="sub" id="loggedInUid" style="font-size:11px;"></p>
+      <button class="btn btn-outline" id="editProfileBtn" style="width:100%; margin-bottom:10px;">編輯個人資料</button>
       <button class="btn btn-outline" id="myOrdersBtn" style="width:100%; margin-bottom:10px;">查看我的訂單</button>
       <button class="btn btn-outline" id="logoutBtn" style="width:100%">登出</button>
     </div>
@@ -834,6 +853,108 @@
     <h3>我的訂單</h3>
     <p class="sub">訂單狀態：待確認 → 已鎖定(採購中) → 已完成</p>
     <div id="myOrdersList"></div>
+  </div>
+</div>
+
+<!-- ============ Edit Profile Modal（編輯個人資料） ============ -->
+<div class="modal-overlay" id="editProfileOverlay">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" id="editProfileClose" aria-label="關閉">×</button>
+    <h3>編輯個人資料</h3>
+    <div class="edit-profile-tabs">
+      <button type="button" class="edit-profile-tab active" data-ep-tab="avatar">自訂頭貼</button>
+      <button type="button" class="edit-profile-tab" data-ep-tab="account">帳號相關</button>
+      <button type="button" class="edit-profile-tab" data-ep-tab="userinfo">用戶資料</button>
+      <button type="button" class="edit-profile-tab" data-ep-tab="shipping">收貨預設設定</button>
+    </div>
+
+    <!-- 自訂頭貼 -->
+    <div id="epAvatarPane" class="ep-pane">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:14px;">
+        <img id="epAvatarPreview" src="" alt="大頭貼" style="width:72px; height:72px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line);">
+        <div>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-block;">
+            上傳新頭貼
+            <input type="file" id="epAvatarInput" accept="image/*" style="display:none;">
+          </label>
+          <p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">建議正方形圖片，檔案需小於 2MB</p>
+        </div>
+      </div>
+      <div class="form-msg" id="epAvatarMsg"></div>
+    </div>
+
+    <!-- 帳號相關 -->
+    <div id="epAccountPane" class="ep-pane" style="display:none">
+      <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+        <button type="button" class="ep-section-edit" data-ep-edit="account">編輯</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epAccount">登入帳號（必填，至少6碼，可用英數字與符號）</label>
+          <input type="text" id="epAccount" disabled>
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epPassword">新密碼（選填，若要更改請至少輸入6碼；不改請留空）</label>
+          <input type="password" id="epPassword" disabled placeholder="不修改請留空">
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
+      </div>
+      <div class="form-msg" id="epAccountMsg"></div>
+      <div class="ep-actions" id="epAccountActions" style="display:none;">
+        <button type="button" class="btn btn-outline btn-sm" id="epAccountCancel">取消</button>
+        <button type="button" class="btn btn-primary btn-sm" id="epAccountSave">儲存</button>
+      </div>
+    </div>
+
+    <!-- 用戶資料 -->
+    <div id="epUserinfoPane" class="ep-pane" style="display:none">
+      <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+        <button type="button" class="ep-section-edit" data-ep-edit="userinfo">編輯</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epDisplayName">顯示名稱（必填，2～20字元）</label>
+          <input type="text" id="epDisplayName" disabled maxlength="20">
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epInstagram">Instagram（選填）</label>
+          <input type="text" id="epInstagram" disabled placeholder="@yourname">
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epContactEmail">聯絡信箱（選填，非登入用信箱）</label>
+          <input type="email" id="epContactEmail" disabled>
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epPhone">手機號碼（選填）</label>
+          <input type="tel" id="epPhone" disabled>
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="form-msg" id="epUserinfoMsg"></div>
+      <div class="ep-actions" id="epUserinfoActions" style="display:none;">
+        <button type="button" class="btn btn-outline btn-sm" id="epUserinfoCancel">取消</button>
+        <button type="button" class="btn btn-primary btn-sm" id="epUserinfoSave">儲存</button>
+      </div>
+    </div>
+
+    <!-- 收貨預設設定（尚未開放編輯） -->
+    <div id="epShippingPane" class="ep-pane" style="display:none">
+      <p style="font-size:13px; color:var(--ink-soft); line-height:1.7;">
+        收貨預設設定（預設收件人、地址、聯絡電話等）將於後續版本開放，敬請期待。
+      </p>
+    </div>
   </div>
 </div>
 
@@ -1288,8 +1409,12 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   const emailInput = document.getElementById('signupEmail').value.trim();
   const msg = document.getElementById('signupMsg');
 
-  if (!/^[a-zA-Z0-9_]+$/.test(account)) {
-    msg.textContent = '帳號僅能使用英文字母、數字與底線'; msg.className = 'form-msg err';
+  if (!validateDisplayName(displayName)) {
+    msg.textContent = '用戶名稱需為2～20個字元，且不可全部空白'; msg.className = 'form-msg err';
+    return;
+  }
+  if (!validateAccountFormat(account)) {
+    msg.textContent = '帳號至少需要6個字元，可用英文字母、數字與符號'; msg.className = 'form-msg err';
     return;
   }
   msg.textContent = '處理中...'; msg.className = 'form-msg';
@@ -2035,7 +2160,7 @@ async function loadProfile() {
   if (!state.user) { state.profile = null; updateAdminUI(); return; }
   const { data, error } = await sb
     .from('profiles')
-    .select('is_admin, display_name, uid, account')
+    .select('is_admin, display_name, uid, account, instagram, avatar_url, contact_email, phone')
     .eq('id', state.user.id)
     .single();
   if (error) { console.error('讀取會員資料失敗', error); state.profile = null; }
@@ -2061,6 +2186,181 @@ document.getElementById('myOrdersBtn').addEventListener('click', () => {
 });
 document.getElementById('myOrdersClose').addEventListener('click', () => myOrdersOverlay.classList.remove('open'));
 myOrdersOverlay.addEventListener('click', (e) => { if (e.target === myOrdersOverlay) myOrdersOverlay.classList.remove('open'); });
+
+/* ============================================================
+   編輯個人資料
+   ------------------------------------------------------------
+   四個子項目：自訂頭貼／帳號相關／用戶資料／收貨預設設定(尚未開放)。
+   帳號相關、用戶資料各自是獨立的編輯區塊：點旁邊的鉛筆✎或右上角
+   「編輯」都會讓該區塊的欄位一起進入可編輯狀態，一定要按「儲存」
+   才會真的送出更新；按「取消」若偵測到有改過內容，會先詢問是否儲存。
+   ============================================================ */
+function validateAccountFormat(v) { return /^[A-Za-z0-9_.\-!@#$%^&*]{6,}$/.test(v); }
+function validateDisplayName(v) { const t = (v || '').trim(); return t.length >= 2 && t.length <= 20; }
+
+const editProfileOverlay = document.getElementById('editProfileOverlay');
+
+function openEditProfile() {
+  populateEditProfileFields();
+  switchEpTab('avatar');
+  editProfileOverlay.classList.add('open');
+}
+function populateEditProfileFields() {
+  document.getElementById('epAvatarPreview').src = state.profile?.avatar_url || '';
+  document.getElementById('epAccount').value = state.profile?.account || '';
+  document.getElementById('epPassword').value = '';
+  document.getElementById('epDisplayName').value = state.profile?.display_name || '';
+  document.getElementById('epInstagram').value = state.profile?.instagram || '';
+  document.getElementById('epContactEmail').value = state.profile?.contact_email || '';
+  document.getElementById('epPhone').value = state.profile?.phone || '';
+  document.getElementById('epAccountMsg').textContent = '';
+  document.getElementById('epUserinfoMsg').textContent = '';
+  document.getElementById('epAvatarMsg').textContent = '';
+}
+function epCap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function enterEpEditMode(section) {
+  document.querySelectorAll(`#ep${epCap(section)}Pane input`).forEach(el => el.disabled = false);
+  const actions = document.getElementById(`ep${epCap(section)}Actions`);
+  if (actions) actions.style.display = 'flex';
+}
+function exitEpEditMode(section) {
+  document.querySelectorAll(`#ep${epCap(section)}Pane input`).forEach(el => el.disabled = true);
+  const actions = document.getElementById(`ep${epCap(section)}Actions`);
+  if (actions) actions.style.display = 'none';
+}
+
+document.getElementById('editProfileBtn').addEventListener('click', () => { closeAuth(); openEditProfile(); });
+document.getElementById('editProfileClose').addEventListener('click', () => editProfileOverlay.classList.remove('open'));
+editProfileOverlay.addEventListener('click', (e) => { if (e.target === editProfileOverlay) editProfileOverlay.classList.remove('open'); });
+
+function switchEpTab(tab) {
+  document.querySelectorAll('.edit-profile-tab').forEach(b => b.classList.toggle('active', b.dataset.epTab === tab));
+  ['avatar', 'account', 'userinfo', 'shipping'].forEach(t => {
+    document.getElementById(`ep${epCap(t)}Pane`).style.display = (t === tab) ? 'block' : 'none';
+  });
+}
+document.querySelectorAll('.edit-profile-tab').forEach(btn => {
+  btn.addEventListener('click', () => switchEpTab(btn.dataset.epTab));
+});
+
+// 鉛筆icon跟區塊右上角的「編輯」共用同一組進入編輯模式的邏輯
+document.querySelectorAll('[data-ep-edit]').forEach(btn => {
+  btn.addEventListener('click', () => enterEpEditMode(btn.dataset.epEdit));
+});
+
+/* ---------- 帳號相關：儲存／取消 ---------- */
+async function saveEpAccount() {
+  const msg = document.getElementById('epAccountMsg');
+  const newAccount = document.getElementById('epAccount').value.trim();
+  const newPassword = document.getElementById('epPassword').value;
+
+  if (!validateAccountFormat(newAccount)) {
+    msg.textContent = '帳號至少需要6個字元，可用英文字母、數字與符號'; msg.className = 'form-msg err';
+    return;
+  }
+  if (newPassword && newPassword.length < 6) {
+    msg.textContent = '新密碼至少需要6個字元'; msg.className = 'form-msg err';
+    return;
+  }
+  msg.textContent = '儲存中...'; msg.className = 'form-msg';
+
+  if (newAccount !== (state.profile?.account || '')) {
+    const { data: available, error: checkErr } = await sb.rpc('is_account_available', { check_account: newAccount });
+    if (checkErr) { msg.textContent = '檢查帳號時發生問題：' + checkErr.message; msg.className = 'form-msg err'; return; }
+    if (!available) { msg.textContent = '這個帳號已經被使用了，請換一個'; msg.className = 'form-msg err'; return; }
+    const { error: accErr } = await sb.from('profiles').update({ account: newAccount }).eq('id', state.user.id);
+    if (accErr) { msg.textContent = '帳號更新失敗：' + accErr.message; msg.className = 'form-msg err'; return; }
+  }
+
+  if (newPassword) {
+    const { error: pwErr } = await sb.auth.updateUser({ password: newPassword });
+    if (pwErr) { msg.textContent = '密碼更新失敗：' + pwErr.message; msg.className = 'form-msg err'; return; }
+  }
+
+  await loadProfile();
+  document.getElementById('epPassword').value = '';
+  document.getElementById('epAccount').value = state.profile?.account || '';
+  msg.textContent = '已儲存！'; msg.className = 'form-msg ok';
+  exitEpEditMode('account');
+  refreshAuthView();
+}
+document.getElementById('epAccountSave').addEventListener('click', saveEpAccount);
+document.getElementById('epAccountCancel').addEventListener('click', async () => {
+  const changed = document.getElementById('epAccount').value.trim() !== (state.profile?.account || '')
+    || document.getElementById('epPassword').value !== '';
+  if (changed && confirm('是否儲存變更？')) { await saveEpAccount(); return; }
+  document.getElementById('epAccount').value = state.profile?.account || '';
+  document.getElementById('epPassword').value = '';
+  document.getElementById('epAccountMsg').textContent = '';
+  exitEpEditMode('account');
+});
+
+/* ---------- 用戶資料：儲存／取消 ---------- */
+async function saveEpUserinfo() {
+  const msg = document.getElementById('epUserinfoMsg');
+  const displayName = document.getElementById('epDisplayName').value.trim();
+  const instagram = document.getElementById('epInstagram').value.trim();
+  const contactEmail = document.getElementById('epContactEmail').value.trim();
+  const phone = document.getElementById('epPhone').value.trim();
+
+  if (!validateDisplayName(displayName)) {
+    msg.textContent = '顯示名稱需為2～20個字元，且不可全部空白'; msg.className = 'form-msg err';
+    return;
+  }
+  msg.textContent = '儲存中...'; msg.className = 'form-msg';
+
+  const { error } = await sb.from('profiles').update({
+    display_name: displayName,
+    instagram: instagram || null,
+    contact_email: contactEmail || null,
+    phone: phone || null,
+  }).eq('id', state.user.id);
+
+  if (error) { msg.textContent = '儲存失敗：' + error.message; msg.className = 'form-msg err'; return; }
+
+  await loadProfile();
+  msg.textContent = '已儲存！'; msg.className = 'form-msg ok';
+  exitEpEditMode('userinfo');
+}
+document.getElementById('epUserinfoSave').addEventListener('click', saveEpUserinfo);
+document.getElementById('epUserinfoCancel').addEventListener('click', async () => {
+  const changed =
+    document.getElementById('epDisplayName').value.trim() !== (state.profile?.display_name || '') ||
+    document.getElementById('epInstagram').value.trim() !== (state.profile?.instagram || '') ||
+    document.getElementById('epContactEmail').value.trim() !== (state.profile?.contact_email || '') ||
+    document.getElementById('epPhone').value.trim() !== (state.profile?.phone || '');
+  if (changed && confirm('是否儲存變更？')) { await saveEpUserinfo(); return; }
+  populateEditProfileFields();
+  exitEpEditMode('userinfo');
+});
+
+/* ---------- 自訂頭貼：選檔即上傳 ---------- */
+document.getElementById('epAvatarInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const msg = document.getElementById('epAvatarMsg');
+  if (file.size > 2 * 1024 * 1024) {
+    msg.textContent = '檔案請小於 2MB'; msg.className = 'form-msg err';
+    e.target.value = '';
+    return;
+  }
+  msg.textContent = '上傳中...'; msg.className = 'form-msg';
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${state.user.id}/avatar.${ext}`;
+  const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true });
+  if (upErr) { msg.textContent = '上傳失敗：' + upErr.message; msg.className = 'form-msg err'; return; }
+
+  const { data: pub } = sb.storage.from('avatars').getPublicUrl(path);
+  const avatarUrl = pub.publicUrl + '?t=' + Date.now();
+  const { error: updErr } = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', state.user.id);
+  if (updErr) { msg.textContent = '儲存失敗：' + updErr.message; msg.className = 'form-msg err'; return; }
+
+  await loadProfile();
+  document.getElementById('epAvatarPreview').src = avatarUrl;
+  msg.textContent = '頭貼已更新！'; msg.className = 'form-msg ok';
+  e.target.value = '';
+});
 
 const ORDER_STATUS_LABEL = { pending: '待確認', locked: '已鎖定(採購中)', fulfilled: '已完成', cancelled: '已取消' };
 
