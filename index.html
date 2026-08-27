@@ -2205,8 +2205,17 @@ function openEditProfile() {
   switchEpTab('avatar');
   editProfileOverlay.classList.add('open');
 }
+// 沒有上傳頭貼時的預設圖：純色系人形剪影，不帶五官，跟站內配色一致
+const DEFAULT_AVATAR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+  '<circle cx="50" cy="50" r="50" fill="#E4DCC9"/>' +
+  '<circle cx="50" cy="38" r="18" fill="#8A6238"/>' +
+  '<path d="M50 60c-21 0-36 15-36 34v6h72v-6c0-19-15-34-36-34z" fill="#8A6238"/>' +
+  '</svg>'
+);
+
 function populateEditProfileFields() {
-  document.getElementById('epAvatarPreview').src = state.profile?.avatar_url || '';
+  document.getElementById('epAvatarPreview').src = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
   document.getElementById('epAccount').value = state.profile?.account || '';
   document.getElementById('epPassword').value = '';
   document.getElementById('epDisplayName').value = state.profile?.display_name || '';
