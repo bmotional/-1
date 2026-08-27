@@ -1304,19 +1304,17 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   // 若沒填信箱，系統自動產生一組使用者看不到的內部信箱，僅用來滿足登入系統的需求
   const authEmail = emailInput || `${account}_${Date.now()}@internal.local`;
 
-  const { data, error } = await sb.auth.signUp({ email: authEmail, password });
+  // 顯示名稱／Instagram／帳號一併放進 user_metadata，
+  // 資料庫觸發器會在建立帳號的同一個交易內自動建立對應的 profiles 資料列（含會員編號），
+  // 不再依賴前端另外呼叫 upsert，徹底避開 session 套用時間差造成的權限錯誤。
+  const { data, error } = await sb.auth.signUp({
+    email: authEmail,
+    password,
+    options: { data: { display_name: displayName, instagram: instagram || null, account } },
+  });
   if (error) {
     msg.textContent = error.message; msg.className = 'form-msg err';
     return;
-  }
-  if (data.user) {
-    const { error: profErr } = await sb.from('profiles').upsert({
-      id: data.user.id, display_name: displayName, instagram: instagram || null, account,
-    });
-    if (profErr) {
-      msg.textContent = '註冊帳號時發生問題：' + profErr.message; msg.className = 'form-msg err';
-      return;
-    }
   }
   msg.textContent = '註冊成功！'; msg.className = 'form-msg ok';
   state.user = data.user;
