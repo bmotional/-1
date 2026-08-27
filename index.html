@@ -284,14 +284,12 @@
   .admin-tab.active { color: var(--ink); border-color: var(--brass); font-weight: 600; }
   .admin-panel-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 
-  /* ============ 編輯個人資料 ============ */
-  .edit-profile-tabs { display: flex; gap: 6px; margin: 14px 0 18px; flex-wrap: wrap; }
-  .edit-profile-tab {
-    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line);
-    background: var(--bg); font-size: 12px; color: var(--ink-soft);
-  }
-  .edit-profile-tab.active { background: var(--brass); color: #fff; border-color: var(--brass); font-weight: 600; }
-  .ep-pane {}
+  /* ============ 編輯個人資料（獨立分頁） ============ */
+  .ep-section { padding: 22px 0; border-bottom: 1px solid var(--line); }
+  .ep-section:last-child { border-bottom: none; }
+  .ep-section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .ep-section-title { font-family: var(--font-display); font-size: 16px; margin: 0 0 12px; }
+  .ep-section-header .ep-section-title { margin-bottom: 0; }
   .ep-field-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
   .ep-pencil {
     background: none; border: none; font-size: 15px; color: var(--ink-soft);
@@ -300,7 +298,7 @@
   .ep-pencil:hover { color: var(--ink); }
   .ep-section-edit { background: none; border: none; font-size: 13px; font-weight: 600; color: var(--brass-dark); cursor: pointer; }
   .ep-actions { display: flex; gap: 10px; margin-top: 8px; }
-  .ep-pane input:disabled { background: var(--bg-raised); color: var(--ink-soft); cursor: default; }
+  .ep-section input:disabled { background: var(--bg-raised); color: var(--ink-soft); cursor: default; }
   .wish-row {
     border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 10px; background: var(--bg);
   }
@@ -551,7 +549,8 @@
 
     <div class="header-actions">
       <button class="icon-btn" id="acctBtn" aria-label="會員帳號">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <svg id="acctIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <img id="acctAvatarImg" alt="" style="display:none; width:36px; height:36px; border-radius:999px; object-fit:cover;">
       </button>
       <button class="icon-btn" id="chatBtn" aria-label="聯絡我們" title="聯絡我們">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -742,6 +741,106 @@
   <div id="notifPageList" style="max-width:640px;"></div>
 </div>
 
+<!-- ============ Edit Profile Page（編輯個人資料，獨立分頁） ============ -->
+<div id="editProfilePageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="editProfilePageBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">編輯個人資料</h2>
+
+  <div style="max-width:520px;">
+    <!-- 自訂頭貼 -->
+    <div class="ep-section">
+      <h3 class="ep-section-title">自訂頭貼</h3>
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:6px;">
+        <img id="epAvatarPreview" src="" alt="大頭貼" style="width:72px; height:72px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line);">
+        <div>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-block;">
+            上傳新頭貼
+            <input type="file" id="epAvatarInput" accept="image/*" style="display:none;">
+          </label>
+          <p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">建議正方形圖片，檔案需小於 2MB</p>
+        </div>
+      </div>
+      <div class="form-msg" id="epAvatarMsg"></div>
+    </div>
+
+    <!-- 帳號相關 -->
+    <div class="ep-section" id="epAccountPane">
+      <div class="ep-section-header">
+        <h3 class="ep-section-title">帳號相關</h3>
+        <button type="button" class="ep-section-edit" data-ep-edit="account">編輯</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epAccount">登入帳號（必填，至少6碼，可用英數字與符號）</label>
+          <input type="text" id="epAccount" disabled>
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epPassword">新密碼（選填，若要更改請至少輸入6碼；不改請留空）</label>
+          <input type="password" id="epPassword" disabled placeholder="不修改請留空">
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
+      </div>
+      <div class="form-msg" id="epAccountMsg"></div>
+      <div class="ep-actions" id="epAccountActions" style="display:none;">
+        <button type="button" class="btn btn-outline btn-sm" id="epAccountCancel">取消</button>
+        <button type="button" class="btn btn-primary btn-sm" id="epAccountSave">儲存</button>
+      </div>
+    </div>
+
+    <!-- 用戶資料 -->
+    <div class="ep-section" id="epUserinfoPane">
+      <div class="ep-section-header">
+        <h3 class="ep-section-title">用戶資料</h3>
+        <button type="button" class="ep-section-edit" data-ep-edit="userinfo">編輯</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epDisplayName">顯示名稱（必填，2～20字元）</label>
+          <input type="text" id="epDisplayName" disabled maxlength="20">
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epInstagram">Instagram（選填）</label>
+          <input type="text" id="epInstagram" disabled placeholder="@yourname">
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epContactEmail">聯絡信箱（選填，非登入用信箱）</label>
+          <input type="email" id="epContactEmail" disabled>
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="ep-field-row">
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="epPhone">手機號碼（選填）</label>
+          <input type="tel" id="epPhone" disabled>
+        </div>
+        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+      </div>
+      <div class="form-msg" id="epUserinfoMsg"></div>
+      <div class="ep-actions" id="epUserinfoActions" style="display:none;">
+        <button type="button" class="btn btn-outline btn-sm" id="epUserinfoCancel">取消</button>
+        <button type="button" class="btn btn-primary btn-sm" id="epUserinfoSave">儲存</button>
+      </div>
+    </div>
+
+    <!-- 收貨預設設定（尚未開放編輯） -->
+    <div class="ep-section">
+      <h3 class="ep-section-title">收貨預設設定</h3>
+      <p style="font-size:13px; color:var(--ink-soft); line-height:1.7;">
+        收貨預設設定（預設收件人、地址、聯絡電話等）將於後續版本開放，敬請期待。
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- ============ Footer ============ -->
 <footer>
   <div class="wrap footer-inner">
@@ -857,106 +956,7 @@
 </div>
 
 <!-- ============ Edit Profile Modal（編輯個人資料） ============ -->
-<div class="modal-overlay" id="editProfileOverlay">
-  <div class="modal" style="max-width:480px;">
-    <button class="modal-close" id="editProfileClose" aria-label="關閉">×</button>
-    <h3>編輯個人資料</h3>
-    <div class="edit-profile-tabs">
-      <button type="button" class="edit-profile-tab active" data-ep-tab="avatar">自訂頭貼</button>
-      <button type="button" class="edit-profile-tab" data-ep-tab="account">帳號相關</button>
-      <button type="button" class="edit-profile-tab" data-ep-tab="userinfo">用戶資料</button>
-      <button type="button" class="edit-profile-tab" data-ep-tab="shipping">收貨預設設定</button>
-    </div>
-
-    <!-- 自訂頭貼 -->
-    <div id="epAvatarPane" class="ep-pane">
-      <div style="display:flex; align-items:center; gap:16px; margin-bottom:14px;">
-        <img id="epAvatarPreview" src="" alt="大頭貼" style="width:72px; height:72px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line);">
-        <div>
-          <label class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-block;">
-            上傳新頭貼
-            <input type="file" id="epAvatarInput" accept="image/*" style="display:none;">
-          </label>
-          <p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">建議正方形圖片，檔案需小於 2MB</p>
-        </div>
-      </div>
-      <div class="form-msg" id="epAvatarMsg"></div>
-    </div>
-
-    <!-- 帳號相關 -->
-    <div id="epAccountPane" class="ep-pane" style="display:none">
-      <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
-        <button type="button" class="ep-section-edit" data-ep-edit="account">編輯</button>
-      </div>
-      <div class="ep-field-row">
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epAccount">登入帳號（必填，至少6碼，可用英數字與符號）</label>
-          <input type="text" id="epAccount" disabled>
-        </div>
-        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
-      </div>
-      <div class="ep-field-row">
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epPassword">新密碼（選填，若要更改請至少輸入6碼；不改請留空）</label>
-          <input type="password" id="epPassword" disabled placeholder="不修改請留空">
-        </div>
-        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
-      </div>
-      <div class="form-msg" id="epAccountMsg"></div>
-      <div class="ep-actions" id="epAccountActions" style="display:none;">
-        <button type="button" class="btn btn-outline btn-sm" id="epAccountCancel">取消</button>
-        <button type="button" class="btn btn-primary btn-sm" id="epAccountSave">儲存</button>
-      </div>
-    </div>
-
-    <!-- 用戶資料 -->
-    <div id="epUserinfoPane" class="ep-pane" style="display:none">
-      <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
-        <button type="button" class="ep-section-edit" data-ep-edit="userinfo">編輯</button>
-      </div>
-      <div class="ep-field-row">
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epDisplayName">顯示名稱（必填，2～20字元）</label>
-          <input type="text" id="epDisplayName" disabled maxlength="20">
-        </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
-      </div>
-      <div class="ep-field-row">
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epInstagram">Instagram（選填）</label>
-          <input type="text" id="epInstagram" disabled placeholder="@yourname">
-        </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
-      </div>
-      <div class="ep-field-row">
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epContactEmail">聯絡信箱（選填，非登入用信箱）</label>
-          <input type="email" id="epContactEmail" disabled>
-        </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
-      </div>
-      <div class="ep-field-row">
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epPhone">手機號碼（選填）</label>
-          <input type="tel" id="epPhone" disabled>
-        </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
-      </div>
-      <div class="form-msg" id="epUserinfoMsg"></div>
-      <div class="ep-actions" id="epUserinfoActions" style="display:none;">
-        <button type="button" class="btn btn-outline btn-sm" id="epUserinfoCancel">取消</button>
-        <button type="button" class="btn btn-primary btn-sm" id="epUserinfoSave">儲存</button>
-      </div>
-    </div>
-
-    <!-- 收貨預設設定（尚未開放編輯） -->
-    <div id="epShippingPane" class="ep-pane" style="display:none">
-      <p style="font-size:13px; color:var(--ink-soft); line-height:1.7;">
-        收貨預設設定（預設收件人、地址、聯絡電話等）將於後續版本開放，敬請期待。
-      </p>
-    </div>
-  </div>
-</div>
+<!-- 已改為獨立分頁 #edit-profile，內容移到頁面下方的 editProfilePageView -->
 
 <!-- ============ Admin Panel Modal（管理員專用） ============ -->
 <div class="modal-overlay big-modal" id="adminOverlay">
@@ -1845,12 +1845,14 @@ function renderRoute() {
   const isMessages = hash === '#messages';
   const isNotifications = hash === '#notifications';
   const isAdminMessages = hash === '#admin-messages';
+  const isEditProfile = hash === '#edit-profile';
 
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || isEditProfile) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
   document.getElementById('adminMessagesPageView').style.display = isAdminMessages ? 'block' : 'none';
+  document.getElementById('editProfilePageView').style.display = isEditProfile ? 'block' : 'none';
 
   window.scrollTo(0, 0);
 
@@ -1858,6 +1860,7 @@ function renderRoute() {
   if (isMessages) renderMessagesPage();
   if (isNotifications) renderNotifPage();
   if (isAdminMessages) renderAdminMessagesPage();
+  if (isEditProfile) { if (!state.user) { location.hash = ''; } else { populateEditProfileFields(); } }
 }
 window.addEventListener('hashchange', () => {
   // 商品詢問預覽只存在於正在開啟的聊天室；離開即不保留也不送出。
@@ -1869,6 +1872,7 @@ document.getElementById('productPageBackBtn').addEventListener('click', () => { 
 document.getElementById('messagesPageBackBtn').addEventListener('click', () => { state.pendingProductInquiry = null; location.hash = state.chatReturnHash || ''; });
 document.getElementById('notifPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('adminMessagesPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('editProfilePageBackBtn').addEventListener('click', () => { location.hash = ''; });
 
 /* ============================================================
    收藏（愛心）
@@ -2166,8 +2170,21 @@ async function loadProfile() {
   if (error) { console.error('讀取會員資料失敗', error); state.profile = null; }
   else { state.profile = data; }
   updateAdminUI();
+  updateAcctIcon();
   const uidEl = document.getElementById('loggedInUid');
   if (uidEl) uidEl.textContent = state.profile?.uid ? `會員編號：${state.profile.uid}` : '';
+}
+function updateAcctIcon() {
+  const svg = document.getElementById('acctIconSvg');
+  const img = document.getElementById('acctAvatarImg');
+  if (state.user) {
+    svg.style.display = 'none';
+    img.style.display = 'block';
+    img.src = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
+  } else {
+    svg.style.display = 'block';
+    img.style.display = 'none';
+  }
 }
 function updateAdminUI() {
   const adminBtn = document.getElementById('adminBtn');
@@ -2198,13 +2215,6 @@ myOrdersOverlay.addEventListener('click', (e) => { if (e.target === myOrdersOver
 function validateAccountFormat(v) { return /^[A-Za-z0-9_.\-!@#$%^&*]{6,}$/.test(v); }
 function validateDisplayName(v) { const t = (v || '').trim(); return t.length >= 2 && t.length <= 20; }
 
-const editProfileOverlay = document.getElementById('editProfileOverlay');
-
-function openEditProfile() {
-  populateEditProfileFields();
-  switchEpTab('avatar');
-  editProfileOverlay.classList.add('open');
-}
 // 沒有上傳頭貼時的預設圖：純色系人形剪影，不帶五官，跟站內配色一致
 const DEFAULT_AVATAR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
@@ -2225,6 +2235,8 @@ function populateEditProfileFields() {
   document.getElementById('epAccountMsg').textContent = '';
   document.getElementById('epUserinfoMsg').textContent = '';
   document.getElementById('epAvatarMsg').textContent = '';
+  exitEpEditMode('account');
+  exitEpEditMode('userinfo');
 }
 function epCap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function enterEpEditMode(section) {
@@ -2238,19 +2250,9 @@ function exitEpEditMode(section) {
   if (actions) actions.style.display = 'none';
 }
 
-document.getElementById('editProfileBtn').addEventListener('click', () => { closeAuth(); openEditProfile(); });
-document.getElementById('editProfileClose').addEventListener('click', () => editProfileOverlay.classList.remove('open'));
-editProfileOverlay.addEventListener('click', (e) => { if (e.target === editProfileOverlay) editProfileOverlay.classList.remove('open'); });
-
-function switchEpTab(tab) {
-  document.querySelectorAll('.edit-profile-tab').forEach(b => b.classList.toggle('active', b.dataset.epTab === tab));
-  ['avatar', 'account', 'userinfo', 'shipping'].forEach(t => {
-    document.getElementById(`ep${epCap(t)}Pane`).style.display = (t === tab) ? 'block' : 'none';
-  });
-}
-document.querySelectorAll('.edit-profile-tab').forEach(btn => {
-  btn.addEventListener('click', () => switchEpTab(btn.dataset.epTab));
-});
+// 「編輯個人資料」是獨立分頁（#edit-profile），不是彈窗；
+// 進入分頁後的欄位載入由 renderRoute() 呼叫 populateEditProfileFields() 處理。
+document.getElementById('editProfileBtn').addEventListener('click', () => { closeAuth(); location.hash = '#edit-profile'; });
 
 // 鉛筆icon跟區塊右上角的「編輯」共用同一組進入編輯模式的邏輯
 document.querySelectorAll('[data-ep-edit]').forEach(btn => {
