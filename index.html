@@ -13,6 +13,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
 
+<!-- Cropper.js：頭貼裁切預覽用 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
 <style>
   /* ============================================
      設計 Token — 生成り煎茶 (Kinari & Sencha)
@@ -100,9 +104,10 @@
   .header-actions { display: flex; align-items: center; gap: 16px; }
   .icon-btn {
     background: none; border: 1px solid var(--line); border-radius: var(--radius);
-    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center;
     position: relative; color: var(--ink); transition: border-color .15s, background .15s;
   }
+  .icon-btn img { max-width: none; }
   .icon-btn:hover { border-color: var(--khaki); background: var(--bg-raised); }
   .cart-badge {
     position: absolute; top: -6px; right: -6px;
@@ -757,10 +762,34 @@
             上傳新頭貼
             <input type="file" id="epAvatarInput" accept="image/*" style="display:none;">
           </label>
+          <button type="button" class="btn btn-outline btn-sm" id="epAvatarRemoveBtn">移除頭貼</button>
           <p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">建議正方形圖片，檔案需小於 2MB</p>
         </div>
       </div>
       <div class="form-msg" id="epAvatarMsg"></div>
+    </div>
+
+    <!-- ============ 頭貼裁切預覽彈窗 ============ -->
+    <div class="modal-overlay" id="avatarCropOverlay">
+      <div class="modal">
+        <button class="modal-close" id="avatarCropClose" aria-label="關閉">×</button>
+        <h3>調整頭貼</h3>
+        <p class="sub">拖曳/縮放選取要保留的範圍，右側可預覽圓形裁切後的樣子</p>
+        <div style="max-height:320px; overflow:hidden; background:#000;">
+          <img id="avatarCropImage" style="max-width:100%; display:block;" alt="">
+        </div>
+        <div style="display:flex; align-items:center; gap:14px; margin-top:16px;">
+          <span style="font-size:12px; color:var(--ink-soft);">圓形預覽</span>
+          <div style="width:80px; height:80px; border-radius:999px; overflow:hidden; border:1px solid var(--line); background:var(--bg-raised);">
+            <div id="avatarCropPreviewCircle" style="width:100%; height:100%; overflow:hidden;"></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" class="btn btn-outline" id="avatarCropCancelBtn" style="flex:1;">取消</button>
+          <button type="button" class="btn btn-primary" id="avatarCropConfirmBtn" style="flex:1;">確認更換</button>
+        </div>
+        <div class="form-msg" id="avatarCropMsg"></div>
+      </div>
     </div>
 
     <!-- 帳號相關 -->
@@ -2345,8 +2374,11 @@ document.getElementById('epUserinfoCancel').addEventListener('click', async () =
   exitEpEditMode('userinfo');
 });
 
-/* ---------- 自訂頭貼：選檔即上傳 ---------- */
-document.getElementById('epAvatarInput').addEventListener('change', async (e) => {
+/* ---------- 自訂頭貼：選檔 → 裁切預覽 → 確認才真正上傳 ---------- */
+let avatarCropper = null;
+const avatarCropOverlay = document.getElementById('avatarCropOverlay');
+
+document.getElementById('epAvatarInput').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const msg = document.getElementById('epAvatarMsg');
@@ -2355,22 +2387,65 @@ document.getElementById('epAvatarInput').addEventListener('change', async (e) =>
     e.target.value = '';
     return;
   }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = document.getElementById('avatarCropImage');
+    img.src = ev.target.result;
+    avatarCropOverlay.classList.add('open');
+    if (avatarCropper) { avatarCropper.destroy(); avatarCropper = null; }
+    avatarCropper = new Cropper(img, {
+      aspectRatio: 1,
+      viewMode: 1,
+      background: false,
+      preview: '#avatarCropPreviewCircle',
+    });
+  };
+  reader.readAsDataURL(file);
+  e.target.value = ''; // 允許之後重選同一個檔案也能觸發change
+});
+
+function closeAvatarCropModal() {
+  avatarCropOverlay.classList.remove('open');
+  if (avatarCropper) { avatarCropper.destroy(); avatarCropper = null; }
+  document.getElementById('avatarCropMsg').textContent = '';
+}
+document.getElementById('avatarCropCancelBtn').addEventListener('click', closeAvatarCropModal);
+document.getElementById('avatarCropClose').addEventListener('click', closeAvatarCropModal);
+avatarCropOverlay.addEventListener('click', (e) => { if (e.target === avatarCropOverlay) closeAvatarCropModal(); });
+
+document.getElementById('avatarCropConfirmBtn').addEventListener('click', () => {
+  if (!avatarCropper) return;
+  const msg = document.getElementById('avatarCropMsg');
   msg.textContent = '上傳中...'; msg.className = 'form-msg';
 
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-  const path = `${state.user.id}/avatar.${ext}`;
-  const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true });
-  if (upErr) { msg.textContent = '上傳失敗：' + upErr.message; msg.className = 'form-msg err'; return; }
+  const canvas = avatarCropper.getCroppedCanvas({ width: 320, height: 320 });
+  canvas.toBlob(async (blob) => {
+    const path = `${state.user.id}/avatar.jpg`;
+    const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+    if (upErr) { msg.textContent = '上傳失敗：' + upErr.message; msg.className = 'form-msg err'; return; }
 
-  const { data: pub } = sb.storage.from('avatars').getPublicUrl(path);
-  const avatarUrl = pub.publicUrl + '?t=' + Date.now();
-  const { error: updErr } = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', state.user.id);
-  if (updErr) { msg.textContent = '儲存失敗：' + updErr.message; msg.className = 'form-msg err'; return; }
+    const { data: pub } = sb.storage.from('avatars').getPublicUrl(path);
+    const avatarUrl = pub.publicUrl + '?t=' + Date.now();
+    const { error: updErr } = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', state.user.id);
+    if (updErr) { msg.textContent = '儲存失敗：' + updErr.message; msg.className = 'form-msg err'; return; }
 
+    await loadProfile();
+    document.getElementById('epAvatarPreview').src = avatarUrl;
+    document.getElementById('epAvatarMsg').textContent = '頭貼已更新！';
+    document.getElementById('epAvatarMsg').className = 'form-msg ok';
+    closeAvatarCropModal();
+  }, 'image/jpeg', 0.92);
+});
+
+/* ---------- 移除頭貼，恢復預設圖案 ---------- */
+document.getElementById('epAvatarRemoveBtn').addEventListener('click', async () => {
+  if (!confirm('確定要移除頭貼，恢復成預設圖案嗎？')) return;
+  const msg = document.getElementById('epAvatarMsg');
+  const { error } = await sb.from('profiles').update({ avatar_url: null }).eq('id', state.user.id);
+  if (error) { msg.textContent = '移除失敗：' + error.message; msg.className = 'form-msg err'; return; }
   await loadProfile();
-  document.getElementById('epAvatarPreview').src = avatarUrl;
-  msg.textContent = '頭貼已更新！'; msg.className = 'form-msg ok';
-  e.target.value = '';
+  document.getElementById('epAvatarPreview').src = DEFAULT_AVATAR_SVG;
+  msg.textContent = '已恢復預設頭貼'; msg.className = 'form-msg ok';
 });
 
 const ORDER_STATUS_LABEL = { pending: '待確認', locked: '已鎖定(採購中)', fulfilled: '已完成', cancelled: '已取消' };
