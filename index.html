@@ -733,7 +733,7 @@
 <!-- ============ 聯絡我們 全頁畫面 ============ -->
 <div id="messagesPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="messagesPageBackBtn" style="margin-bottom:20px;">← 返回</button>
-  <div class="chat-shell" style="grid-template-columns:1fr; max-width:720px;">
+  <div class="chat-shell show-thread" style="grid-template-columns:1fr; max-width:720px;">
     <div class="chat-thread">
       <div class="chat-thread-head">濱水一湖｜聯絡我們</div>
       <div class="chat-log" id="messagesPageMessages"></div>
@@ -2593,7 +2593,9 @@ function renderSingleItemRow(it) {
   const desc = variantDesc(it);
   let actionsHtml = '';
 
-  if (it.state === 'paid_pending') {
+  if (it.state === 'awaiting_payment') {
+    actionsHtml = `<p class="cart-note">訂單已送出，等待賣家確認收款</p>`;
+  } else if (it.state === 'paid_pending') {
     actionsHtml = `<button class="btn btn-outline btn-sm" data-abandon-full-refund="${it.id}" style="color:var(--danger); border-color:var(--danger);">申請退款</button>`;
   } else if (it.state === 'locked_sourcing') {
     actionsHtml = `<p class="cart-note">已鎖單，賣家已開始採購備貨，此階段無法申請退款</p>`;
@@ -2606,7 +2608,7 @@ function renderSingleItemRow(it) {
     actionsHtml = `<p class="cart-note">已送出出貨申請，等待賣家提供賣貨便連結，請留意通知。</p>`;
   } else if (it.state === 'shipped') {
     actionsHtml = `
-      <p class="cart-note">商品配送中${it.shipway_tracking_no ? '，物流單號：' + it.shipway_tracking_no : ''}</p>
+      <p class="cart-note">商品配送中，此階段無法申請退款${it.shipway_tracking_no ? '，物流單號：' + it.shipway_tracking_no : ''}</p>
       ${it.shipway_url ? `<a href="${it.shipway_url}" target="_blank" class="btn btn-outline btn-sm">前往賣貨便選門市/付尾款</a>` : ''}
     `;
   } else if (it.state === 'arrived_store') {
@@ -2700,11 +2702,20 @@ function bindOrderItemActions() {
   });
 
   document.querySelectorAll('[data-apply-shipping]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const { error } = await sb.rpc('customer_apply_shipping', { item_id: btn.dataset.applyShipping });
-      if (error) { toast('操作失敗：' + error.message); return; }
-      toast('已送出出貨申請');
-      refreshActiveOrdersEverywhere();
+    btn.addEventListener('click', () => {
+      const itemId = btn.dataset.applyShipping;
+      openWarningModal({
+        title: '⚠️ 申請出貨',
+        message: '申請出貨後，若之後放棄取貨，將不會退還任何訂金。確定商品資訊都已核對無誤，要申請出貨嗎？',
+        confirmLabel: '確定申請出貨',
+        danger: true,
+        onConfirm: async () => {
+          const { error } = await sb.rpc('customer_apply_shipping', { item_id: itemId });
+          if (error) { toast('操作失敗：' + error.message); return; }
+          toast('已送出出貨申請');
+          refreshActiveOrdersEverywhere();
+        },
+      });
     });
   });
 
