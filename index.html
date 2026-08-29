@@ -2593,7 +2593,11 @@ function renderSingleItemRow(it) {
   const desc = variantDesc(it);
   let actionsHtml = '';
 
-  if (it.state === 'awaiting_shipping_apply' && !it.shipping_apply_requested_at) {
+  if (it.state === 'paid_pending') {
+    actionsHtml = `<button class="btn btn-outline btn-sm" data-abandon-full-refund="${it.id}" style="color:var(--danger); border-color:var(--danger);">申請退款</button>`;
+  } else if (it.state === 'locked_sourcing') {
+    actionsHtml = `<p class="cart-note">已鎖單，賣家已開始採購備貨，此階段無法申請退款</p>`;
+  } else if (it.state === 'awaiting_shipping_apply' && !it.shipping_apply_requested_at) {
     actionsHtml = `
       <button class="btn btn-primary btn-sm" data-apply-shipping="${it.id}">申請出貨</button>
       <button class="btn btn-outline btn-sm" data-abandon-refund="${it.id}">放棄訂單並申請退款</button>
@@ -2678,6 +2682,23 @@ async function loadActiveOrders(targetListId) {
 
 /* ---------- 客戶端動作按鈕綁定 ---------- */
 function bindOrderItemActions() {
+  document.querySelectorAll('[data-abandon-full-refund]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const itemId = btn.dataset.abandonFullRefund;
+      openWarningModal({
+        title: '申請退款',
+        message: '商品尚未鎖單開始採購，可申請全額退還訂金。確定要放棄這筆訂單並申請全額退款嗎？',
+        confirmLabel: '確定申請全額退款',
+        onConfirm: async () => {
+          const { error } = await sb.rpc('customer_request_stage1_refund', { item_id: itemId });
+          if (error) { toast('操作失敗：' + error.message); return; }
+          toast('已受理退款申請');
+          refreshActiveOrdersEverywhere();
+        },
+      });
+    });
+  });
+
   document.querySelectorAll('[data-apply-shipping]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const { error } = await sb.rpc('customer_apply_shipping', { item_id: btn.dataset.applyShipping });
