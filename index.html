@@ -1117,6 +1117,18 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ============ 強烈警告確認彈窗（不可逆棄單動作用） ============ -->
+<div class="modal-overlay" id="warningModalOverlay">
+  <div class="modal">
+    <h3 id="warningModalTitle" style="color:var(--danger);"></h3>
+    <p class="sub" id="warningModalMessage" style="line-height:1.7;"></p>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button type="button" class="btn btn-outline" id="warningModalCancelBtn" style="flex:1;">取消</button>
+      <button type="button" class="btn btn-primary" id="warningModalConfirmBtn" style="flex:1;"></button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ Product Detail Modal（客戶查看放大圖+選款式） ============ -->
 <div class="modal-overlay product-modal" id="productDetailOverlay">
   <div class="modal">
@@ -2521,22 +2533,84 @@ document.getElementById('epAvatarRemoveBtn').addEventListener('click', async () 
   msg.textContent = '已恢復預設頭貼'; msg.className = 'form-msg ok';
 });
 
+// 注意：這個是給「管理後台」舊版訂單列表用的(訂單整體狀態)，客戶端已經改用下面的 ITEM_STATE_LABEL(明細層級)。
+// 下一輪處理管理後台時，這裡會一併整合成明細層級的顯示，屆時這個常數可以移除。
 const ORDER_STATUS_LABEL = { pending: '待確認', locked: '已鎖定(採購中)', fulfilled: '已完成', cancelled: '已取消' };
 
-function renderOrderRowsHtml(data) {
-  return data.map(o => `
+const ITEM_STATE_LABEL = {
+  awaiting_payment: '待確認付款', paid_pending: '已付款，等待供應', locked_sourcing: '已鎖單，採購備貨中',
+  awaiting_shipping_apply: '商品已抵台，待申請出貨', abandoned_pending_refund: '已申請退款，待審核',
+  shipped: '已出貨，配送中', arrived_store: '已到店，待取貨', package_returned: '包裹已退回',
+  completed: '已完成', refunded_stage1: '已退款結案', abandoned_no_refund: '不退款結案',
+};
+const ITEM_STATE_COLOR = {
+  awaiting_payment: 'order-status-pending', paid_pending: 'order-status-pending', locked_sourcing: 'order-status-locked',
+  awaiting_shipping_apply: 'order-status-locked', abandoned_pending_refund: 'order-status-cancelled',
+  shipped: 'order-status-locked', arrived_store: 'order-status-locked', package_returned: 'order-status-cancelled',
+  completed: 'order-status-fulfilled', refunded_stage1: 'order-status-fulfilled', abandoned_no_refund: 'order-status-cancelled',
+};
+const TERMINAL_STATES = ['completed', 'refunded_stage1', 'abandoned_no_refund'];
+
+function variantDesc(it) { return [it.variant_color, it.variant_size].filter(Boolean).join(' / '); }
+
+/* ---------- 依訂單分組，渲染每個明細各自的狀態與動作按鈕 ---------- */
+function renderOrderItemsGrouped(orders) {
+  return orders.map(o => `
     <div class="order-row">
       <div class="order-row-top">
         <span class="order-id">訂單 #${o.id}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
-        <span class="order-status order-status-${o.status}">${ORDER_STATUS_LABEL[o.status] || o.status}</span>
       </div>
-      <div class="order-items-list">
-        ${(o.order_items || []).map(it => `<div>${it.product_name} × ${it.quantity}</div>`).join('')}
-      </div>
-      <div class="order-total"><span>訂金</span><span>${ntd(o.deposit_ntd)}</span></div>
-      <div class="order-total"><span>總額</span><span>${ntd(o.total_ntd)}</span></div>
+      ${(o.order_items || []).map(it => renderSingleItemRow(it)).join('')}
     </div>
   `).join('');
+}
+
+function renderSingleItemRow(it) {
+  const desc = variantDesc(it);
+  let actionsHtml = '';
+
+  if (it.state === 'awaiting_shipping_apply' && !it.shipping_apply_requested_at) {
+    actionsHtml = `
+      <button class="btn btn-primary btn-sm" data-apply-shipping="${it.id}">申請出貨</button>
+      <button class="btn btn-outline btn-sm" data-abandon-refund="${it.id}">放棄訂單並申請退款</button>
+    `;
+  } else if (it.state === 'awaiting_shipping_apply' && it.shipping_apply_requested_at) {
+    actionsHtml = `<p class="cart-note">已送出出貨申請，等待賣家提供賣貨便連結，請留意通知。</p>`;
+  } else if (it.state === 'shipped') {
+    actionsHtml = `
+      <p class="cart-note">商品配送中${it.shipway_tracking_no ? '，物流單號：' + it.shipway_tracking_no : ''}</p>
+      ${it.shipway_url ? `<a href="${it.shipway_url}" target="_blank" class="btn btn-outline btn-sm">前往賣貨便選門市/付尾款</a>` : ''}
+    `;
+  } else if (it.state === 'arrived_store') {
+    actionsHtml = `
+      <p class="cart-note">商品已送達門市，請盡快取貨並付清尾款${it.shipway_url ? '' : ''}</p>
+      ${it.shipway_url ? `<a href="${it.shipway_url}" target="_blank" class="btn btn-outline btn-sm">賣貨便連結</a>` : ''}
+      <button class="btn btn-primary btn-sm" data-confirm-receipt="${it.id}">完成訂單</button>
+      <button class="btn btn-outline btn-sm" data-abandon-shipping="${it.id}" style="color:var(--danger); border-color:var(--danger);">放棄取貨</button>
+    `;
+  } else if (it.state === 'package_returned') {
+    actionsHtml = it.resend_requested_at
+      ? `<p class="cart-note">已申請重寄，等待賣家確認運費並重新出貨${it.resend_fee_ntd ? '（運費 ' + ntd(it.resend_fee_ntd) + '）' : ''}</p>`
+      : `
+        <p class="cart-note">包裹逾期未取貨已退回${it.resend_fee_ntd ? '，重寄需先支付運費 ' + ntd(it.resend_fee_ntd) : ''}</p>
+        <button class="btn btn-primary btn-sm" data-request-resend="${it.id}">一鍵申請重寄</button>
+        <button class="btn btn-outline btn-sm" data-abandon-resend="${it.id}" style="color:var(--danger); border-color:var(--danger);">放棄重寄</button>
+      `;
+  } else if (it.state === 'abandoned_pending_refund') {
+    actionsHtml = `<p class="cart-note">已受理退款申請，預估退款 ${ntd(it.refund_amount_ntd)}（${it.refund_percent}%），待人工核算後撥款</p>`;
+  } else if (it.state === 'refunded_stage1' || it.state === 'abandoned_no_refund') {
+    actionsHtml = `<p class="cart-note">退款金額：${ntd(it.refund_amount_ntd || 0)}</p>`;
+  }
+
+  return `
+    <div style="border-top:1px solid var(--line); padding:12px 0;">
+      <div class="order-row-top">
+        <span style="font-size:13px;">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
+        <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${ITEM_STATE_LABEL[it.state] || it.state}</span>
+      </div>
+      <div class="order-admin-actions" style="flex-wrap:wrap;">${actionsHtml}</div>
+    </div>
+  `;
 }
 
 function rangeToDate(range) {
@@ -2547,36 +2621,154 @@ function rangeToDate(range) {
   return null; // 'all'
 }
 
-/* ---------- 歷史訂單（僅「已完成」，可依日期範圍篩選） ---------- */
+/* ---------- 歷史訂單（僅終點狀態：已完成/已退款結案/不退款結案），可依日期範圍篩選 ---------- */
 async function loadHistoryOrders(range, targetListId) {
   if (!state.user) return;
-  let query = sb.from('orders').select('id, status, total_ntd, deposit_ntd, created_at, order_items(*)')
-    .eq('user_id', state.user.id).eq('status', 'fulfilled').order('created_at', { ascending: false });
+  let query = sb.from('orders').select('id, created_at, order_items!inner(*)')
+    .eq('user_id', state.user.id).in('order_items.state', TERMINAL_STATES).order('created_at', { ascending: false });
   const fromDate = rangeToDate(range);
   if (fromDate) query = query.gte('created_at', fromDate.toISOString());
 
   const { data, error } = await query;
   const list = document.getElementById(targetListId);
-  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; return; }
-  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">這個區間沒有已完成的訂單紀錄。</p>'; return; }
-  list.innerHTML = renderOrderRowsHtml(data);
+  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; console.error(error); return; }
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">這個區間沒有已結案的訂單紀錄。</p>'; return; }
+  list.innerHTML = renderOrderItemsGrouped(data);
 }
 
-/* ---------- 進行中訂單（待確認、已鎖定，尚未完成或取消） ---------- */
+/* ---------- 進行中訂單（尚未走到終點的所有明細） ---------- */
 async function loadActiveOrders(targetListId) {
   if (!state.user) return;
-  const { data, error } = await sb.from('orders').select('id, status, total_ntd, deposit_ntd, created_at, order_items(*)')
-    .eq('user_id', state.user.id).in('status', ['pending', 'locked']).order('created_at', { ascending: false });
+  const { data, error } = await sb.from('orders').select('id, created_at, order_items!inner(*)')
+    .eq('user_id', state.user.id).not('order_items.state', 'in', `(${TERMINAL_STATES.join(',')})`).order('created_at', { ascending: false });
   const list = document.getElementById(targetListId);
-  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; return; }
+  if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; console.error(error); return; }
   if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有進行中的訂單。</p>'; }
-  else { list.innerHTML = renderOrderRowsHtml(data); }
+  else { list.innerHTML = renderOrderItemsGrouped(data); bindOrderItemActions(); }
 
   const badge = document.getElementById('activeOrdersBadge');
-  const count = (data || []).length;
+  const count = (data || []).reduce((sum, o) => sum + (o.order_items || []).length, 0);
   badge.style.display = count > 0 ? 'flex' : 'none';
   badge.textContent = count;
 }
+
+/* ---------- 客戶端動作按鈕綁定 ---------- */
+function bindOrderItemActions() {
+  document.querySelectorAll('[data-apply-shipping]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { error } = await sb.rpc('customer_apply_shipping', { item_id: btn.dataset.applyShipping });
+      if (error) { toast('操作失敗：' + error.message); return; }
+      toast('已送出出貨申請');
+      refreshActiveOrdersEverywhere();
+    });
+  });
+
+  document.querySelectorAll('[data-abandon-refund]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const itemId = btn.dataset.abandonRefund;
+      const row = btn.closest('div[style*="border-top"]');
+      const depositAmt = await estimateDepositAmount(itemId);
+      const { data: pct } = await sb.rpc('calc_stage3_refund_percent', { deposit_amount: depositAmt });
+      const estAmount = Math.round(depositAmt * (pct || 0) / 100);
+      openWarningModal({
+        title: '放棄訂單並申請退款',
+        message: `依目前訂金金額試算，預估可退還 ${ntd(estAmount)}（${pct}%）。放棄後將無法復原，確定要放棄這筆訂單嗎？`,
+        confirmLabel: '確定放棄並申請退款',
+        onConfirm: async () => {
+          const { error } = await sb.rpc('customer_abandon_for_refund', { item_id: itemId });
+          if (error) { toast('操作失敗：' + error.message); return; }
+          toast('已受理退款申請');
+          refreshActiveOrdersEverywhere();
+        },
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-confirm-receipt]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('確認已收到商品並付清尾款嗎？')) return;
+      const { error } = await sb.rpc('customer_confirm_receipt', { item_id: btn.dataset.confirmReceipt });
+      if (error) { toast('操作失敗：' + error.message); return; }
+      toast('訂單已完成，謝謝惠顧！');
+      refreshActiveOrdersEverywhere();
+    });
+  });
+
+  document.querySelectorAll('[data-abandon-shipping]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const itemId = btn.dataset.abandonShipping;
+      openWarningModal({
+        title: '⚠️ 放棄取貨',
+        message: '申請出貨後棄單，將不會退還任何訂金（可退金額 NT$0）。此操作無法復原，確定要放棄這筆訂單嗎？',
+        confirmLabel: '確定放棄，不要退款',
+        danger: true,
+        onConfirm: async () => {
+          const { error } = await sb.rpc('customer_abandon_after_shipping', { item_id: itemId });
+          if (error) { toast('操作失敗：' + error.message); return; }
+          toast('已放棄此筆訂單');
+          refreshActiveOrdersEverywhere();
+        },
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-request-resend]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('確定要申請重新寄送嗎？我們會盡快與你確認運費並重新出貨。')) return;
+      const { error } = await sb.rpc('customer_request_resend', { item_id: btn.dataset.requestResend });
+      if (error) { toast('操作失敗：' + error.message); return; }
+      toast('已送出重寄申請');
+      refreshActiveOrdersEverywhere();
+    });
+  });
+
+  document.querySelectorAll('[data-abandon-resend]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const itemId = btn.dataset.abandonResend;
+      openWarningModal({
+        title: '⚠️ 放棄重寄',
+        message: '放棄重寄將不會退還任何訂金（可退金額 NT$0）。此操作無法復原，確定要放棄嗎？',
+        confirmLabel: '確定放棄，不要退款',
+        danger: true,
+        onConfirm: async () => {
+          const { error } = await sb.rpc('customer_abandon_resend', { item_id: itemId });
+          if (error) { toast('操作失敗：' + error.message); return; }
+          toast('已放棄重寄');
+          refreshActiveOrdersEverywhere();
+        },
+      });
+    });
+  });
+}
+
+async function estimateDepositAmount(itemId) {
+  const { data } = await sb.from('order_items').select('price_ntd, quantity, deposit_ratio').eq('id', itemId).single();
+  if (!data) return 0;
+  return data.price_ntd * data.quantity * (data.deposit_ratio || 0.5);
+}
+
+function refreshActiveOrdersEverywhere() {
+  if (document.getElementById('activeOrdersOverlay').classList.contains('open')) loadActiveOrders('activeOrdersList');
+  if (location.hash === '#active-orders') loadActiveOrders('activeOrdersPageList');
+}
+
+/* ---------- 強烈警告確認彈窗（用於不可逆的棄單動作） ---------- */
+function openWarningModal({ title, message, confirmLabel, onConfirm, danger }) {
+  const overlay = document.getElementById('warningModalOverlay');
+  document.getElementById('warningModalTitle').textContent = title;
+  document.getElementById('warningModalMessage').textContent = message;
+  const confirmBtn = document.getElementById('warningModalConfirmBtn');
+  confirmBtn.textContent = confirmLabel;
+  confirmBtn.style.background = danger ? 'var(--danger)' : '';
+  confirmBtn.style.borderColor = danger ? 'var(--danger)' : '';
+  confirmBtn.onclick = () => { overlay.classList.remove('open'); onConfirm(); };
+  overlay.classList.add('open');
+}
+document.getElementById('warningModalCancelBtn').addEventListener('click', () => {
+  document.getElementById('warningModalOverlay').classList.remove('open');
+});
+
+
 
 /* ---------- 歷史訂單 Modal ---------- */
 document.getElementById('myOrdersBtn').addEventListener('click', () => {
