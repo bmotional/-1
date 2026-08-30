@@ -442,6 +442,13 @@
     font-size: 12px; padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg);
   }
   .unread-row { border-left: 3px solid var(--brass); }
+  .order-highlight { animation: orderHighlightPulse 2.6s ease; }
+  @keyframes orderHighlightPulse {
+    0%, 100% { box-shadow: none; }
+    15%, 60% { box-shadow: 0 0 0 3px var(--brass); }
+  }
+  .notif-clickable { cursor: pointer; }
+  .notif-clickable:hover { background: var(--bg-raised); }
 
   .notif-row { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
   .notif-row.unread { background: var(--bg-raised); border-left: 3px solid var(--brass); }
@@ -1122,7 +1129,7 @@
         <button class="chip" data-wish-tag-filter="watch">再觀察</button>
         <button class="chip" data-wish-tag-filter="spam">垃圾訊息</button>
       </div>
-      <div id="adminWishlistList"></div>
+      <div id="adminWishlistList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
     </div>
 
     <div id="adminChatTab" style="display:none">
@@ -1135,7 +1142,7 @@
         <span class="filter-label" id="adminProductsCount"></span>
         <button class="btn btn-primary btn-sm" id="newProductBtn">+ 新增商品</button>
       </div>
-      <div id="adminProductsList"></div>
+      <div id="adminProductsList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
     </div>
 
     <div id="adminDemandTab" style="display:none">
@@ -1155,17 +1162,19 @@
         <button class="chip" data-demand-category-filter="零食">零食</button>
       </div>
 
-      <h3 class="ep-section-title">已付款，已鎖單（本趟確定要採買）</h3>
-      <p class="sub" style="margin-bottom:10px;">依完整款式（顏色+尺寸）統計，出國採買時直接對照即可。</p>
-      <div id="demandLockedList" style="margin-bottom:30px;"></div>
+      <div style="max-height:420px; overflow-y:auto; padding-right:4px;">
+        <h3 class="ep-section-title">已付款，已鎖單（本趟確定要採買）</h3>
+        <p class="sub" style="margin-bottom:10px;">依完整款式（顏色+尺寸）統計，出國採買時直接對照即可。</p>
+        <div id="demandLockedList" style="margin-bottom:30px;"></div>
 
-      <h3 class="ep-section-title">已付款，尚未鎖單</h3>
-      <p class="sub" style="margin-bottom:10px;">同樣依完整款式統計，這批還沒正式鎖定，僅供預先掌握。</p>
-      <div id="demandPaidPendingList" style="margin-bottom:30px;"></div>
+        <h3 class="ep-section-title">已付款，尚未鎖單</h3>
+        <p class="sub" style="margin-bottom:10px;">同樣依完整款式統計，這批還沒正式鎖定，僅供預先掌握。</p>
+        <div id="demandPaidPendingList" style="margin-bottom:30px;"></div>
 
-      <h3 class="ep-section-title">所有已成立訂單總覽（不含已取消/已退款）</h3>
-      <p class="sub" style="margin-bottom:10px;">分開統計顏色與尺寸的總量，方便你決定下趟該多進哪些商品/顏色/尺寸。</p>
-      <div id="adminDemandList"></div>
+        <h3 class="ep-section-title">所有已成立訂單總覽（不含已取消/已退款）</h3>
+        <p class="sub" style="margin-bottom:10px;">分開統計顏色與尺寸的總量，方便你決定下趟該多進哪些商品/顏色/尺寸。</p>
+        <div id="adminDemandList"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1357,6 +1366,7 @@ const state = {
   adminOrderBatchState: null,
   demandCountryFilter: 'all',
   demandCategoryFilter: 'all',
+  highlightOrderId: null,
   historyRange: 'all',
   wishTagFilter: 'all',
   adminChatActiveUser: null,
@@ -1731,7 +1741,7 @@ async function loadCart() {
   if (!state.user) { state.cart = []; renderCart(); return; }
   const { data, error } = await sb
     .from('cart_items')
-    .select('id, quantity, product_id, products(*)')
+    .select('id, quantity, product_id, variant_color, variant_size, products(*)')
     .eq('user_id', state.user.id);
   if (error) { console.error(error); return; }
   state.cart = data || [];
@@ -1982,22 +1992,30 @@ document.getElementById('notifExpandBtn').addEventListener('click', () => {
   location.hash = '#notifications';
 });
 
-async function loadNotifications() {
+async function loadNotifications(targetListId = 'notifList') {
   const { data, error } = await sb.from('notifications').select('*').eq('user_id', state.user.id).order('created_at', { ascending: false });
-  const list = document.getElementById('notifList');
+  const list = document.getElementById(targetListId);
   if (error) { list.innerHTML = '<p>讀取通知失敗</p>'; return; }
   if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有通知。</p>'; }
   else {
     list.innerHTML = data.map(n => `
-      <div class="notif-row ${n.is_read ? '' : 'unread'}">
+      <div class="notif-row ${n.is_read ? '' : 'unread'} ${n.order_id ? 'notif-clickable' : ''}" ${n.order_id ? `data-notif-order="${n.order_id}"` : ''}>
         <div>${n.content}</div>
         <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-Hant-TW')}</div>
       </div>
     `).join('');
+    list.querySelectorAll('[data-notif-order]').forEach(row => {
+      row.addEventListener('click', () => {
+        document.getElementById('notifOverlay').classList.remove('open');
+        state.highlightOrderId = Number(row.dataset.notifOrder);
+        location.hash = '#active-orders';
+      });
+    });
   }
   await sb.from('notifications').update({ is_read: true }).eq('user_id', state.user.id).eq('is_read', false);
   updateNotifBadge();
 }
+function renderNotifPage() { loadNotifications('notifPageList'); }
 
 async function updateNotifBadge() {
   if (!state.user) { document.getElementById('notifBadge').style.display = 'none'; return; }
@@ -2627,7 +2645,7 @@ function variantDesc(it) { return [it.variant_color, it.variant_size].filter(Boo
 /* ---------- 依訂單分組，渲染每個明細各自的狀態與動作按鈕 ---------- */
 function renderOrderItemsGrouped(orders) {
   return orders.map(o => `
-    <div class="order-row">
+    <div class="order-row" id="order-${o.id}">
       <div class="order-row-top">
         <span class="order-id">訂單 #${o.id}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
       </div>
@@ -2727,6 +2745,17 @@ async function loadActiveOrders(targetListId) {
   const count = (data || []).reduce((sum, o) => sum + (o.order_items || []).length, 0);
   badge.style.display = count > 0 ? 'flex' : 'none';
   badge.textContent = count;
+
+  // 從通知點進來的話，捲動到對應訂單並短暫高亮，看完就清掉避免下次誤觸發
+  if (state.highlightOrderId) {
+    const target = document.getElementById(`order-${state.highlightOrderId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('order-highlight');
+      setTimeout(() => target.classList.remove('order-highlight'), 2600);
+    }
+    state.highlightOrderId = null;
+  }
 }
 
 /* ---------- 客戶端動作按鈕綁定 ---------- */
