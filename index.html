@@ -768,8 +768,16 @@
   </div>
 </div>
 
+<!-- ============ 訂單管理 全頁畫面（面板從管理後台彈窗中移過來共用，見 JS） ============ -->
+<div id="adminOrdersPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminOrdersPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">訂單管理</h2>
+  <div id="adminOrdersPageSlot"></div>
+</div>
+
 <!-- ============ 通知 全頁畫面 ============ -->
 <div id="notificationsPageView" class="wrap section" style="display:none;">
+
   <button class="btn btn-outline btn-sm" id="notifPageBackBtn" style="margin-bottom:20px;">← 返回</button>
   <h2 class="section-title">通知</h2>
   <div id="notifPageList" style="max-width:640px;"></div>
@@ -1070,42 +1078,40 @@
     </div>
 
     <div id="adminOrdersTab">
-      <div class="admin-panel-actions">
-        <span class="filter-label" id="adminOrdersCount"></span>
-        <button class="btn btn-primary btn-sm" id="processOverdueBtn">批次處理超期到店（9天）</button>
+      <div id="adminOrdersPanel">
+        <div class="admin-panel-actions">
+          <span class="filter-label" id="adminOrdersCount"></span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline btn-sm" id="openAdminOrdersPageBtn">在獨立頁面開啟 ↗</button>
+            <button class="btn btn-primary btn-sm" id="processOverdueBtn">批次處理超期到店（9天）</button>
+          </div>
+        </div>
+        <div class="filter-group" id="orderStateFilters" style="margin-bottom:10px; flex-wrap:wrap;">
+          <button class="chip active" data-order-state-filter="active">進行中</button>
+          <button class="chip" data-order-state-filter="awaiting_payment">待確認付款</button>
+          <button class="chip" data-order-state-filter="paid_pending">已付款(待鎖單)</button>
+          <button class="chip" data-order-state-filter="locked_sourcing">已鎖單(待抵台)</button>
+          <button class="chip" data-order-state-filter="awaiting_shipping_apply">待出貨</button>
+          <button class="chip" data-order-state-filter="shipped">配送中</button>
+          <button class="chip" data-order-state-filter="arrived_store">已到店</button>
+          <button class="chip" data-order-state-filter="package_returned">包裹退回</button>
+          <button class="chip" data-order-state-filter="abandoned_pending_refund">待審核退款</button>
+          <button class="chip" data-order-state-filter="history">歷史(已結案)</button>
+        </div>
+        <div class="filter-group" id="orderCountryFilters" style="margin-bottom:10px;">
+          <span class="filter-label">產地</span>
+          <button class="chip active" data-order-country-filter="all">全部</button>
+          <button class="chip" data-order-country-filter="vietnam">越南</button>
+          <button class="chip" data-order-country-filter="japan">日本</button>
+          <button class="chip" data-order-country-filter="korea">韓國</button>
+        </div>
+        <div id="adminOrdersBatchBar" style="display:none; margin-bottom:14px; padding:10px 14px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius); align-items:center; gap:12px;">
+          <span id="adminOrdersBatchCount" style="font-size:13px;"></span>
+          <button class="btn btn-primary btn-sm" id="adminOrdersBatchActionBtn"></button>
+          <button class="btn btn-outline btn-sm" id="adminOrdersBatchClearBtn">清除選取</button>
+        </div>
+        <div id="adminOrdersList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
-      <div class="filter-group" id="orderStateFilters" style="margin-bottom:10px; flex-wrap:wrap;">
-        <button class="chip active" data-order-state-filter="active">進行中</button>
-        <button class="chip" data-order-state-filter="awaiting_payment">待確認付款</button>
-        <button class="chip" data-order-state-filter="paid_pending">已付款(待鎖單)</button>
-        <button class="chip" data-order-state-filter="locked_sourcing">已鎖單(待抵台)</button>
-        <button class="chip" data-order-state-filter="awaiting_shipping_apply">待出貨</button>
-        <button class="chip" data-order-state-filter="shipped">配送中</button>
-        <button class="chip" data-order-state-filter="arrived_store">已到店</button>
-        <button class="chip" data-order-state-filter="package_returned">包裹退回</button>
-        <button class="chip" data-order-state-filter="abandoned_pending_refund">待審核退款</button>
-        <button class="chip" data-order-state-filter="history">歷史(已結案)</button>
-      </div>
-      <div class="filter-group" id="orderCountryFilters" style="margin-bottom:10px;">
-        <span class="filter-label">產地</span>
-        <button class="chip active" data-order-country-filter="all">全部</button>
-        <button class="chip" data-order-country-filter="vietnam">越南</button>
-        <button class="chip" data-order-country-filter="japan">日本</button>
-        <button class="chip" data-order-country-filter="korea">韓國</button>
-      </div>
-      <div class="filter-group" id="orderTagFilters" style="margin-bottom:14px;">
-        <button class="chip active" data-order-tag-filter="all">全部（不含垃圾訊息）</button>
-        <button class="chip" data-order-tag-filter="unread">未讀</button>
-        <button class="chip" data-order-tag-filter="future">未來可做方案</button>
-        <button class="chip" data-order-tag-filter="watch">再觀察</button>
-        <button class="chip" data-order-tag-filter="spam">垃圾訊息</button>
-      </div>
-      <div id="adminOrdersBatchBar" style="display:none; margin-bottom:14px; padding:10px 14px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius); align-items:center; gap:12px;">
-        <span id="adminOrdersBatchCount" style="font-size:13px;"></span>
-        <button class="btn btn-primary btn-sm" id="adminOrdersBatchActionBtn"></button>
-        <button class="btn btn-outline btn-sm" id="adminOrdersBatchClearBtn">清除選取</button>
-      </div>
-      <div id="adminOrdersList"></div>
     </div>
 
     <div id="adminWishlistTab" style="display:none">
@@ -1133,7 +1139,32 @@
     </div>
 
     <div id="adminDemandTab" style="display:none">
-      <p class="sub" style="margin-bottom:14px;">依所有已成立訂單（不含已取消）加總，方便你決定下趟該多進哪些商品/顏色/尺寸。</p>
+      <div class="filter-group" id="demandCountryFilters" style="margin-bottom:10px;">
+        <span class="filter-label">產地</span>
+        <button class="chip active" data-demand-country-filter="all">全部</button>
+        <button class="chip" data-demand-country-filter="vietnam">越南</button>
+        <button class="chip" data-demand-country-filter="japan">日本</button>
+        <button class="chip" data-demand-country-filter="korea">韓國</button>
+      </div>
+      <div class="filter-group" id="demandCategoryFilters" style="margin-bottom:18px; flex-wrap:wrap;">
+        <span class="filter-label">種類</span>
+        <button class="chip active" data-demand-category-filter="all">全部</button>
+        <button class="chip" data-demand-category-filter="男裝">男裝</button>
+        <button class="chip" data-demand-category-filter="女裝">女裝</button>
+        <button class="chip" data-demand-category-filter="飾品">飾品</button>
+        <button class="chip" data-demand-category-filter="零食">零食</button>
+      </div>
+
+      <h3 class="ep-section-title">已付款，已鎖單（本趟確定要採買）</h3>
+      <p class="sub" style="margin-bottom:10px;">依完整款式（顏色+尺寸）統計，出國採買時直接對照即可。</p>
+      <div id="demandLockedList" style="margin-bottom:30px;"></div>
+
+      <h3 class="ep-section-title">已付款，尚未鎖單</h3>
+      <p class="sub" style="margin-bottom:10px;">同樣依完整款式統計，這批還沒正式鎖定，僅供預先掌握。</p>
+      <div id="demandPaidPendingList" style="margin-bottom:30px;"></div>
+
+      <h3 class="ep-section-title">所有已成立訂單總覽（不含已取消/已退款）</h3>
+      <p class="sub" style="margin-bottom:10px;">分開統計顏色與尺寸的總量，方便你決定下趟該多進哪些商品/顏色/尺寸。</p>
       <div id="adminDemandList"></div>
     </div>
   </div>
@@ -1320,11 +1351,12 @@ const state = {
   variantsByProduct: {}, // { productId: { colors:[...], sizes:[...] } }
   favoriteIds: new Set(),
   detailSelection: { productId: null, color: null, size: null },
-  adminOrderTagFilter: 'all',
   adminOrderStateFilter: 'active',
   adminOrderCountryFilter: 'all',
   adminOrderSelectedItems: new Set(),
   adminOrderBatchState: null,
+  demandCountryFilter: 'all',
+  demandCategoryFilter: 'all',
   historyRange: 'all',
   wishTagFilter: 'all',
   adminChatActiveUser: null,
@@ -1987,15 +2019,17 @@ function renderRoute() {
   const isMessages = hash === '#messages';
   const isNotifications = hash === '#notifications';
   const isAdminMessages = hash === '#admin-messages';
+  const isAdminOrders = hash === '#admin-orders';
   const isEditProfile = hash === '#edit-profile';
   const isHistoryOrders = hash === '#order-history';
   const isActiveOrders = hash === '#active-orders';
 
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || isEditProfile || isHistoryOrders || isActiveOrders) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || isAdminOrders || isEditProfile || isHistoryOrders || isActiveOrders) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
   document.getElementById('adminMessagesPageView').style.display = isAdminMessages ? 'block' : 'none';
+  document.getElementById('adminOrdersPageView').style.display = isAdminOrders ? 'block' : 'none';
   document.getElementById('editProfilePageView').style.display = isEditProfile ? 'block' : 'none';
   document.getElementById('historyOrdersPageView').style.display = isHistoryOrders ? 'block' : 'none';
   document.getElementById('activeOrdersPageView').style.display = isActiveOrders ? 'block' : 'none';
@@ -2006,6 +2040,14 @@ function renderRoute() {
   if (isMessages) renderMessagesPage();
   if (isNotifications) renderNotifPage();
   if (isAdminMessages) renderAdminMessagesPage();
+  if (isAdminOrders) {
+    if (!state.profile?.is_admin) { location.hash = ''; }
+    else { document.getElementById('adminOrdersPageSlot').appendChild(document.getElementById('adminOrdersPanel')); loadAdminOrders(); }
+  } else {
+    // 離開這個分頁時，把面板放回管理後台彈窗裡原本的位置
+    const tab = document.getElementById('adminOrdersTab');
+    if (tab && !tab.contains(document.getElementById('adminOrdersPanel'))) tab.appendChild(document.getElementById('adminOrdersPanel'));
+  }
   if (isEditProfile) { if (!state.user) { location.hash = ''; } else { populateEditProfileFields(); } }
   if (isHistoryOrders) loadHistoryOrders(state.historyRange, 'historyOrdersPageList');
   if (isActiveOrders) loadActiveOrders('activeOrdersPageList');
@@ -2023,6 +2065,11 @@ document.getElementById('messagesPageBackBtn').addEventListener('click', () => {
 document.getElementById('notifPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('adminMessagesPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('editProfilePageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('adminOrdersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('openAdminOrdersPageBtn').addEventListener('click', () => {
+  document.getElementById('adminOverlay').classList.remove('open');
+  location.hash = '#admin-orders';
+});
 
 /* ============================================================
    收藏（愛心）
@@ -2914,7 +2961,7 @@ function adminItemMatchesFilters(it) {
 async function loadAdminOrders() {
   const { data, error } = await sb
     .from('orders')
-    .select('id, total_ntd, deposit_ntd, created_at, user_id, admin_read, admin_tag, order_items(*, products(country))')
+    .select('id, total_ntd, deposit_ntd, created_at, user_id, order_items(*, products(country))')
     .order('created_at', { ascending: false });
   const list = document.getElementById('adminOrdersList');
   const countEl = document.getElementById('adminOrdersCount');
@@ -2930,14 +2977,8 @@ async function loadAdminOrders() {
   const totalItemCount = (data || []).reduce((s, o) => s + (o.order_items || []).length, 0);
   countEl.textContent = `共 ${data.length} 筆訂單，${totalItemCount} 項商品明細`;
 
-  const tagFiltered = (data || []).filter(o => {
-    if (state.adminOrderTagFilter === 'all') return o.admin_tag !== 'spam';
-    if (state.adminOrderTagFilter === 'unread') return !o.admin_read;
-    return o.admin_tag === state.adminOrderTagFilter;
-  });
-
   // 依狀態/產地篩選出每張訂單裡「符合條件」的明細；訂單底下一項都不符合就整張隱藏
-  const rows = tagFiltered.map(o => ({ ...o, matchedItems: (o.order_items || []).filter(adminItemMatchesFilters) }))
+  const rows = (data || []).map(o => ({ ...o, matchedItems: (o.order_items || []).filter(adminItemMatchesFilters) }))
     .filter(o => o.matchedItems.length > 0);
 
   if (rows.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的訂單。</p>'; renderAdminOrdersBatchBar(); return; }
@@ -2945,7 +2986,7 @@ async function loadAdminOrders() {
   list.innerHTML = rows.map(o => {
     const hasAwaitingPayment = (o.order_items || []).some(it => it.state === 'awaiting_payment');
     return `
-    <div class="order-row ${o.admin_read ? '' : 'unread-row'}">
+    <div class="order-row">
       <div class="order-row-top">
         <span class="order-id">訂單 #${o.id}　${nameMap[o.user_id] || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
         ${hasAwaitingPayment ? `<button class="btn btn-primary btn-sm" data-confirm-payment-order="${o.id}">確認整筆訂單已付款</button>` : ''}
@@ -2953,15 +2994,6 @@ async function loadAdminOrders() {
       <div class="order-total"><span>訂金</span><span>${ntd(o.deposit_ntd)}</span></div>
       <div class="order-total"><span>總額</span><span>${ntd(o.total_ntd)}</span></div>
       ${o.matchedItems.map(it => renderAdminItemRow(it)).join('')}
-      <div class="order-admin-actions" style="flex-wrap:wrap; border-top:1px solid var(--line); padding-top:10px; margin-top:10px;">
-        <button class="btn btn-outline btn-sm" data-toggle-read-order="${o.id}" data-current-read="${o.admin_read}">${o.admin_read ? '標記未讀' : '標記已讀'}</button>
-        <select class="tag-select" data-tag-order="${o.id}">
-          <option value="" ${!o.admin_tag ? 'selected' : ''}>不分類</option>
-          <option value="future" ${o.admin_tag === 'future' ? 'selected' : ''}>未來可做方案</option>
-          <option value="watch" ${o.admin_tag === 'watch' ? 'selected' : ''}>再觀察</option>
-          <option value="spam" ${o.admin_tag === 'spam' ? 'selected' : ''}>垃圾訊息</option>
-        </select>
-      </div>
     </div>
   `;
   }).join('');
@@ -2975,18 +3007,6 @@ async function loadAdminOrders() {
       const { error } = await sb.rpc('admin_confirm_payment_order', { p_order_id: btn.dataset.confirmPaymentOrder });
       if (error) { toast('操作失敗：' + error.message); return; }
       toast('已確認付款'); loadAdminOrders();
-    });
-  });
-  list.querySelectorAll('[data-toggle-read-order]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      await sb.from('orders').update({ admin_read: btn.dataset.currentRead !== 'true' }).eq('id', btn.dataset.toggleReadOrder);
-      loadAdminOrders();
-    });
-  });
-  list.querySelectorAll('[data-tag-order]').forEach(sel => {
-    sel.addEventListener('change', async () => {
-      await sb.from('orders').update({ admin_tag: sel.value || null }).eq('id', sel.dataset.tagOrder);
-      loadAdminOrders();
     });
   });
 }
@@ -3157,14 +3177,6 @@ document.querySelectorAll('[data-order-country-filter]').forEach(btn => {
     document.querySelectorAll('[data-order-country-filter]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.adminOrderCountryFilter = btn.dataset.orderCountryFilter;
-    loadAdminOrders();
-  });
-});
-document.querySelectorAll('[data-order-tag-filter]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-order-tag-filter]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.adminOrderTagFilter = btn.dataset.orderTagFilter;
     loadAdminOrders();
   });
 });
@@ -3507,43 +3519,101 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
   setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
 });
 
-async function loadAdminDemand() {
-  const { data, error } = await sb
-    .from('order_items')
-    .select('product_id, product_name, variant_color, variant_size, quantity, orders(status)');
-  const list = document.getElementById('adminDemandList');
-  if (error) { list.innerHTML = '<p>讀取需求統計失敗</p>'; console.error(error); return; }
-
-  // 排除已取消的訂單(目前雖然還沒有取消功能,先寫好邏輯備用)
-  const validItems = (data || []).filter(it => !it.orders || it.orders.status !== 'cancelled');
-
+function buildDemandGroups(items) {
+  // 回傳 { productKey: { total, combo:{}, colors:{}, sizes:{} } }
   const groups = {};
-  validItems.forEach(it => {
+  items.forEach(it => {
     const key = it.product_name || `商品#${it.product_id}`;
-    if (!groups[key]) groups[key] = { total: 0, variants: {} };
+    if (!groups[key]) groups[key] = { total: 0, combo: {}, colors: {}, sizes: {} };
     groups[key].total += it.quantity;
-    const variantKey = [it.variant_color, it.variant_size].filter(Boolean).join(' ') || '（無款式）';
-    groups[key].variants[variantKey] = (groups[key].variants[variantKey] || 0) + it.quantity;
+    const comboKey = [it.variant_color, it.variant_size].filter(Boolean).join(' / ') || '（無款式）';
+    groups[key].combo[comboKey] = (groups[key].combo[comboKey] || 0) + it.quantity;
+    if (it.variant_color) groups[key].colors[it.variant_color] = (groups[key].colors[it.variant_color] || 0) + it.quantity;
+    if (it.variant_size) groups[key].sizes[it.variant_size] = (groups[key].sizes[it.variant_size] || 0) + it.quantity;
   });
+  return groups;
+}
 
+function renderDemandGroups(groups, mode) {
   const keys = Object.keys(groups).sort((a, b) => groups[b].total - groups[a].total);
-  if (keys.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有訂單資料。</p>'; return; }
+  if (keys.length === 0) return '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的商品。</p>';
 
-  list.innerHTML = keys.map(name => {
+  return keys.map(name => {
     const g = groups[name];
-    const variantRows = Object.keys(g.variants).sort((a, b) => g.variants[b] - g.variants[a])
-      .map(vk => `<div class="demand-row"><span>${vk}</span><span>${g.variants[vk]} 件</span></div>`).join('');
+    let body = '';
+    if (mode === 'combo') {
+      body = Object.keys(g.combo).sort((a, b) => g.combo[b] - g.combo[a])
+        .map(k => `<div class="demand-row"><span>${k}</span><span>${g.combo[k]} 件</span></div>`).join('');
+    } else {
+      const colorKeys = Object.keys(g.colors), sizeKeys = Object.keys(g.sizes);
+      if (colorKeys.length) {
+        body += `<div style="font-size:11px; color:var(--ink-soft); margin:8px 0 2px;">依顏色</div>`;
+        body += colorKeys.sort((a, b) => g.colors[b] - g.colors[a]).map(k => `<div class="demand-row"><span>${k}</span><span>${g.colors[k]} 件</span></div>`).join('');
+      }
+      if (sizeKeys.length) {
+        body += `<div style="font-size:11px; color:var(--ink-soft); margin:8px 0 2px;">依尺寸</div>`;
+        body += sizeKeys.sort((a, b) => g.sizes[b] - g.sizes[a]).map(k => `<div class="demand-row"><span>${k}</span><span>${g.sizes[k]} 件</span></div>`).join('');
+      }
+      if (!colorKeys.length && !sizeKeys.length) {
+        body = `<div class="demand-row"><span>（無款式）</span><span>${g.total} 件</span></div>`;
+      }
+    }
     return `
       <div class="demand-group">
         <div class="demand-group-top">
           <span class="demand-group-name">${name}</span>
           <span class="demand-group-total">共 ${g.total} 件</span>
         </div>
-        ${variantRows}
+        ${body}
       </div>
     `;
   }).join('');
 }
+
+const DEMAND_EXCLUDED_STATES = ['refunded_full', 'refunded_partial', 'abandoned_no_refund'];
+
+async function loadAdminDemand() {
+  const { data, error } = await sb
+    .from('order_items')
+    .select('product_id, product_name, variant_color, variant_size, quantity, state, products(country, category)');
+
+  const lockedList = document.getElementById('demandLockedList');
+  const paidPendingList = document.getElementById('demandPaidPendingList');
+  const allList = document.getElementById('adminDemandList');
+  if (error) { allList.innerHTML = '<p>讀取需求統計失敗</p>'; console.error(error); return; }
+
+  const matchesFilter = (it) => {
+    if (state.demandCountryFilter !== 'all' && (it.products?.country || '') !== state.demandCountryFilter) return false;
+    if (state.demandCategoryFilter !== 'all' && (it.products?.category || '') !== state.demandCategoryFilter) return false;
+    return true;
+  };
+
+  const filtered = (data || []).filter(matchesFilter);
+  const lockedItems = filtered.filter(it => it.state === 'locked_sourcing');
+  const paidPendingItems = filtered.filter(it => it.state === 'paid_pending');
+  const validItems = filtered.filter(it => !DEMAND_EXCLUDED_STATES.includes(it.state));
+
+  lockedList.innerHTML = renderDemandGroups(buildDemandGroups(lockedItems), 'combo');
+  paidPendingList.innerHTML = renderDemandGroups(buildDemandGroups(paidPendingItems), 'combo');
+  allList.innerHTML = renderDemandGroups(buildDemandGroups(validItems), 'separated');
+}
+
+document.querySelectorAll('[data-demand-country-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-demand-country-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.demandCountryFilter = btn.dataset.demandCountryFilter;
+    loadAdminDemand();
+  });
+});
+document.querySelectorAll('[data-demand-category-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-demand-category-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.demandCategoryFilter = btn.dataset.demandCategoryFilter;
+    loadAdminDemand();
+  });
+});
 
 /* ============================================================
    許願專區
