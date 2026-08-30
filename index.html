@@ -281,7 +281,7 @@
   .order-items-list div { padding: 2px 0; }
   .order-total { font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; }
   .order-admin-actions { margin-top: 10px; display: flex; gap: 8px; }
-  .admin-tabs { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .admin-tabs { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
   .admin-tab {
     background: none; border: none; padding: 10px 4px; font-size: 14px; color: var(--ink-soft);
     border-bottom: 2px solid transparent;
@@ -453,6 +453,15 @@
   .notif-row { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
   .notif-row.unread { background: var(--bg-raised); border-left: 3px solid var(--brass); }
   .notif-time { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
+  .notif-row.notif-rich { display: flex; gap: 12px; align-items: flex-start; }
+  .notif-thumb { width: 48px; height: 48px; border-radius: var(--radius); object-fit: cover; flex-shrink: 0; background: #E4DCC9; }
+  .notif-thumb-empty { background: #E4DCC9; }
+  .notif-rich-body { flex: 1; min-width: 0; }
+  .notif-rich-top { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; margin-bottom: 3px; }
+  .notif-order-no { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--brass-dark); }
+  .notif-product-name { font-weight: 700; font-size: 13px; color: var(--ink); }
+  .notif-rich-msg { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+  .notif-rich-amounts { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
 
   .gallery-thumbs { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   .gallery-thumb { width: 52px; height: 62px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer; }
@@ -782,6 +791,41 @@
   <div id="adminOrdersPageSlot"></div>
 </div>
 
+<!-- ============ 許願管理 全頁畫面 ============ -->
+<div id="adminWishlistPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminWishlistPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">許願管理</h2>
+  <div id="adminWishlistPageSlot"></div>
+</div>
+
+<!-- ============ 商品管理 全頁畫面 ============ -->
+<div id="adminProductsPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminProductsPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">商品管理</h2>
+  <div id="adminProductsPageSlot"></div>
+</div>
+
+<!-- ============ 採購總計 全頁畫面 ============ -->
+<div id="adminDemandLockedPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminDemandLockedPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">採購總計</h2>
+  <div id="adminDemandLockedPageSlot"></div>
+</div>
+
+<!-- ============ 待鎖需求 全頁畫面 ============ -->
+<div id="adminDemandPendingPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminDemandPendingPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">待鎖需求</h2>
+  <div id="adminDemandPendingPageSlot"></div>
+</div>
+
+<!-- ============ 全店需求總覽 全頁畫面 ============ -->
+<div id="adminDemandAllPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminDemandAllPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">全店需求總覽</h2>
+  <div id="adminDemandAllPageSlot"></div>
+</div>
+
 <!-- ============ 通知 全頁畫面 ============ -->
 <div id="notificationsPageView" class="wrap section" style="display:none;">
 
@@ -1081,7 +1125,9 @@
       <button class="admin-tab" data-admin-tab="wishlist">許願管理</button>
       <button class="admin-tab" data-admin-tab="chat">客服訊息</button>
       <button class="admin-tab" data-admin-tab="products">商品管理</button>
-      <button class="admin-tab" data-admin-tab="demand">需求統計</button>
+      <button class="admin-tab" data-admin-tab="demandLocked">採購總計</button>
+      <button class="admin-tab" data-admin-tab="demandPending">待鎖需求</button>
+      <button class="admin-tab" data-admin-tab="demandAll">全店需求總覽</button>
     </div>
 
     <div id="adminOrdersTab">
@@ -1122,14 +1168,20 @@
     </div>
 
     <div id="adminWishlistTab" style="display:none">
-      <div class="filter-group" id="wishTagFilters" style="margin-bottom:14px;">
-        <button class="chip active" data-wish-tag-filter="all">全部（不含垃圾訊息）</button>
-        <button class="chip" data-wish-tag-filter="unread">未讀</button>
-        <button class="chip" data-wish-tag-filter="future">未來可做方案</button>
-        <button class="chip" data-wish-tag-filter="watch">再觀察</button>
-        <button class="chip" data-wish-tag-filter="spam">垃圾訊息</button>
+      <div id="adminWishlistPanel">
+        <div class="admin-panel-actions">
+          <span class="filter-label"></span>
+          <button class="btn btn-outline btn-sm" id="openAdminWishlistPageBtn">在獨立頁面開啟 ↗</button>
+        </div>
+        <div class="filter-group" id="wishTagFilters" style="margin-bottom:14px;">
+          <button class="chip active" data-wish-tag-filter="all">全部（不含垃圾訊息）</button>
+          <button class="chip" data-wish-tag-filter="unread">未讀</button>
+          <button class="chip" data-wish-tag-filter="future">未來可做方案</button>
+          <button class="chip" data-wish-tag-filter="watch">再觀察</button>
+          <button class="chip" data-wish-tag-filter="spam">垃圾訊息</button>
+        </div>
+        <div id="adminWishlistList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
-      <div id="adminWishlistList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
     </div>
 
     <div id="adminChatTab" style="display:none">
@@ -1138,42 +1190,93 @@
     </div>
 
     <div id="adminProductsTab" style="display:none">
-      <div class="admin-panel-actions">
-        <span class="filter-label" id="adminProductsCount"></span>
-        <button class="btn btn-primary btn-sm" id="newProductBtn">+ 新增商品</button>
+      <div id="adminProductsPanel">
+        <div class="admin-panel-actions">
+          <span class="filter-label" id="adminProductsCount"></span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline btn-sm" id="openAdminProductsPageBtn">在獨立頁面開啟 ↗</button>
+            <button class="btn btn-primary btn-sm" id="newProductBtn">+ 新增商品</button>
+          </div>
+        </div>
+        <div id="adminProductsList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
-      <div id="adminProductsList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
     </div>
 
-    <div id="adminDemandTab" style="display:none">
-      <div class="filter-group" id="demandCountryFilters" style="margin-bottom:10px;">
-        <span class="filter-label">產地</span>
-        <button class="chip active" data-demand-country-filter="all">全部</button>
-        <button class="chip" data-demand-country-filter="vietnam">越南</button>
-        <button class="chip" data-demand-country-filter="japan">日本</button>
-        <button class="chip" data-demand-country-filter="korea">韓國</button>
-      </div>
-      <div class="filter-group" id="demandCategoryFilters" style="margin-bottom:18px; flex-wrap:wrap;">
-        <span class="filter-label">種類</span>
-        <button class="chip active" data-demand-category-filter="all">全部</button>
-        <button class="chip" data-demand-category-filter="男裝">男裝</button>
-        <button class="chip" data-demand-category-filter="女裝">女裝</button>
-        <button class="chip" data-demand-category-filter="飾品">飾品</button>
-        <button class="chip" data-demand-category-filter="零食">零食</button>
-      </div>
-
-      <div style="max-height:420px; overflow-y:auto; padding-right:4px;">
-        <h3 class="ep-section-title">已付款，已鎖單（本趟確定要採買）</h3>
+    <div id="adminDemandLockedTab" style="display:none">
+      <div id="adminDemandLockedPanel">
+        <div class="admin-panel-actions">
+          <span class="filter-label">採購總計 — 已付款，已鎖單（本趟確定要採買）</span>
+          <button class="btn btn-outline btn-sm" id="openAdminDemandLockedPageBtn">在獨立頁面開啟 ↗</button>
+        </div>
         <p class="sub" style="margin-bottom:10px;">依完整款式（顏色+尺寸）統計，出國採買時直接對照即可。</p>
-        <div id="demandLockedList" style="margin-bottom:30px;"></div>
+        <div class="filter-group" id="demandLockedCountryFilters" style="margin-bottom:10px;">
+          <span class="filter-label">產地</span>
+          <button class="chip active" data-demand-locked-country-filter="all">全部</button>
+          <button class="chip" data-demand-locked-country-filter="vietnam">越南</button>
+          <button class="chip" data-demand-locked-country-filter="japan">日本</button>
+          <button class="chip" data-demand-locked-country-filter="korea">韓國</button>
+        </div>
+        <div class="filter-group" id="demandLockedCategoryFilters" style="margin-bottom:14px; flex-wrap:wrap;">
+          <span class="filter-label">種類</span>
+          <button class="chip active" data-demand-locked-category-filter="all">全部</button>
+          <button class="chip" data-demand-locked-category-filter="男裝">男裝</button>
+          <button class="chip" data-demand-locked-category-filter="女裝">女裝</button>
+          <button class="chip" data-demand-locked-category-filter="飾品">飾品</button>
+          <button class="chip" data-demand-locked-category-filter="零食">零食</button>
+        </div>
+        <div id="demandLockedList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+      </div>
+    </div>
 
-        <h3 class="ep-section-title">已付款，尚未鎖單</h3>
+    <div id="adminDemandPendingTab" style="display:none">
+      <div id="adminDemandPendingPanel">
+        <div class="admin-panel-actions">
+          <span class="filter-label">待鎖需求 — 已付款，尚未鎖單</span>
+          <button class="btn btn-outline btn-sm" id="openAdminDemandPendingPageBtn">在獨立頁面開啟 ↗</button>
+        </div>
         <p class="sub" style="margin-bottom:10px;">同樣依完整款式統計，這批還沒正式鎖定，僅供預先掌握。</p>
-        <div id="demandPaidPendingList" style="margin-bottom:30px;"></div>
+        <div class="filter-group" id="demandPendingCountryFilters" style="margin-bottom:10px;">
+          <span class="filter-label">產地</span>
+          <button class="chip active" data-demand-pending-country-filter="all">全部</button>
+          <button class="chip" data-demand-pending-country-filter="vietnam">越南</button>
+          <button class="chip" data-demand-pending-country-filter="japan">日本</button>
+          <button class="chip" data-demand-pending-country-filter="korea">韓國</button>
+        </div>
+        <div class="filter-group" id="demandPendingCategoryFilters" style="margin-bottom:14px; flex-wrap:wrap;">
+          <span class="filter-label">種類</span>
+          <button class="chip active" data-demand-pending-category-filter="all">全部</button>
+          <button class="chip" data-demand-pending-category-filter="男裝">男裝</button>
+          <button class="chip" data-demand-pending-category-filter="女裝">女裝</button>
+          <button class="chip" data-demand-pending-category-filter="飾品">飾品</button>
+          <button class="chip" data-demand-pending-category-filter="零食">零食</button>
+        </div>
+        <div id="demandPendingList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+      </div>
+    </div>
 
-        <h3 class="ep-section-title">所有已成立訂單總覽（不含已取消/已退款）</h3>
+    <div id="adminDemandAllTab" style="display:none">
+      <div id="adminDemandAllPanel">
+        <div class="admin-panel-actions">
+          <span class="filter-label">全店需求總覽（不含已取消/已退款）</span>
+          <button class="btn btn-outline btn-sm" id="openAdminDemandAllPageBtn">在獨立頁面開啟 ↗</button>
+        </div>
         <p class="sub" style="margin-bottom:10px;">分開統計顏色與尺寸的總量，方便你決定下趟該多進哪些商品/顏色/尺寸。</p>
-        <div id="adminDemandList"></div>
+        <div class="filter-group" id="demandAllCountryFilters" style="margin-bottom:10px;">
+          <span class="filter-label">產地</span>
+          <button class="chip active" data-demand-all-country-filter="all">全部</button>
+          <button class="chip" data-demand-all-country-filter="vietnam">越南</button>
+          <button class="chip" data-demand-all-country-filter="japan">日本</button>
+          <button class="chip" data-demand-all-country-filter="korea">韓國</button>
+        </div>
+        <div class="filter-group" id="demandAllCategoryFilters" style="margin-bottom:14px; flex-wrap:wrap;">
+          <span class="filter-label">種類</span>
+          <button class="chip active" data-demand-all-category-filter="all">全部</button>
+          <button class="chip" data-demand-all-category-filter="男裝">男裝</button>
+          <button class="chip" data-demand-all-category-filter="女裝">女裝</button>
+          <button class="chip" data-demand-all-category-filter="飾品">飾品</button>
+          <button class="chip" data-demand-all-category-filter="零食">零食</button>
+        </div>
+        <div id="demandAllList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
   </div>
@@ -1262,7 +1365,7 @@
       <h3 style="margin:0;">通知</h3>
       <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm" style="flex-shrink:0;">展開完整畫面</button>
     </div>
-    <div id="notifList"></div>
+    <div id="notifList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
   </div>
 </div>
 
@@ -1364,8 +1467,12 @@ const state = {
   adminOrderCountryFilter: 'all',
   adminOrderSelectedItems: new Set(),
   adminOrderBatchState: null,
-  demandCountryFilter: 'all',
-  demandCategoryFilter: 'all',
+  demandLockedCountry: 'all',
+  demandLockedCategory: 'all',
+  demandPendingCountry: 'all',
+  demandPendingCategory: 'all',
+  demandAllCountry: 'all',
+  demandAllCategory: 'all',
   highlightOrderId: null,
   historyRange: 'all',
   wishTagFilter: 'all',
@@ -1998,12 +2105,45 @@ async function loadNotifications(targetListId = 'notifList') {
   if (error) { list.innerHTML = '<p>讀取通知失敗</p>'; return; }
   if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有通知。</p>'; }
   else {
-    list.innerHTML = data.map(n => `
-      <div class="notif-row ${n.is_read ? '' : 'unread'} ${n.order_id ? 'notif-clickable' : ''}" ${n.order_id ? `data-notif-order="${n.order_id}"` : ''}>
-        <div>${n.content}</div>
-        <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-Hant-TW')}</div>
-      </div>
-    `).join('');
+    const orderIds = [...new Set(data.filter(n => n.order_id).map(n => n.order_id))];
+    const itemIds = [...new Set(data.filter(n => n.order_item_id).map(n => n.order_item_id))];
+    const orderMap = {}, itemMap = {};
+    if (orderIds.length) {
+      const { data: orders } = await sb.from('orders').select('id, order_no, total_ntd, deposit_ntd').in('id', orderIds);
+      (orders || []).forEach(o => { orderMap[o.id] = o; });
+    }
+    if (itemIds.length) {
+      const { data: items } = await sb.from('order_items').select('id, product_name, products(image_url)').in('id', itemIds);
+      (items || []).forEach(it => { itemMap[it.id] = it; });
+    }
+
+    list.innerHTML = data.map(n => {
+      const order = n.order_id ? orderMap[n.order_id] : null;
+      const item = n.order_item_id ? itemMap[n.order_item_id] : null;
+      if (!order && !item) {
+        return `
+          <div class="notif-row ${n.is_read ? '' : 'unread'}">
+            <div>${n.content}</div>
+            <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-Hant-TW')}</div>
+          </div>
+        `;
+      }
+      return `
+        <div class="notif-row notif-rich ${n.is_read ? '' : 'unread'} ${order ? 'notif-clickable' : ''}" ${order ? `data-notif-order="${order.id}"` : ''}>
+          ${item?.products?.image_url ? `<img src="${item.products.image_url}" class="notif-thumb" alt="">` : '<div class="notif-thumb notif-thumb-empty"></div>'}
+          <div class="notif-rich-body">
+            <div class="notif-rich-top">
+              ${order ? `<span class="notif-order-no">${order.order_no}</span>` : ''}
+              ${item ? `<span class="notif-product-name">${item.product_name}</span>` : ''}
+            </div>
+            <div class="notif-rich-msg">${n.content}</div>
+            ${order ? `<div class="notif-rich-amounts">已付訂金 ${ntd(order.deposit_ntd)}　／　訂單總額 ${ntd(order.total_ntd)}</div>` : ''}
+            <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-Hant-TW')}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
     list.querySelectorAll('[data-notif-order]').forEach(row => {
       row.addEventListener('click', () => {
         document.getElementById('notifOverlay').classList.remove('open');
@@ -2031,26 +2171,52 @@ async function updateNotifBadge() {
    用網址的 # 標記切換要顯示哪個畫面，同一個index.html內完成，
    不用另外開分頁、也不是彈出視窗。
    ============================================================ */
+const ADMIN_PANEL_PAGES = {
+  '#admin-orders': { panel: 'adminOrdersPanel', tab: 'adminOrdersTab', slot: 'adminOrdersPageSlot', view: 'adminOrdersPageView', backBtn: 'adminOrdersPageBackBtn', openBtn: 'openAdminOrdersPageBtn', load: () => loadAdminOrders() },
+  '#admin-wishlist': { panel: 'adminWishlistPanel', tab: 'adminWishlistTab', slot: 'adminWishlistPageSlot', view: 'adminWishlistPageView', backBtn: 'adminWishlistPageBackBtn', openBtn: 'openAdminWishlistPageBtn', load: () => loadAdminWishlist() },
+  '#admin-products': { panel: 'adminProductsPanel', tab: 'adminProductsTab', slot: 'adminProductsPageSlot', view: 'adminProductsPageView', backBtn: 'adminProductsPageBackBtn', openBtn: 'openAdminProductsPageBtn', load: () => loadAdminProducts() },
+  '#admin-demand-locked': { panel: 'adminDemandLockedPanel', tab: 'adminDemandLockedTab', slot: 'adminDemandLockedPageSlot', view: 'adminDemandLockedPageView', backBtn: 'adminDemandLockedPageBackBtn', openBtn: 'openAdminDemandLockedPageBtn', load: () => loadDemandLocked() },
+  '#admin-demand-pending': { panel: 'adminDemandPendingPanel', tab: 'adminDemandPendingTab', slot: 'adminDemandPendingPageSlot', view: 'adminDemandPendingPageView', backBtn: 'adminDemandPendingPageBackBtn', openBtn: 'openAdminDemandPendingPageBtn', load: () => loadDemandPending() },
+  '#admin-demand-all': { panel: 'adminDemandAllPanel', tab: 'adminDemandAllTab', slot: 'adminDemandAllPageSlot', view: 'adminDemandAllPageView', backBtn: 'adminDemandAllPageBackBtn', openBtn: 'openAdminDemandAllPageBtn', load: () => loadDemandAll() },
+};
+
 function renderRoute() {
   const hash = location.hash;
   const productMatch = hash.match(/^#product=(\d+)/);
   const isMessages = hash === '#messages';
   const isNotifications = hash === '#notifications';
   const isAdminMessages = hash === '#admin-messages';
-  const isAdminOrders = hash === '#admin-orders';
   const isEditProfile = hash === '#edit-profile';
   const isHistoryOrders = hash === '#order-history';
   const isActiveOrders = hash === '#active-orders';
+  const adminPage = ADMIN_PANEL_PAGES[hash];
 
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || isAdminOrders || isEditProfile || isHistoryOrders || isActiveOrders) ? 'none' : 'block';
+  const anyAdminPageOpen = !!adminPage;
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
   document.getElementById('adminMessagesPageView').style.display = isAdminMessages ? 'block' : 'none';
-  document.getElementById('adminOrdersPageView').style.display = isAdminOrders ? 'block' : 'none';
   document.getElementById('editProfilePageView').style.display = isEditProfile ? 'block' : 'none';
   document.getElementById('historyOrdersPageView').style.display = isHistoryOrders ? 'block' : 'none';
   document.getElementById('activeOrdersPageView').style.display = isActiveOrders ? 'block' : 'none';
+
+  // 六個「管理後台專屬頁面」共用同一套邏輯：符合目前網址的那個顯示 + 面板移過去 + 載入資料；
+  // 其餘的一律隱藏，面板放回管理後台彈窗裡原本的分頁位置。
+  Object.entries(ADMIN_PANEL_PAGES).forEach(([pageHash, cfg]) => {
+    const viewEl = document.getElementById(cfg.view);
+    if (pageHash === hash) {
+      if (!state.profile?.is_admin) { location.hash = ''; return; }
+      viewEl.style.display = 'block';
+      document.getElementById(cfg.slot).appendChild(document.getElementById(cfg.panel));
+      cfg.load();
+    } else {
+      viewEl.style.display = 'none';
+      const tab = document.getElementById(cfg.tab);
+      const panel = document.getElementById(cfg.panel);
+      if (tab && panel && !tab.contains(panel)) tab.appendChild(panel);
+    }
+  });
 
   window.scrollTo(0, 0);
 
@@ -2058,14 +2224,6 @@ function renderRoute() {
   if (isMessages) renderMessagesPage();
   if (isNotifications) renderNotifPage();
   if (isAdminMessages) renderAdminMessagesPage();
-  if (isAdminOrders) {
-    if (!state.profile?.is_admin) { location.hash = ''; }
-    else { document.getElementById('adminOrdersPageSlot').appendChild(document.getElementById('adminOrdersPanel')); loadAdminOrders(); }
-  } else {
-    // 離開這個分頁時，把面板放回管理後台彈窗裡原本的位置
-    const tab = document.getElementById('adminOrdersTab');
-    if (tab && !tab.contains(document.getElementById('adminOrdersPanel'))) tab.appendChild(document.getElementById('adminOrdersPanel'));
-  }
   if (isEditProfile) { if (!state.user) { location.hash = ''; } else { populateEditProfileFields(); } }
   if (isHistoryOrders) loadHistoryOrders(state.historyRange, 'historyOrdersPageList');
   if (isActiveOrders) loadActiveOrders('activeOrdersPageList');
@@ -2083,10 +2241,16 @@ document.getElementById('messagesPageBackBtn').addEventListener('click', () => {
 document.getElementById('notifPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('adminMessagesPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('editProfilePageBackBtn').addEventListener('click', () => { location.hash = ''; });
-document.getElementById('adminOrdersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
-document.getElementById('openAdminOrdersPageBtn').addEventListener('click', () => {
-  document.getElementById('adminOverlay').classList.remove('open');
-  location.hash = '#admin-orders';
+Object.values(ADMIN_PANEL_PAGES).forEach(cfg => {
+  const backBtn = document.getElementById(cfg.backBtn);
+  if (backBtn) backBtn.addEventListener('click', () => { location.hash = ''; });
+  const openBtn = document.getElementById(cfg.openBtn);
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      document.getElementById('adminOverlay').classList.remove('open');
+      location.hash = Object.keys(ADMIN_PANEL_PAGES).find(h => ADMIN_PANEL_PAGES[h] === cfg);
+    });
+  }
 });
 
 /* ============================================================
@@ -2647,7 +2811,7 @@ function renderOrderItemsGrouped(orders) {
   return orders.map(o => `
     <div class="order-row" id="order-${o.id}">
       <div class="order-row-top">
-        <span class="order-id">訂單 #${o.id}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        <span class="order-id">訂單 ${o.order_no || ('#' + o.id)}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
       </div>
       ${(o.order_items || []).map(it => renderSingleItemRow(it)).join('')}
     </div>
@@ -2719,7 +2883,7 @@ function rangeToDate(range) {
 /* ---------- 歷史訂單（僅終點狀態：已完成/已退款結案/不退款結案），可依日期範圍篩選 ---------- */
 async function loadHistoryOrders(range, targetListId) {
   if (!state.user) return;
-  let query = sb.from('orders').select('id, created_at, order_items!inner(*)')
+  let query = sb.from('orders').select('id, order_no, created_at, order_items!inner(*)')
     .eq('user_id', state.user.id).in('order_items.state', TERMINAL_STATES).order('created_at', { ascending: false });
   const fromDate = rangeToDate(range);
   if (fromDate) query = query.gte('created_at', fromDate.toISOString());
@@ -2734,7 +2898,7 @@ async function loadHistoryOrders(range, targetListId) {
 /* ---------- 進行中訂單（尚未走到終點的所有明細） ---------- */
 async function loadActiveOrders(targetListId) {
   if (!state.user) return;
-  const { data, error } = await sb.from('orders').select('id, created_at, order_items!inner(*)')
+  const { data, error } = await sb.from('orders').select('id, order_no, created_at, order_items!inner(*)')
     .eq('user_id', state.user.id).not('order_items.state', 'in', `(${TERMINAL_STATES.join(',')})`).order('created_at', { ascending: false });
   const list = document.getElementById(targetListId);
   if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; console.error(error); return; }
@@ -2964,11 +3128,15 @@ document.querySelectorAll('[data-admin-tab]').forEach(btn => {
     document.getElementById('adminWishlistTab').style.display = tab === 'wishlist' ? 'block' : 'none';
     document.getElementById('adminChatTab').style.display = tab === 'chat' ? 'block' : 'none';
     document.getElementById('adminProductsTab').style.display = tab === 'products' ? 'block' : 'none';
-    document.getElementById('adminDemandTab').style.display = tab === 'demand' ? 'block' : 'none';
+    document.getElementById('adminDemandLockedTab').style.display = tab === 'demandLocked' ? 'block' : 'none';
+    document.getElementById('adminDemandPendingTab').style.display = tab === 'demandPending' ? 'block' : 'none';
+    document.getElementById('adminDemandAllTab').style.display = tab === 'demandAll' ? 'block' : 'none';
     if (tab === 'wishlist') loadAdminWishlist();
     if (tab === 'chat') loadAdminChatPreview();
     if (tab === 'products') loadAdminProducts();
-    if (tab === 'demand') loadAdminDemand();
+    if (tab === 'demandLocked') loadDemandLocked();
+    if (tab === 'demandPending') loadDemandPending();
+    if (tab === 'demandAll') loadDemandAll();
   });
 });
 
@@ -2990,7 +3158,7 @@ function adminItemMatchesFilters(it) {
 async function loadAdminOrders() {
   const { data, error } = await sb
     .from('orders')
-    .select('id, total_ntd, deposit_ntd, created_at, user_id, order_items(*, products(country))')
+    .select('id, order_no, total_ntd, deposit_ntd, created_at, user_id, order_items(*, products(country))')
     .order('created_at', { ascending: false });
   const list = document.getElementById('adminOrdersList');
   const countEl = document.getElementById('adminOrdersCount');
@@ -3017,7 +3185,7 @@ async function loadAdminOrders() {
     return `
     <div class="order-row">
       <div class="order-row-top">
-        <span class="order-id">訂單 #${o.id}　${nameMap[o.user_id] || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        <span class="order-id">訂單 ${o.order_no || ('#' + o.id)}　${nameMap[o.user_id] || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
         ${hasAwaitingPayment ? `<button class="btn btn-primary btn-sm" data-confirm-payment-order="${o.id}">確認整筆訂單已付款</button>` : ''}
       </div>
       <div class="order-total"><span>訂金</span><span>${ntd(o.deposit_ntd)}</span></div>
@@ -3601,48 +3769,55 @@ function renderDemandGroups(groups, mode) {
 
 const DEMAND_EXCLUDED_STATES = ['refunded_full', 'refunded_partial', 'abandoned_no_refund'];
 
-async function loadAdminDemand() {
+async function loadDemandSection({ countryKey, categoryKey, listId, stateMatch, mode }) {
   const { data, error } = await sb
     .from('order_items')
     .select('product_id, product_name, variant_color, variant_size, quantity, state, products(country, category)');
+  const list = document.getElementById(listId);
+  if (error) { list.innerHTML = '<p>讀取需求統計失敗</p>'; console.error(error); return; }
 
-  const lockedList = document.getElementById('demandLockedList');
-  const paidPendingList = document.getElementById('demandPaidPendingList');
-  const allList = document.getElementById('adminDemandList');
-  if (error) { allList.innerHTML = '<p>讀取需求統計失敗</p>'; console.error(error); return; }
-
-  const matchesFilter = (it) => {
-    if (state.demandCountryFilter !== 'all' && (it.products?.country || '') !== state.demandCountryFilter) return false;
-    if (state.demandCategoryFilter !== 'all' && (it.products?.category || '') !== state.demandCategoryFilter) return false;
-    return true;
+  const countryFilter = state[countryKey], categoryFilter = state[categoryKey];
+  const matches = (it) => {
+    if (countryFilter !== 'all' && (it.products?.country || '') !== countryFilter) return false;
+    if (categoryFilter !== 'all' && (it.products?.category || '') !== categoryFilter) return false;
+    if (stateMatch) return it.state === stateMatch;
+    return !DEMAND_EXCLUDED_STATES.includes(it.state);
   };
 
-  const filtered = (data || []).filter(matchesFilter);
-  const lockedItems = filtered.filter(it => it.state === 'locked_sourcing');
-  const paidPendingItems = filtered.filter(it => it.state === 'paid_pending');
-  const validItems = filtered.filter(it => !DEMAND_EXCLUDED_STATES.includes(it.state));
-
-  lockedList.innerHTML = renderDemandGroups(buildDemandGroups(lockedItems), 'combo');
-  paidPendingList.innerHTML = renderDemandGroups(buildDemandGroups(paidPendingItems), 'combo');
-  allList.innerHTML = renderDemandGroups(buildDemandGroups(validItems), 'separated');
+  list.innerHTML = renderDemandGroups(buildDemandGroups((data || []).filter(matches)), mode);
 }
 
-document.querySelectorAll('[data-demand-country-filter]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-demand-country-filter]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.demandCountryFilter = btn.dataset.demandCountryFilter;
-    loadAdminDemand();
+function loadDemandLocked() {
+  return loadDemandSection({ countryKey: 'demandLockedCountry', categoryKey: 'demandLockedCategory', listId: 'demandLockedList', stateMatch: 'locked_sourcing', mode: 'combo' });
+}
+function loadDemandPending() {
+  return loadDemandSection({ countryKey: 'demandPendingCountry', categoryKey: 'demandPendingCategory', listId: 'demandPendingList', stateMatch: 'paid_pending', mode: 'combo' });
+}
+function loadDemandAll() {
+  return loadDemandSection({ countryKey: 'demandAllCountry', categoryKey: 'demandAllCategory', listId: 'demandAllList', stateMatch: null, mode: 'separated' });
+}
+
+function bindDemandFilterGroup(prefix, countryKey, categoryKey, reload) {
+  document.querySelectorAll(`[data-demand-${prefix}-country-filter]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`[data-demand-${prefix}-country-filter]`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state[countryKey] = btn.dataset[`demand${prefix.charAt(0).toUpperCase() + prefix.slice(1)}CountryFilter`];
+      reload();
+    });
   });
-});
-document.querySelectorAll('[data-demand-category-filter]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-demand-category-filter]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.demandCategoryFilter = btn.dataset.demandCategoryFilter;
-    loadAdminDemand();
+  document.querySelectorAll(`[data-demand-${prefix}-category-filter]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`[data-demand-${prefix}-category-filter]`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state[categoryKey] = btn.dataset[`demand${prefix.charAt(0).toUpperCase() + prefix.slice(1)}CategoryFilter`];
+      reload();
+    });
   });
-});
+}
+bindDemandFilterGroup('locked', 'demandLockedCountry', 'demandLockedCategory', loadDemandLocked);
+bindDemandFilterGroup('pending', 'demandPendingCountry', 'demandPendingCategory', loadDemandPending);
+bindDemandFilterGroup('all', 'demandAllCountry', 'demandAllCategory', loadDemandAll);
 
 /* ============================================================
    許願專區
