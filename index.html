@@ -1207,6 +1207,7 @@
           <button class="chip" data-order-state-filter="paid_pending">已付款(待鎖單)</button>
           <button class="chip" data-order-state-filter="locked_sourcing">已鎖單(待抵台)</button>
           <button class="chip" data-order-state-filter="awaiting_shipping_apply">待出貨</button>
+          <button class="chip" data-order-state-filter="shipway_setup_pending">待建賣貨便單</button>
           <button class="chip" data-order-state-filter="shipped">配送中</button>
           <button class="chip" data-order-state-filter="arrived_store">已到店</button>
           <button class="chip" data-order-state-filter="package_returned">包裹退回</button>
@@ -2926,13 +2927,14 @@ document.getElementById('epAvatarRemoveBtn').addEventListener('click', async () 
 
 const ITEM_STATE_LABEL = {
   awaiting_payment: '待確認付款', paid_pending: '已付款，等待供應', locked_sourcing: '已鎖單，採購備貨中',
-  awaiting_shipping_apply: '商品已抵台，待申請出貨', abandoned_pending_refund: '已申請退款，待審核',
+  awaiting_shipping_apply: '商品已抵台，待申請出貨', shipway_setup_pending: '已申請出貨，賣家準備中',
+  abandoned_pending_refund: '已申請退款，待審核',
   shipped: '已出貨，配送中', arrived_store: '已到店，待取貨', package_returned: '包裹已退回',
   completed: '已完成', refunded_full: '已全額退款結案', refunded_partial: '已部分退款結案', abandoned_no_refund: '不退款結案',
 };
 const ITEM_STATE_COLOR = {
   awaiting_payment: 'order-status-pending', paid_pending: 'order-status-pending', locked_sourcing: 'order-status-locked',
-  awaiting_shipping_apply: 'order-status-locked', abandoned_pending_refund: 'order-status-cancelled',
+  awaiting_shipping_apply: 'order-status-locked', shipway_setup_pending: 'order-status-locked', abandoned_pending_refund: 'order-status-cancelled',
   shipped: 'order-status-locked', arrived_store: 'order-status-locked', package_returned: 'order-status-cancelled',
   completed: 'order-status-fulfilled', refunded_full: 'order-status-fulfilled', refunded_partial: 'order-status-fulfilled', abandoned_no_refund: 'order-status-cancelled',
 };
@@ -2963,12 +2965,12 @@ function renderSingleItemRow(it) {
     actionsHtml = `<button class="btn btn-outline btn-sm" data-abandon-full-refund="${it.id}" style="color:var(--danger); border-color:var(--danger);">申請退款</button>`;
   } else if (it.state === 'locked_sourcing') {
     actionsHtml = `<p class="cart-note">已鎖單，賣家已開始採購備貨，此階段無法申請退款</p>`;
-  } else if (it.state === 'awaiting_shipping_apply' && !it.shipping_apply_requested_at) {
+  } else if (it.state === 'awaiting_shipping_apply') {
     actionsHtml = `
       <button class="btn btn-primary btn-sm" data-apply-shipping="${it.id}">申請出貨</button>
       <button class="btn btn-outline btn-sm" data-abandon-refund="${it.id}">放棄訂單並申請退款</button>
     `;
-  } else if (it.state === 'awaiting_shipping_apply' && it.shipping_apply_requested_at) {
+  } else if (it.state === 'shipway_setup_pending') {
     actionsHtml = `<p class="status-callout">已送出出貨申請，等待賣家提供賣貨便連結，請留意通知。</p>`;
   } else if (it.state === 'shipped') {
     actionsHtml = `
@@ -3353,13 +3355,14 @@ function renderAdminItemRow(it) {
   let actionsHtml = '';
 
   if (it.state === 'awaiting_shipping_apply') {
-    actionsHtml = it.shipping_apply_requested_at
-      ? `
-        <input type="text" class="tag-select" placeholder="物流單號" data-tracking-for="${it.id}" style="width:140px;">
-        <input type="text" class="tag-select" placeholder="賣貨便連結網址" data-link-for="${it.id}" style="width:220px;">
-        <button class="btn btn-primary btn-sm" data-do-ship="${it.id}">確認出貨</button>
-      `
-      : `<p class="cart-note">尚未申請出貨（已通知客戶抵台）</p>`;
+    actionsHtml = `<p class="cart-note">尚未申請出貨（已通知客戶抵台）</p>`;
+  } else if (it.state === 'shipway_setup_pending') {
+    actionsHtml = `
+      <p class="status-callout" style="margin-bottom:8px;">客戶已申請出貨，請至賣貨便平台完成下單，再回來填入單號</p>
+      <input type="text" class="tag-select" placeholder="物流單號" data-tracking-for="${it.id}" style="width:140px;">
+      <input type="text" class="tag-select" placeholder="賣貨便連結網址" data-link-for="${it.id}" style="width:220px;">
+      <button class="btn btn-primary btn-sm" data-do-ship="${it.id}">確認出貨</button>
+    `;
   } else if (it.state === 'shipped') {
     actionsHtml = `<p class="cart-note">物流單號：${it.shipway_tracking_no || '—'}</p><button class="btn btn-outline btn-sm" data-mark-arrived="${it.id}">標記已到店</button>`;
   } else if (it.state === 'arrived_store') {
