@@ -452,7 +452,7 @@
   .chat-file-preview button { border:0; background:transparent; color:var(--danger); font-size:18px; padding:3px 7px; }
   @media (max-width:780px) { .chat-shell { grid-template-columns:1fr; } .chat-shell.show-thread .chat-inbox { display:none; } .chat-shell:not(.show-thread) .chat-thread { display:none; } }
 
-  .admin-chat-preview-list { max-height: 320px; overflow-y: auto; }
+  .admin-chat-preview-list { height: 320px; overflow-y: auto; }
   .admin-chat-preview-row {
     display: block; padding: 10px 12px;
     border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; background: var(--bg);
@@ -481,7 +481,13 @@
   .notif-clickable:hover { background: var(--bg-raised); }
 
   .notif-row { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
-  .notif-row.unread { background: var(--bg-raised); border-left: 3px solid var(--brass); }
+  .notif-row.unread {
+    background: #F0C94A; border-left: 4px solid var(--brass-dark);
+  }
+  .notif-row.unread .notif-time,
+  .notif-row.unread .notif-rich-amounts { color: #5C4A1E; }
+  .notif-rich-msg { font-size: 13px; color: var(--ink-soft); line-height: 1.5; font-weight: 700; }
+  .notif-row.unread .notif-rich-msg { color: var(--ink); }
   .notif-time { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
   .notif-row.notif-rich { display: flex; gap: 12px; align-items: flex-start; }
   .notif-thumb { width: 48px; height: 48px; border-radius: var(--radius); object-fit: cover; flex-shrink: 0; background: #E4DCC9; }
@@ -490,7 +496,6 @@
   .notif-rich-top { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; margin-bottom: 3px; }
   .notif-order-no { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--brass-dark); }
   .notif-product-name { font-weight: 700; font-size: 13px; color: var(--ink); }
-  .notif-rich-msg { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
   .notif-rich-amounts { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
 
   .gallery-thumbs { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
@@ -1206,7 +1211,7 @@
           <button class="btn btn-primary btn-sm" id="adminOrdersBatchActionBtn"></button>
           <button class="btn btn-outline btn-sm" id="adminOrdersBatchClearBtn">清除選取</button>
         </div>
-        <div id="adminOrdersList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="adminOrdersList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1223,7 +1228,7 @@
           <button class="chip" data-wish-tag-filter="watch">再觀察</button>
           <button class="chip" data-wish-tag-filter="spam">垃圾訊息</button>
         </div>
-        <div id="adminWishlistList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="adminWishlistList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1241,7 +1246,7 @@
             <button class="btn btn-primary btn-sm" id="newProductBtn">+ 新增商品</button>
           </div>
         </div>
-        <div id="adminProductsList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="adminProductsList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1267,7 +1272,7 @@
           <button class="chip" data-demand-locked-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-locked-category-filter="零食">零食</button>
         </div>
-        <div id="demandLockedList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="demandLockedList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1293,7 +1298,7 @@
           <button class="chip" data-demand-pending-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-pending-category-filter="零食">零食</button>
         </div>
-        <div id="demandPendingList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="demandPendingList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1319,7 +1324,7 @@
           <button class="chip" data-demand-all-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-all-category-filter="零食">零食</button>
         </div>
-        <div id="demandAllList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="demandAllList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
   </div>
@@ -1379,7 +1384,7 @@
   <div class="modal">
     <button class="modal-close" id="favClose" aria-label="關閉">×</button>
     <h3>我的收藏</h3>
-    <div id="favList"></div>
+    <div id="favList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
   </div>
 </div>
 
@@ -1411,7 +1416,7 @@
         <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm">展開完整畫面</button>
       </div>
     </div>
-    <div id="notifList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
+    <div id="notifList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
   </div>
 </div>
 
@@ -2231,7 +2236,7 @@ async function loadNotifications(targetListId = 'notifList') {
       if (!order && !item) {
         return `
           <div class="notif-row ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}">
-            <div>${n.content}</div>
+            <div class="notif-rich-msg">${n.content}</div>
             <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-Hant-TW')}</div>
           </div>
         `;
