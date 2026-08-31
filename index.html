@@ -186,8 +186,8 @@
   .section-title .count { font-family: var(--font-body); font-size: 13px; color: var(--ink-soft); font-weight: 400; }
 
   .grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 24px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
   }
   .card {
     background: var(--bg-raised); border: 1px solid var(--line);
@@ -197,7 +197,7 @@
   }
   .card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
   .card-image {
-    aspect-ratio: 4 / 5; background: #E4DCC9;
+    aspect-ratio: 1 / 1.1; background: #E4DCC9;
     display: flex; align-items: center; justify-content: center;
     color: var(--khaki-dark); font-size: 12px; position: relative;
     background-size: cover; background-position: center;
@@ -227,6 +227,19 @@
   .card-add:hover { background: var(--ink); color: var(--bg); }
   .card-add:disabled { opacity: 0.4; cursor: not-allowed; }
   .card-add:disabled:hover { background: transparent; color: var(--ink); }
+
+  /* 手機版：固定兩欄，卡片整體再縮小一點，讓一個畫面能看到2~3排商品 */
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .card-body { padding: 10px; gap: 4px; }
+    .card-country { font-size: 10px; }
+    .card-brand { font-size: 11px; }
+    .card-name { font-size: 12.5px; line-height: 1.3; }
+    .price-value { font-size: 14px; }
+    .deposit-note { font-size: 10px; }
+    .card-add { padding: 7px; font-size: 11.5px; margin-top: 6px; }
+    .status-badge { font-size: 10px; padding: 3px 8px; top: 6px; left: 6px; }
+  }
 
   .empty-state {
     text-align: center; padding: 60px 20px; color: var(--ink-soft);
@@ -329,12 +342,27 @@
   .badge-hidden { background: var(--danger); color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
   .prod-admin-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .image-preview {
-    width: 100%; aspect-ratio: 4/5; background: #E4DCC9; border-radius: var(--radius);
-    display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px;
-    color: var(--khaki-dark); font-size: 12px;
+  .product-image-gallery {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px;
   }
-  .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .pig-item {
+    position: relative; aspect-ratio: 1/1.1; border-radius: var(--radius); overflow: hidden;
+    background: #E4DCC9; border: 1px solid var(--line);
+  }
+  .pig-item img { width: 100%; height: 100%; object-fit: cover; }
+  .pig-cover-badge {
+    position: absolute; top: 3px; left: 3px; background: var(--brass); color: #fff;
+    font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 999px;
+  }
+  .pig-actions {
+    position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; gap: 3px;
+    padding: 3px; background: rgba(0,0,0,0.45);
+  }
+  .pig-actions button {
+    background: none; border: none; color: #fff; font-size: 11px; padding: 1px 4px; cursor: pointer; line-height: 1;
+  }
+  .pig-actions button:hover { color: var(--brass); }
+  .pig-empty { grid-column: 1/-1; text-align: center; padding: 20px; color: var(--ink-soft); font-size: 12px; border: 1px dashed var(--line); border-radius: var(--radius); }
 
   /* ============ Product card heart / variants ============ */
   .card-image { position: relative; }
@@ -1377,12 +1405,11 @@
 
     <div class="product-edit-layout">
       <div>
-        <div class="image-preview" id="productImagePreview">尚無圖片</div>
-        <div class="field">
-          <label for="productImageFile">上傳/更換圖片</label>
-          <input type="file" id="productImageFile" accept="image/*">
-          <div class="form-msg" id="productImageMsg"></div>
-        </div>
+        <p class="sub" style="margin-bottom:8px;">商品圖庫（最多25張，第一張為封面圖，會用在商品卡片、通知縮圖等各處預覽）</p>
+        <div id="productImageGallery" class="product-image-gallery"></div>
+        <button type="button" class="btn btn-outline btn-sm" id="productImageAddBtn" style="margin-top:10px; width:100%;">+ 新增圖片（可裁切）</button>
+        <input type="file" id="productImageAddInput" accept="image/*" style="display:none;">
+        <div class="form-msg" id="productImageMsg"></div>
       </div>
 
       <form id="productEditForm">
@@ -1437,6 +1464,27 @@
       <div id="sizeVariantList"></div>
     </div>
     <p id="variantHint" style="display:none; font-size:12px; color:var(--ink-soft); margin-top:16px;"></p>
+  </div>
+</div>
+
+<!-- ============ 圖片裁切工具 ============ -->
+<div class="modal-overlay" id="imageCropOverlay">
+  <div class="modal" style="max-width:540px;">
+    <button class="modal-close" id="imageCropClose" aria-label="關閉">×</button>
+    <h3>裁切圖片</h3>
+    <p class="sub">拖曳框線中央可移動，拖曳右下角可調整選取範圍大小，右側可即時預覽縮圖效果</p>
+    <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; margin-top:14px;">
+      <canvas id="cropCanvas" width="360" height="360" style="border:1px solid var(--line); border-radius:var(--radius); max-width:100%; touch-action:none; cursor:move; background:var(--bg-raised);"></canvas>
+      <div>
+        <p style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">縮圖預覽</p>
+        <canvas id="cropPreviewCanvas" width="110" height="121" style="border:1px solid var(--line); border-radius:var(--radius); background:var(--bg-raised);"></canvas>
+      </div>
+    </div>
+    <div class="form-msg" id="cropMsg"></div>
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button type="button" class="btn btn-outline" id="cropCancelBtn" style="flex:1;">取消</button>
+      <button type="button" class="btn btn-primary" id="cropConfirmBtn" style="flex:1;">確認裁切並上傳</button>
+    </div>
   </div>
 </div>
 
@@ -2116,10 +2164,16 @@ async function loadNotifications(targetListId = 'notifList') {
       const { data: items } = await sb.from('order_items').select('id, product_name, products(image_url)').in('id', itemIds);
       (items || []).forEach(it => { itemMap[it.id] = it; });
     }
+    // 舊資料相容：早期的通知還沒有連結到明確的商品明細，退而求其次抓該訂單的第一項商品來顯示縮圖
+    const fallbackOrderIds = orderIds.filter(oid => data.some(n => n.order_id === oid && !n.order_item_id));
+    if (fallbackOrderIds.length) {
+      const { data: fallbackItems } = await sb.from('order_items').select('order_id, product_name, products(image_url)').in('order_id', fallbackOrderIds);
+      (fallbackItems || []).forEach(it => { if (!orderMap[it.order_id].fallbackItem) orderMap[it.order_id].fallbackItem = it; });
+    }
 
     list.innerHTML = data.map(n => {
       const order = n.order_id ? orderMap[n.order_id] : null;
-      const item = n.order_item_id ? itemMap[n.order_item_id] : null;
+      const item = (n.order_item_id ? itemMap[n.order_item_id] : null) || order?.fallbackItem;
       if (!order && !item) {
         return `
           <div class="notif-row ${n.is_read ? '' : 'unread'}">
@@ -3488,9 +3542,8 @@ async function loadAdminProducts() {
 
 document.getElementById('newProductBtn').addEventListener('click', () => openProductEditor(null));
 
-function openProductEditor(product) {
+async function openProductEditor(product) {
   const title = document.getElementById('productEditTitle');
-  const preview = document.getElementById('productImagePreview');
   document.getElementById('productEditId').value = product ? product.id : '';
   document.getElementById('pfName').value = product ? product.name : '';
   document.getElementById('pfBrand').value = product ? (product.brand || '') : '';
@@ -3501,12 +3554,18 @@ function openProductEditor(product) {
   document.getElementById('pfDeposit').value = product ? product.deposit_ratio : 0.5;
   document.getElementById('pfDesc').value = product ? (product.description || '') : '';
   document.getElementById('pfHidden').checked = product ? !!product.is_hidden : false;
-  document.getElementById('productEditForm').dataset.currentImage = product ? (product.image_url || '') : '';
   document.getElementById('productImageMsg').textContent = '';
   document.getElementById('productEditMsg').textContent = '';
 
   title.textContent = product ? '編輯商品' : '新增商品';
-  preview.innerHTML = product && product.image_url ? `<img src="${product.image_url}" alt="">` : '尚無圖片';
+
+  if (product && product.id) {
+    const { data: images } = await sb.from('product_images').select('image_url').eq('product_id', product.id).order('position');
+    state.productEditImages = (images && images.length) ? images.map(i => i.image_url) : (product.image_url ? [product.image_url] : []);
+  } else {
+    state.productEditImages = [];
+  }
+  renderProductImageGallery();
 
   document.getElementById('variantSection').style.display = 'block';
   document.getElementById('variantHint').style.display = 'none';
@@ -3521,6 +3580,48 @@ function openProductEditor(product) {
   }
 
   document.getElementById('productEditOverlay').classList.add('open');
+}
+
+function renderProductImageGallery() {
+  const box = document.getElementById('productImageGallery');
+  const images = state.productEditImages || [];
+  if (images.length === 0) {
+    box.innerHTML = '<div class="pig-empty">尚無圖片，點下方按鈕新增（最多25張）</div>';
+    return;
+  }
+  box.innerHTML = images.map((url, i) => `
+    <div class="pig-item">
+      <img src="${url}" alt="">
+      ${i === 0 ? '<span class="pig-cover-badge">封面</span>' : ''}
+      <div class="pig-actions">
+        ${i !== 0 ? `<button type="button" data-pig-cover="${i}" title="設為封面">★</button>` : ''}
+        ${i > 0 ? `<button type="button" data-pig-left="${i}" title="往前移">◀</button>` : ''}
+        ${i < images.length - 1 ? `<button type="button" data-pig-right="${i}" title="往後移">▶</button>` : ''}
+        <button type="button" data-pig-remove="${i}" title="刪除">×</button>
+      </div>
+    </div>
+  `).join('');
+
+  box.querySelectorAll('[data-pig-cover]').forEach(btn => btn.addEventListener('click', () => {
+    const i = Number(btn.dataset.pigCover);
+    const [moved] = state.productEditImages.splice(i, 1);
+    state.productEditImages.unshift(moved);
+    renderProductImageGallery();
+  }));
+  box.querySelectorAll('[data-pig-left]').forEach(btn => btn.addEventListener('click', () => {
+    const i = Number(btn.dataset.pigLeft);
+    [state.productEditImages[i - 1], state.productEditImages[i]] = [state.productEditImages[i], state.productEditImages[i - 1]];
+    renderProductImageGallery();
+  }));
+  box.querySelectorAll('[data-pig-right]').forEach(btn => btn.addEventListener('click', () => {
+    const i = Number(btn.dataset.pigRight);
+    [state.productEditImages[i + 1], state.productEditImages[i]] = [state.productEditImages[i], state.productEditImages[i + 1]];
+    renderProductImageGallery();
+  }));
+  box.querySelectorAll('[data-pig-remove]').forEach(btn => btn.addEventListener('click', () => {
+    state.productEditImages.splice(Number(btn.dataset.pigRemove), 1);
+    renderProductImageGallery();
+  }));
 }
 
 async function loadVariantsIntoStage(productId) {
@@ -3627,22 +3728,158 @@ document.getElementById('productEditClose').addEventListener('click', () => {
 });
 
 // 圖片上傳：選檔案後立即上傳到 Supabase Storage，成功後把公開網址存起來備用
-document.getElementById('productImageFile').addEventListener('change', async (e) => {
+document.getElementById('productImageAddBtn').addEventListener('click', () => {
+  if ((state.productEditImages || []).length >= 25) { toast('最多只能有25張圖片'); return; }
+  document.getElementById('productImageAddInput').click();
+});
+document.getElementById('productImageAddInput').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  const msg = document.getElementById('productImageMsg');
-  msg.textContent = '上傳中...'; msg.className = 'form-msg';
+  openCropTool(file);
+  e.target.value = '';
+});
 
-  const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
-  const { error: uploadErr } = await sb.storage.from('product-images').upload(filePath, file);
-  if (uploadErr) {
-    msg.textContent = '上傳失敗：' + uploadErr.message; msg.className = 'form-msg err';
-    return;
+/* ============================================================
+   圖片裁切工具：固定長寬比（跟商品卡片一致 1:1.1），
+   可拖曳移動選取框、拖曳右下角調整大小，即時預覽縮圖效果
+   ============================================================ */
+const CROP_RATIO = 1 / 1.1;
+const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, box: { x: 0, y: 0, w: 0, h: 0 }, dragMode: null, dragStart: null };
+
+function openCropTool(file) {
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      cropState.img = img;
+      const canvas = document.getElementById('cropCanvas');
+      // 依圖片比例把畫布縮放到最多 360x360 內顯示
+      const maxDim = 360;
+      const scale = Math.min(maxDim / img.width, maxDim / img.height, 1) || 1;
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      cropState.scale = scale;
+
+      const boxH = Math.min(canvas.height * 0.8, canvas.width * 0.8 / CROP_RATIO);
+      const boxW = boxH * CROP_RATIO;
+      cropState.box = { x: (canvas.width - boxW) / 2, y: (canvas.height - boxH) / 2, w: boxW, h: boxH };
+
+      document.getElementById('cropMsg').textContent = '';
+      document.getElementById('imageCropOverlay').classList.add('open');
+      drawCropCanvas();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function drawCropCanvas() {
+  const canvas = document.getElementById('cropCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(cropState.img, 0, 0, canvas.width, canvas.height);
+
+  const { x, y, w, h } = cropState.box;
+  ctx.fillStyle = 'rgba(42,40,35,0.5)';
+  ctx.fillRect(0, 0, canvas.width, y);
+  ctx.fillRect(0, y + h, canvas.width, canvas.height - y - h);
+  ctx.fillRect(0, y, x, h);
+  ctx.fillRect(x + w, y, canvas.width - x - w, h);
+
+  ctx.strokeStyle = '#B08D57'; ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = '#B08D57';
+  ctx.fillRect(x + w - 12, y + h - 12, 12, 12);
+
+  drawCropPreview();
+}
+
+function drawCropPreview() {
+  const preview = document.getElementById('cropPreviewCanvas');
+  const pctx = preview.getContext('2d');
+  const { x, y, w, h } = cropState.box;
+  const sx = x / cropState.scale, sy = y / cropState.scale, sw = w / cropState.scale, sh = h / cropState.scale;
+  pctx.clearRect(0, 0, preview.width, preview.height);
+  pctx.drawImage(cropState.img, sx, sy, sw, sh, 0, 0, preview.width, preview.height);
+}
+
+function cropPointerPos(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
+}
+
+(function setupCropDrag() {
+  const canvas = document.getElementById('cropCanvas');
+  function start(e) {
+    const pos = cropPointerPos(e, canvas);
+    const { x, y, w, h } = cropState.box;
+    const nearCorner = Math.abs(pos.x - (x + w)) < 16 && Math.abs(pos.y - (y + h)) < 16;
+    if (nearCorner) {
+      cropState.dragMode = 'resize';
+    } else if (pos.x >= x && pos.x <= x + w && pos.y >= y && pos.y <= y + h) {
+      cropState.dragMode = 'move';
+    } else {
+      cropState.dragMode = null;
+      return;
+    }
+    cropState.dragStart = { pos, box: { ...cropState.box } };
+    e.preventDefault();
   }
-  const { data: pub } = sb.storage.from('product-images').getPublicUrl(filePath);
-  document.getElementById('productEditForm').dataset.currentImage = pub.publicUrl;
-  document.getElementById('productImagePreview').innerHTML = `<img src="${pub.publicUrl}" alt="">`;
-  msg.textContent = '圖片上傳成功'; msg.className = 'form-msg ok';
+  function move(e) {
+    if (!cropState.dragMode) return;
+    const pos = cropPointerPos(e, canvas);
+    const dx = pos.x - cropState.dragStart.pos.x, dy = pos.y - cropState.dragStart.pos.y;
+    const start = cropState.dragStart.box;
+    if (cropState.dragMode === 'move') {
+      let nx = start.x + dx, ny = start.y + dy;
+      nx = Math.max(0, Math.min(canvas.width - start.w, nx));
+      ny = Math.max(0, Math.min(canvas.height - start.h, ny));
+      cropState.box = { ...start, x: nx, y: ny };
+    } else {
+      let nw = Math.max(30, start.w + dx);
+      nw = Math.min(nw, canvas.width - start.x, (canvas.height - start.y) * CROP_RATIO);
+      cropState.box = { x: start.x, y: start.y, w: nw, h: nw / CROP_RATIO };
+    }
+    drawCropCanvas();
+    e.preventDefault();
+  }
+  function end() { cropState.dragMode = null; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  window.addEventListener('touchend', end);
+})();
+
+document.getElementById('imageCropClose').addEventListener('click', () => document.getElementById('imageCropOverlay').classList.remove('open'));
+document.getElementById('cropCancelBtn').addEventListener('click', () => document.getElementById('imageCropOverlay').classList.remove('open'));
+
+document.getElementById('cropConfirmBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('cropMsg');
+  msg.textContent = '處理中...'; msg.className = 'form-msg';
+
+  const { x, y, w, h } = cropState.box;
+  const sx = x / cropState.scale, sy = y / cropState.scale, sw = w / cropState.scale, sh = h / cropState.scale;
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = 800; outCanvas.height = Math.round(800 / CROP_RATIO);
+  outCanvas.getContext('2d').drawImage(cropState.img, sx, sy, sw, sh, 0, 0, outCanvas.width, outCanvas.height);
+
+  outCanvas.toBlob(async (blob) => {
+    if (!blob) { msg.textContent = '裁切失敗，請重試'; msg.className = 'form-msg err'; return; }
+    const filePath = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const { error: uploadErr } = await sb.storage.from('product-images').upload(filePath, blob, { contentType: 'image/jpeg' });
+    if (uploadErr) { msg.textContent = '上傳失敗：' + uploadErr.message; msg.className = 'form-msg err'; return; }
+    const { data: pub } = sb.storage.from('product-images').getPublicUrl(filePath);
+    state.productEditImages = state.productEditImages || [];
+    state.productEditImages.push(pub.publicUrl);
+    renderProductImageGallery();
+    document.getElementById('imageCropOverlay').classList.remove('open');
+    toast('圖片已新增');
+  }, 'image/jpeg', 0.85);
 });
 
 document.getElementById('productEditForm').addEventListener('submit', async (e) => {
@@ -3661,7 +3898,7 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     deposit_ratio: Number(document.getElementById('pfDeposit').value),
     description: document.getElementById('pfDesc').value.trim(),
     is_hidden: document.getElementById('pfHidden').checked,
-    image_url: document.getElementById('productEditForm').dataset.currentImage || '',
+    image_url: (state.productEditImages && state.productEditImages[0]) || '',
   };
 
   // 確保一定至少有一個顏色、一個尺寸(即便只有一個預設選項)，避免客戶不用選規格就能下單
@@ -3707,6 +3944,13 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
         color_hex: v.color_hex, is_available: v.is_available, unavailable_message: v.unavailable_message,
       });
     }
+  }
+
+  // 圖庫直接整批覆蓋：先刪除這個商品原本的圖庫紀錄，再依目前排序重新寫入
+  await sb.from('product_images').delete().eq('product_id', newId);
+  const galleryRows = (state.productEditImages || []).map((url, i) => ({ product_id: newId, image_url: url, position: i }));
+  if (galleryRows.length > 0) {
+    await sb.from('product_images').insert(galleryRows);
   }
 
   msg.textContent = '儲存成功'; msg.className = 'form-msg ok';
