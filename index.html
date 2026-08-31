@@ -178,6 +178,15 @@
   }
   .sort-arrow { display: none; font-size: 10px; margin-left: 2px; }
   .chip.active .sort-arrow { display: inline; }
+  .status-callout {
+    background: #FBEFC9; border: 1px solid var(--brass); border-radius: var(--radius);
+    padding: 10px 12px; font-weight: 700; color: #5C4A1E; font-size: 13px; line-height: 1.5;
+  }
+  .related-products-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
+  .related-product-item { cursor: pointer; }
+  .related-product-item img { width: 100%; aspect-ratio: 1/1.1; object-fit: cover; border-radius: var(--radius); background: #E4DCC9; }
+  .related-product-item .rp-name { font-size: 11px; margin-top: 5px; line-height: 1.3; color: var(--ink); }
+  .related-product-item .rp-price { font-size: 11px; color: var(--brass-dark); font-weight: 600; }
 
   /* ============ Product grid ============ */
   .section { padding: 40px 0; }
@@ -326,6 +335,7 @@
   .wish-row-desc { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
   .wish-row-meta { font-size: 11px; color: var(--khaki-dark); margin-top: 6px; }
   .big-modal .modal { max-width: 640px; max-height: 82vh; overflow-y: auto; }
+  #adminOverlay .modal { height: 82vh; max-height: 780px; }
   .product-modal .modal { max-width: 760px; max-height: 88vh; overflow-y: auto; }
   .product-edit-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
   @media (max-width: 640px) { .product-edit-layout { grid-template-columns: 1fr; } }
@@ -452,7 +462,7 @@
   .chat-file-preview button { border:0; background:transparent; color:var(--danger); font-size:18px; padding:3px 7px; }
   @media (max-width:780px) { .chat-shell { grid-template-columns:1fr; } .chat-shell.show-thread .chat-inbox { display:none; } .chat-shell:not(.show-thread) .chat-thread { display:none; } }
 
-  .admin-chat-preview-list { height: 320px; overflow-y: auto; }
+  .admin-chat-preview-list { height: 420px; overflow-y: auto; }
   .admin-chat-preview-row {
     display: block; padding: 10px 12px;
     border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; background: var(--bg);
@@ -767,24 +777,24 @@
       <p id="pageDesc" style="font-size:14px; color:var(--ink-soft); margin-bottom:20px; line-height:1.7;"></p>
 
       <div id="pageColorSection" style="display:none">
-        <div class="variant-label">選擇顏色</div>
+        <div class="variant-label" id="pageColorLabel">選擇顏色</div>
         <div class="swatch-row" id="pageColorRow"></div>
       </div>
       <div id="pageSizeSection" style="display:none">
-        <div class="variant-label">選擇尺寸</div>
+        <div class="variant-label" id="pageSizeLabel">選擇尺寸</div>
         <div class="swatch-row" id="pageSizeRow"></div>
       </div>
 
       <button class="btn btn-primary" id="pageAddToCartBtn" style="width:100%; margin-top:14px;">加入購物車</button>
       <button class="btn btn-outline" id="pageContactBtn" style="width:100%; margin-top:8px;">私訊聯絡</button>
 
-      <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line);">
+      <div style="display:none; margin-top:40px; padding-top:24px; border-top:1px solid var(--line);">
         <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:10px;">留言區</h3>
         <p style="font-size:12px; color:var(--ink-soft);">（規劃中，之後客戶可以在這裡針對商品留言討論）</p>
       </div>
-      <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--line);">
-        <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:10px;">你可能也喜歡</h3>
-        <p style="font-size:12px; color:var(--ink-soft);">（規劃中，之後這裡會推薦相似風格/同品牌的其他商品）</p>
+      <div id="relatedProductsSection" style="display:none; margin-top:24px; padding-top:20px; border-top:1px solid var(--line);">
+        <h3 style="font-family:var(--font-display); font-size:13px; margin-bottom:12px; color:var(--ink-soft); font-weight:600; letter-spacing:0.05em;">你可能也喜歡</h3>
+        <div id="relatedProductsRow" class="related-products-row"></div>
       </div>
     </div>
   </div>
@@ -1364,11 +1374,11 @@
         <p id="detailDesc" style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;"></p>
 
         <div id="detailColorSection" style="display:none">
-          <div class="variant-label">選擇顏色</div>
+          <div class="variant-label" id="detailColorLabel">選擇顏色</div>
           <div class="swatch-row" id="detailColorRow"></div>
         </div>
         <div id="detailSizeSection" style="display:none">
-          <div class="variant-label">選擇尺寸</div>
+          <div class="variant-label" id="detailSizeLabel">選擇尺寸</div>
           <div class="swatch-row" id="detailSizeRow"></div>
         </div>
 
@@ -1478,13 +1488,8 @@
     </div>
 
     <div id="variantSection" style="display:none; margin-top:20px; border-top:1px solid var(--line); padding-top:16px;">
-      <h4 style="font-family:var(--font-display); font-size:15px; margin:0 0 10px;">顏色選項</h4>
-      <div class="filter-group" id="colorPresetRow" style="margin-bottom:10px;"></div>
-      <div id="colorVariantList"></div>
-
-      <h4 style="font-family:var(--font-display); font-size:15px; margin:20px 0 10px;">尺寸選項</h4>
-      <div class="filter-group" id="sizePresetRow" style="margin-bottom:10px;"></div>
-      <div id="sizeVariantList"></div>
+      <div id="variantGroupsContainer"></div>
+      <button type="button" class="btn btn-outline btn-sm" id="addVariantGroupBtn" style="margin-top:10px;">+ 新增款式</button>
     </div>
     <p id="variantHint" style="display:none; font-size:12px; color:var(--ink-soft); margin-top:16px;"></p>
   </div>
@@ -1617,19 +1622,29 @@ async function loadProducts() {
     p._repurchaseRate = statsMap[p.id]?.repurchase_rate || 0;
   });
 
-  // 一併撈取這些商品的款式資料(顏色/尺寸)
+  // 一併撈取這些商品的款式資料(最多兩組，各自標籤可自訂，男裝/女裝預設是顏色/尺寸)
   const ids = state.products.map(p => p.id);
   state.variantsByProduct = {};
   if (ids.length > 0) {
     const { data: variants } = await sb.from('product_variants').select('*').in('product_id', ids).order('sort_order');
-    (variants || []).forEach(v => {
-      if (!state.variantsByProduct[v.product_id]) state.variantsByProduct[v.product_id] = { colors: [], sizes: [] };
-      if (v.variant_type === 'color') state.variantsByProduct[v.product_id].colors.push(v);
-      else state.variantsByProduct[v.product_id].sizes.push(v);
-    });
+    const byProduct = {};
+    (variants || []).forEach(v => { (byProduct[v.product_id] = byProduct[v.product_id] || []).push(v); });
+    Object.entries(byProduct).forEach(([pid, rows]) => { state.variantsByProduct[pid] = groupVariantsIntoSlots(rows); });
   }
 
   renderProducts();
+}
+
+// 把一個商品的款式資料列，依出現順序分成最多兩組(對應 variant_color / variant_size 兩個實際欄位)，
+// 每組保留自己的標籤名稱(type)，不再寫死一定叫「顏色」「尺寸」
+function groupVariantsIntoSlots(rows) {
+  const order = [];
+  const byType = {};
+  rows.forEach(v => {
+    if (!byType[v.variant_type]) { byType[v.variant_type] = []; order.push(v.variant_type); }
+    byType[v.variant_type].push(v);
+  });
+  return order.slice(0, 2).map(type => ({ type, rows: byType[type] }));
 }
 
 function renderProducts() {
@@ -2448,6 +2463,36 @@ productDetailOverlay.addEventListener('click', (e) => {
   }
 });
 
+// 共用的款式選擇區塊渲染：slot.type 是這組款式的顯示名稱(可能是「顏色」「尺寸」或自訂名稱)。
+// 只有真的叫「顏色」才用色塊 UI，其餘一律用文字選項卡片。selectionKey 固定用 color/size，
+// 對應資料庫實際存在的 variant_color/variant_size 欄位，跟畫面上顯示的自訂名稱是兩件事。
+function renderVariantSlot(slot, sectionId, rowId, labelId, selectionObj, selectionKey) {
+  const section = document.getElementById(sectionId);
+  const row = document.getElementById(rowId);
+  const label = document.getElementById(labelId);
+  if (!slot || !slot.rows || slot.rows.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  label.textContent = '選擇' + slot.type;
+  const isColorType = slot.type === '顏色';
+  row.innerHTML = slot.rows.map(v => isColorType
+    ? `<div class="swatch ${v.is_available ? '' : 'unavailable'}" style="background:${v.color_hex || '#ccc'}" data-value="${v.value}" data-available="${v.is_available}" title="${v.value}" data-msg="${(v.unavailable_message || '目前無此選項').replace(/"/g, '&quot;')}"></div>`
+    : `<div class="size-chip ${v.is_available ? '' : 'unavailable'}" data-value="${v.value}" data-available="${v.is_available}" data-msg="${(v.unavailable_message || '目前無此選項').replace(/"/g, '&quot;')}">${v.value}</div>`
+  ).join('');
+  row.querySelectorAll('.swatch, .size-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
+      row.querySelectorAll('.swatch, .size-chip').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+      selectionObj[selectionKey] = el.dataset.value;
+    });
+  });
+  if (slot.rows.length === 1 && slot.rows[0].is_available) {
+    const only = row.querySelector('.swatch, .size-chip');
+    if (only) only.classList.add('selected');
+    selectionObj[selectionKey] = slot.rows[0].value;
+  }
+}
+
 function openProductDetail(productId) {
   const p = state.products.find(x => String(x.id) === String(productId));
   if (!p) return;
@@ -2466,61 +2511,18 @@ function openProductDetail(productId) {
   document.getElementById('detailHeartLabel').textContent = isFav ? '已收藏' : '加入收藏';
   heartBtn.onclick = () => { toggleFavorite(p.id, heartBtn); heartBtn.classList.toggle('active'); document.getElementById('detailHeartLabel').textContent = heartBtn.classList.contains('active') ? '已收藏' : '加入收藏'; };
 
-  const variants = state.variantsByProduct[p.id] || { colors: [], sizes: [] };
-
-  const colorSection = document.getElementById('detailColorSection');
-  const colorRow = document.getElementById('detailColorRow');
-  if (variants.colors.length > 0) {
-    colorSection.style.display = 'block';
-    colorRow.innerHTML = variants.colors.map(v => `
-      <div class="swatch ${v.is_available ? '' : 'unavailable'}" style="background:${v.color_hex || '#ccc'}"
-           data-color="${v.value}" data-available="${v.is_available}" title="${v.value}"
-           data-msg="${(v.unavailable_message || '目前無此色系').replace(/"/g, '&quot;')}"></div>
-    `).join('');
-    colorRow.querySelectorAll('.swatch').forEach(el => {
-      el.addEventListener('click', () => {
-        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
-        colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
-        el.classList.add('selected');
-        state.detailSelection.color = el.dataset.color;
-      });
-    });
-    // 只有一個選項時，直接預選（減少不必要的點擊）
-    if (variants.colors.length === 1 && variants.colors[0].is_available) {
-      colorRow.querySelector('.swatch').classList.add('selected');
-      state.detailSelection.color = variants.colors[0].value;
-    }
-  } else { colorSection.style.display = 'none'; }
-
-  const sizeSection = document.getElementById('detailSizeSection');
-  const sizeRow = document.getElementById('detailSizeRow');
-  if (variants.sizes.length > 0) {
-    sizeSection.style.display = 'block';
-    sizeRow.innerHTML = variants.sizes.map(v => `
-      <div class="size-chip ${v.is_available ? '' : 'unavailable'}" data-size="${v.value}" data-available="${v.is_available}"
-           data-msg="${(v.unavailable_message || '目前無此尺寸').replace(/"/g, '&quot;')}">${v.value}</div>
-    `).join('');
-    sizeRow.querySelectorAll('.size-chip').forEach(el => {
-      el.addEventListener('click', () => {
-        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
-        sizeRow.querySelectorAll('.size-chip').forEach(s => s.classList.remove('selected'));
-        el.classList.add('selected');
-        state.detailSelection.size = el.dataset.size;
-      });
-    });
-    if (variants.sizes.length === 1 && variants.sizes[0].is_available) {
-      sizeRow.querySelector('.size-chip').classList.add('selected');
-      state.detailSelection.size = variants.sizes[0].value;
-    }
-  } else { sizeSection.style.display = 'none'; }
+  const variantGroups = state.variantsByProduct[p.id] || [];
+  state.detailSelection = {};
+  renderVariantSlot(variantGroups[0], 'detailColorSection', 'detailColorRow', 'detailColorLabel', state.detailSelection, 'color');
+  renderVariantSlot(variantGroups[1], 'detailSizeSection', 'detailSizeRow', 'detailSizeLabel', state.detailSelection, 'size');
 
   const addBtn = document.getElementById('detailAddToCartBtn');
   const canAdd = p.status === 'available' || p.status === 'preorder';
   addBtn.disabled = !canAdd;
   addBtn.textContent = canAdd ? '加入購物車' : (STATUS_LABEL[p.status] || '無法購買');
   addBtn.onclick = () => {
-    if (variants.colors.length > 0 && !state.detailSelection.color) { toast('請先選擇顏色'); return; }
-    if (variants.sizes.length > 0 && !state.detailSelection.size) { toast('請先選擇尺寸'); return; }
+    if (variantGroups[0] && variantGroups[0].rows.length > 0 && !state.detailSelection.color) { toast('請先選擇' + variantGroups[0].type); return; }
+    if (variantGroups[1] && variantGroups[1].rows.length > 0 && !state.detailSelection.size) { toast('請先選擇' + variantGroups[1].type); return; }
     const desc = [state.detailSelection.color, state.detailSelection.size].filter(Boolean).join(' / ');
     if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
     addToCart(p.id, { variant_color: state.detailSelection.color, variant_size: state.detailSelection.size });
@@ -2557,6 +2559,45 @@ function confirmAndAddToCart(productId) {
    ============================================================ */
 let pageSelection = { color: null, size: null };
 
+// 「你可能也喜歡」：同分類(男裝/女裝/飾品/零食)的其他商品，依近一個月下單數由多到少，最多5件。
+// 完全沒有同分類的其他商品時，整區塊維持隱藏，不額外顯示提示文字。
+async function loadRelatedProducts(p) {
+  const section = document.getElementById('relatedProductsSection');
+  const row = document.getElementById('relatedProductsRow');
+  section.style.display = 'none';
+
+  const { data: candidates } = await sb
+    .from('products')
+    .select('id, name, price_ntd, image_url')
+    .eq('category', p.category)
+    .eq('is_hidden', false)
+    .neq('id', p.id);
+
+  if (!candidates || candidates.length === 0) return;
+
+  const ids = candidates.map(c => c.id);
+  const { data: stats } = await sb.from('product_recent_demand_stats').select('*').in('product_id', ids);
+  const statMap = {};
+  (stats || []).forEach(s => { statMap[s.product_id] = s.recent_orders; });
+
+  const top = candidates
+    .map(c => ({ ...c, _recent: statMap[c.id] || 0 }))
+    .sort((a, b) => b._recent - a._recent)
+    .slice(0, 5);
+
+  row.innerHTML = top.map(c => `
+    <div class="related-product-item" data-related-product="${c.id}">
+      ${c.image_url ? `<img src="${c.image_url}" alt="">` : '<div style="width:100%; aspect-ratio:1/1.1; border-radius:var(--radius); background:#E4DCC9;"></div>'}
+      <div class="rp-name">${c.name}</div>
+      <div class="rp-price">${ntd(c.price_ntd)}</div>
+    </div>
+  `).join('');
+  row.querySelectorAll('[data-related-product]').forEach(el => {
+    el.addEventListener('click', () => { location.hash = `#product=${el.dataset.relatedProduct}`; });
+  });
+  section.style.display = 'block';
+}
+
 function renderProductPage(productId) {
   const p = state.products.find(x => String(x.id) === String(productId));
   if (!p) { document.getElementById('productPageView').innerHTML = '<p>找不到這件商品，可能已下架。</p>'; return; }
@@ -2568,6 +2609,7 @@ function renderProductPage(productId) {
   document.getElementById('pageName').textContent = p.name;
   document.getElementById('pagePrice').textContent = ntd(p.price_ntd);
   document.getElementById('pageDesc').textContent = p.description || '';
+  loadRelatedProducts(p);
 
   const isFav = state.favoriteIds.has(p.id);
   const heartBtn = document.getElementById('pageHeartBtn');
@@ -2594,60 +2636,17 @@ function renderProductPage(productId) {
     location.hash = '#messages';
   };
 
-  const variants = state.variantsByProduct[p.id] || { colors: [], sizes: [] };
-
-  const colorSection = document.getElementById('pageColorSection');
-  const colorRow = document.getElementById('pageColorRow');
-  if (variants.colors.length > 0) {
-    colorSection.style.display = 'block';
-    colorRow.innerHTML = variants.colors.map(v => `
-      <div class="swatch ${v.is_available ? '' : 'unavailable'}" style="background:${v.color_hex || '#ccc'}"
-           data-color="${v.value}" data-available="${v.is_available}" title="${v.value}"
-           data-msg="${(v.unavailable_message || '目前無此色系').replace(/"/g, '&quot;')}"></div>
-    `).join('');
-    colorRow.querySelectorAll('.swatch').forEach(el => {
-      el.addEventListener('click', () => {
-        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
-        colorRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
-        el.classList.add('selected');
-        pageSelection.color = el.dataset.color;
-      });
-    });
-    if (variants.colors.length === 1 && variants.colors[0].is_available) {
-      colorRow.querySelector('.swatch').classList.add('selected');
-      pageSelection.color = variants.colors[0].value;
-    }
-  } else { colorSection.style.display = 'none'; }
-
-  const sizeSection = document.getElementById('pageSizeSection');
-  const sizeRow = document.getElementById('pageSizeRow');
-  if (variants.sizes.length > 0) {
-    sizeSection.style.display = 'block';
-    sizeRow.innerHTML = variants.sizes.map(v => `
-      <div class="size-chip ${v.is_available ? '' : 'unavailable'}" data-size="${v.value}" data-available="${v.is_available}"
-           data-msg="${(v.unavailable_message || '目前無此尺寸').replace(/"/g, '&quot;')}">${v.value}</div>
-    `).join('');
-    sizeRow.querySelectorAll('.size-chip').forEach(el => {
-      el.addEventListener('click', () => {
-        if (el.dataset.available === 'false') { toast(el.dataset.msg); return; }
-        sizeRow.querySelectorAll('.size-chip').forEach(s => s.classList.remove('selected'));
-        el.classList.add('selected');
-        pageSelection.size = el.dataset.size;
-      });
-    });
-    if (variants.sizes.length === 1 && variants.sizes[0].is_available) {
-      sizeRow.querySelector('.size-chip').classList.add('selected');
-      pageSelection.size = variants.sizes[0].value;
-    }
-  } else { sizeSection.style.display = 'none'; }
+  const pageVariantGroups = state.variantsByProduct[p.id] || [];
+  renderVariantSlot(pageVariantGroups[0], 'pageColorSection', 'pageColorRow', 'pageColorLabel', pageSelection, 'color');
+  renderVariantSlot(pageVariantGroups[1], 'pageSizeSection', 'pageSizeRow', 'pageSizeLabel', pageSelection, 'size');
 
   const addBtn = document.getElementById('pageAddToCartBtn');
   const canAdd = p.status === 'available' || p.status === 'preorder';
   addBtn.disabled = !canAdd;
   addBtn.textContent = canAdd ? '加入購物車' : (STATUS_LABEL[p.status] || '無法購買');
   addBtn.onclick = () => {
-    if (variants.colors.length > 0 && !pageSelection.color) { toast('請先選擇顏色'); return; }
-    if (variants.sizes.length > 0 && !pageSelection.size) { toast('請先選擇尺寸'); return; }
+    if (pageVariantGroups[0] && pageVariantGroups[0].rows.length > 0 && !pageSelection.color) { toast('請先選擇' + pageVariantGroups[0].type); return; }
+    if (pageVariantGroups[1] && pageVariantGroups[1].rows.length > 0 && !pageSelection.size) { toast('請先選擇' + pageVariantGroups[1].type); return; }
     const desc = [pageSelection.color, pageSelection.size].filter(Boolean).join(' / ');
     if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
     addToCart(p.id, { variant_color: pageSelection.color, variant_size: pageSelection.size });
@@ -2956,7 +2955,7 @@ function renderSingleItemRow(it) {
       <button class="btn btn-outline btn-sm" data-abandon-refund="${it.id}">放棄訂單並申請退款</button>
     `;
   } else if (it.state === 'awaiting_shipping_apply' && it.shipping_apply_requested_at) {
-    actionsHtml = `<p class="cart-note">已送出出貨申請，等待賣家提供賣貨便連結，請留意通知。</p>`;
+    actionsHtml = `<p class="status-callout">已送出出貨申請，等待賣家提供賣貨便連結，請留意通知。</p>`;
   } else if (it.state === 'shipped') {
     actionsHtml = `
       <p class="cart-note">商品配送中，此階段無法申請退款${it.shipway_tracking_no ? '，物流單號：' + it.shipway_tracking_no : ''}</p>
@@ -2971,14 +2970,14 @@ function renderSingleItemRow(it) {
     `;
   } else if (it.state === 'package_returned') {
     actionsHtml = it.resend_requested_at
-      ? `<p class="cart-note">已申請重寄，等待賣家確認運費並重新出貨${it.resend_fee_ntd ? '（運費 ' + ntd(it.resend_fee_ntd) + '）' : ''}</p>`
+      ? `<p class="status-callout">已申請重寄，等待賣家確認運費並重新出貨${it.resend_fee_ntd ? '（運費 ' + ntd(it.resend_fee_ntd) + '）' : ''}</p>`
       : `
         <p class="cart-note">包裹逾期未取貨已退回${it.resend_fee_ntd ? '，重寄需先支付運費 ' + ntd(it.resend_fee_ntd) : ''}</p>
         <button class="btn btn-primary btn-sm" data-request-resend="${it.id}">一鍵申請重寄</button>
         <button class="btn btn-outline btn-sm" data-abandon-resend="${it.id}" style="color:var(--danger); border-color:var(--danger);">放棄重寄</button>
       `;
   } else if (it.state === 'abandoned_pending_refund') {
-    actionsHtml = `<p class="cart-note">已受理退款申請，預估退款 ${ntd(it.refund_amount_ntd)}（${it.refund_percent}%），待人工核算後撥款</p>`;
+    actionsHtml = `<p class="status-callout">已受理退款申請，預估退款 ${ntd(it.refund_amount_ntd)}（${it.refund_percent}%），待人工核算後撥款</p>`;
   } else if (it.state === 'refunded_full' || it.state === 'refunded_partial' || it.state === 'abandoned_no_refund') {
     actionsHtml = `<p class="cart-note">退款金額：${ntd(it.refund_amount_ntd || 0)}</p>`;
   }
@@ -3645,10 +3644,9 @@ async function openProductEditor(product) {
   if (product && product.id) {
     loadVariantsIntoStage(product.id);
   } else {
-    state.productEditVariants = { colors: [], sizes: [] };
+    state.productEditVariants = defaultVariantGroupsForCategory(document.getElementById('pfCategory').value);
     state.productEditVariantsOriginalIds = [];
-    renderVariantPresets();
-    renderVariantStage();
+    renderVariantGroups();
   }
 
   document.getElementById('productEditOverlay').classList.add('open');
@@ -3698,103 +3696,137 @@ function renderProductImageGallery() {
 
 async function loadVariantsIntoStage(productId) {
   const { data } = await sb.from('product_variants').select('*').eq('product_id', productId).order('sort_order');
-  state.productEditVariants = {
-    colors: (data || []).filter(v => v.variant_type === 'color').map(v => ({ ...v })),
-    sizes: (data || []).filter(v => v.variant_type === 'size').map(v => ({ ...v })),
-  };
+  state.productEditVariants = groupVariantsIntoSlots(data || []).map(g => ({ type: g.type, rows: g.rows.map(v => ({ ...v })) }));
   state.productEditVariantsOriginalIds = (data || []).map(v => v.id);
-  renderVariantPresets();
-  renderVariantStage();
+  renderVariantGroups();
 }
 
-function renderVariantPresets() {
-  const colorNames = state.productEditVariants.colors.map(v => v.value);
-  const sizeNames = state.productEditVariants.sizes.map(v => v.value);
+// 新增商品時的預設款式：男裝/女裝預設有「顏色」「尺寸」兩組(維持既有習慣)，其他品項一律空白，
+// 由賣家自己決定要不要用「新增款式」加上去
+function defaultVariantGroupsForCategory(category) {
+  if (category === '男裝' || category === '女裝') {
+    return [{ type: '顏色', rows: [] }, { type: '尺寸', rows: [] }];
+  }
+  return [];
+}
 
-  document.getElementById('colorPresetRow').innerHTML = PRESET_COLORS.map(c => `
-    <button type="button" class="preset-btn ${colorNames.includes(c.name) ? 'active' : ''}" data-toggle-color="${c.name}" data-hex="${c.hex}" style="${colorNames.includes(c.name) ? 'background:var(--ink); color:var(--bg);' : ''}">
-      <span class="preset-swatch" style="background:${c.hex}"></span>${c.name}${colorNames.includes(c.name) ? ' ✓' : ''}
-    </button>
-  `).join('') + `<button type="button" class="preset-btn" id="addCustomColorBtn">+ 自訂顏色</button>`;
+function renderVariantGroups() {
+  const container = document.getElementById('variantGroupsContainer');
+  const groups = state.productEditVariants || [];
+  container.innerHTML = groups.map((g, gi) => {
+    const isColorType = g.type === '顏色';
+    const isSizeType = g.type === '尺寸';
+    const names = g.rows.map(v => v.value);
+    let presetHtml = '';
+    if (isColorType) {
+      presetHtml = PRESET_COLORS.map(c => `
+        <button type="button" class="preset-btn ${names.includes(c.name) ? 'active' : ''}" data-toggle-preset="${gi}:${c.name}" data-hex="${c.hex}" style="${names.includes(c.name) ? 'background:var(--ink); color:var(--bg);' : ''}">
+          <span class="preset-swatch" style="background:${c.hex}"></span>${c.name}${names.includes(c.name) ? ' ✓' : ''}
+        </button>
+      `).join('');
+    } else if (isSizeType) {
+      presetHtml = PRESET_SIZES.map(s => `
+        <button type="button" class="preset-btn ${names.includes(s) ? 'active' : ''}" data-toggle-preset="${gi}:${s}" style="${names.includes(s) ? 'background:var(--ink); color:var(--bg);' : ''}">${s}${names.includes(s) ? ' ✓' : ''}</button>
+      `).join('');
+    }
+    return `
+      <div style="margin-bottom:22px; ${gi > 0 ? 'border-top:1px solid var(--line); padding-top:16px;' : ''}">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h4 style="font-family:var(--font-display); font-size:15px; margin:0;">${g.type}選項</h4>
+          <button type="button" class="cart-item-remove" data-remove-group="${gi}">移除此款式</button>
+        </div>
+        <div class="filter-group" style="margin-bottom:10px;">
+          ${presetHtml}
+          <button type="button" class="preset-btn" data-add-custom-value="${gi}">+ 自訂${g.type}</button>
+        </div>
+        <div>${g.rows.map((v, i) => renderVariantRow(v, gi, i, isColorType)).join('')}</div>
+      </div>
+    `;
+  }).join('');
 
-  document.getElementById('sizePresetRow').innerHTML = PRESET_SIZES.map(s => `
-    <button type="button" class="preset-btn ${sizeNames.includes(s) ? 'active' : ''}" data-toggle-size="${s}" style="${sizeNames.includes(s) ? 'background:var(--ink); color:var(--bg);' : ''}">${s}${sizeNames.includes(s) ? ' ✓' : ''}</button>
-  `).join('') + `<button type="button" class="preset-btn" id="addCustomSizeBtn">+ 自訂尺寸</button>`;
+  document.getElementById('addVariantGroupBtn').style.display = groups.length >= 2 ? 'none' : 'inline-flex';
 
-  document.querySelectorAll('[data-toggle-color]').forEach(btn => {
-    btn.addEventListener('click', () => togglePresetVariant('color', btn.dataset.toggleColor, btn.dataset.hex));
+  container.querySelectorAll('[data-toggle-preset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [gi, value] = btn.dataset.togglePreset.split(':');
+      toggleGroupValue(Number(gi), value, btn.dataset.hex || null, false);
+    });
   });
-  document.querySelectorAll('[data-toggle-size]').forEach(btn => {
-    btn.addEventListener('click', () => togglePresetVariant('size', btn.dataset.toggleSize, null));
+  container.querySelectorAll('[data-add-custom-value]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gi = Number(btn.dataset.addCustomValue);
+      const group = state.productEditVariants[gi];
+      const name = prompt(`輸入自訂${group.type}名稱`);
+      if (!name) return;
+      let hex = null;
+      if (group.type === '顏色') hex = prompt('輸入顏色色碼（例如：#7a2e2e），取消則使用預設灰色', '#999999') || '#999999';
+      toggleGroupValue(gi, name, hex, true);
+    });
   });
-  document.getElementById('addCustomColorBtn').addEventListener('click', () => {
-    const name = prompt('輸入自訂顏色名稱（例如：酒紅色）');
-    if (!name) return;
-    const hex = prompt('輸入顏色色碼（例如：#7a2e2e），取消則使用預設灰色', '#999999') || '#999999';
-    togglePresetVariant('color', name, hex, true);
+  container.querySelectorAll('[data-remove-group]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('確定要移除整組款式嗎？裡面已加入的選項也會一併移除。')) return;
+      state.productEditVariants.splice(Number(btn.dataset.removeGroup), 1);
+      renderVariantGroups();
+    });
   });
-  document.getElementById('addCustomSizeBtn').addEventListener('click', () => {
-    const name = prompt('輸入自訂尺寸名稱（例如：均一/兒童M）');
-    if (!name) return;
-    togglePresetVariant('size', name, null, true);
+  container.querySelectorAll('[data-stage-toggle-avail]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [gi, idx] = btn.dataset.stageToggleAvail.split(':').map(Number);
+      const row = state.productEditVariants[gi].rows[idx];
+      row.is_available = !row.is_available;
+      renderVariantGroups();
+    });
+  });
+  container.querySelectorAll('[data-stage-msg]').forEach(input => {
+    input.addEventListener('change', () => {
+      const [gi, idx] = input.dataset.stageMsg.split(':').map(Number);
+      state.productEditVariants[gi].rows[idx].unavailable_message = input.value;
+    });
+  });
+  container.querySelectorAll('[data-stage-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [gi, idx] = btn.dataset.stageDelete.split(':').map(Number);
+      state.productEditVariants[gi].rows.splice(idx, 1);
+      renderVariantGroups();
+    });
   });
 }
 
 // 勾選概念：不存在就加入(打勾)，已存在就移除(取消勾選)。forceAdd用於自訂輸入,永遠新增一筆。
-function togglePresetVariant(type, value, hex, forceAdd) {
-  const key = type === 'color' ? 'colors' : 'sizes';
-  const arr = state.productEditVariants[key];
-  const idx = arr.findIndex(v => v.value === value);
+function toggleGroupValue(groupIndex, value, hex, forceAdd) {
+  const rows = state.productEditVariants[groupIndex].rows;
+  const idx = rows.findIndex(v => v.value === value);
   if (idx >= 0 && !forceAdd) {
-    arr.splice(idx, 1);
+    rows.splice(idx, 1);
   } else if (idx < 0) {
-    arr.push({ value, color_hex: hex, is_available: true, unavailable_message: null, id: null });
+    rows.push({ value, color_hex: hex, is_available: true, unavailable_message: null, id: null });
   } else {
     toast('這個選項已經加入過了');
     return;
   }
-  renderVariantPresets();
-  renderVariantStage();
+  renderVariantGroups();
 }
 
-function renderVariantStage() {
-  document.getElementById('colorVariantList').innerHTML = state.productEditVariants.colors.map((v, i) => renderVariantRow(v, 'colors', i)).join('');
-  document.getElementById('sizeVariantList').innerHTML = state.productEditVariants.sizes.map((v, i) => renderVariantRow(v, 'sizes', i)).join('');
-
-  document.querySelectorAll('[data-stage-toggle-avail]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const [key, idx] = btn.dataset.stageToggleAvail.split(':');
-      state.productEditVariants[key][idx].is_available = !state.productEditVariants[key][idx].is_available;
-      renderVariantStage();
-    });
-  });
-  document.querySelectorAll('[data-stage-msg]').forEach(input => {
-    input.addEventListener('change', () => {
-      const [key, idx] = input.dataset.stageMsg.split(':');
-      state.productEditVariants[key][idx].unavailable_message = input.value;
-    });
-  });
-  document.querySelectorAll('[data-stage-delete]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const [key, idx] = btn.dataset.stageDelete.split(':');
-      state.productEditVariants[key].splice(idx, 1);
-      renderVariantPresets();
-      renderVariantStage();
-    });
-  });
-}
-
-function renderVariantRow(v, key, i) {
+function renderVariantRow(v, gi, i, isColorType) {
   return `
     <div class="admin-variant-row">
-      ${key === 'colors' ? `<span class="admin-variant-swatch" style="background:${v.color_hex || '#ccc'}"></span>` : ''}
+      ${isColorType ? `<span class="admin-variant-swatch" style="background:${v.color_hex || '#ccc'}"></span>` : ''}
       <span class="admin-variant-name">${v.value}</span>
-      <button type="button" class="btn btn-outline btn-sm" data-stage-toggle-avail="${key}:${i}">${v.is_available ? '設為缺貨' : '設為有貨'}</button>
-      ${!v.is_available ? `<input type="text" data-stage-msg="${key}:${i}" placeholder="自訂缺貨提示(留空用預設)" value="${v.unavailable_message || ''}" style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-size:12px;">` : ''}
-      <button type="button" class="cart-item-remove" data-stage-delete="${key}:${i}">移除</button>
+      <button type="button" class="btn btn-outline btn-sm" data-stage-toggle-avail="${gi}:${i}">${v.is_available ? '設為缺貨' : '設為有貨'}</button>
+      ${!v.is_available ? `<input type="text" data-stage-msg="${gi}:${i}" placeholder="自訂缺貨提示(留空用預設)" value="${v.unavailable_message || ''}" style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-size:12px;">` : ''}
+      <button type="button" class="cart-item-remove" data-stage-delete="${gi}:${i}">移除</button>
     </div>
   `;
 }
+
+document.getElementById('addVariantGroupBtn').addEventListener('click', () => {
+  if ((state.productEditVariants || []).length >= 2) { toast('最多只能有兩組款式（例如顏色+尺寸）'); return; }
+  const name = prompt('輸入這組款式的名稱（例如：材質、口味、款式）');
+  if (!name) return;
+  state.productEditVariants.push({ type: name, rows: [] });
+  renderVariantGroups();
+});
 document.getElementById('productEditClose').addEventListener('click', () => {
   document.getElementById('productEditOverlay').classList.remove('open');
 });
@@ -3973,14 +4005,6 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     image_url: (state.productEditImages && state.productEditImages[0]) || '',
   };
 
-  // 確保一定至少有一個顏色、一個尺寸(即便只有一個預設選項)，避免客戶不用選規格就能下單
-  if (state.productEditVariants.colors.length === 0) {
-    state.productEditVariants.colors.push({ value: '單一顏色', color_hex: '#96876A', is_available: true, unavailable_message: null, id: null });
-  }
-  if (state.productEditVariants.sizes.length === 0) {
-    state.productEditVariants.sizes.push({ value: '均一尺寸', color_hex: null, is_available: true, unavailable_message: null, id: null });
-  }
-
   let error, newId = id;
   if (id) {
     ({ error } = await sb.from('products').update(payload).eq('id', id));
@@ -3996,10 +4020,8 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
   }
 
   // 一次性把暫存的款式異動寫入資料庫：先刪除被移除的，再新增/更新剩下的
-  const allStaged = [
-    ...state.productEditVariants.colors.map(v => ({ ...v, variant_type: 'color' })),
-    ...state.productEditVariants.sizes.map(v => ({ ...v, variant_type: 'size' })),
-  ];
+  // (不再強制塞「單一顏色/均一尺寸」預設值，沒有款式的商品就是沒有款式)
+  const allStaged = (state.productEditVariants || []).flatMap(g => g.rows.map(v => ({ ...v, variant_type: g.type })));
   const stagedIds = allStaged.map(v => v.id).filter(Boolean);
   const toDelete = (state.productEditVariantsOriginalIds || []).filter(oid => !stagedIds.includes(oid));
   if (toDelete.length > 0) {
