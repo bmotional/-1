@@ -182,6 +182,17 @@
     background: #FBEFC9; border: 1px solid var(--brass); border-radius: var(--radius);
     padding: 10px 12px; font-weight: 700; color: #5C4A1E; font-size: 13px; line-height: 1.5;
   }
+  .qty-selector { display: flex; align-items: center; gap: 10px; }
+  .qty-btn {
+    width: 34px; height: 34px; border: 1px solid var(--line); background: var(--bg-raised);
+    border-radius: var(--radius); font-size: 16px; color: var(--ink); flex-shrink: 0; line-height: 1;
+  }
+  .qty-btn:hover { border-color: var(--khaki); }
+  .qty-input {
+    width: 52px; text-align: center; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 8px 4px; font-size: 14px; background: var(--bg); font-family: inherit;
+  }
+  .qty-input::-webkit-inner-spin-button, .qty-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .related-products-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
   .related-product-item { cursor: pointer; }
   .related-product-item img { width: 100%; aspect-ratio: 1/1.1; object-fit: cover; border-radius: var(--radius); background: #E4DCC9; }
@@ -789,6 +800,11 @@
         <div class="swatch-row" id="pageExtraRow"></div>
       </div>
 
+      <div class="qty-selector" style="margin-top:16px;">
+        <button type="button" class="qty-btn" id="pageQtyMinus">−</button>
+        <input type="number" id="pageQtyInput" class="qty-input" value="1" min="1" max="99">
+        <button type="button" class="qty-btn" id="pageQtyPlus">+</button>
+      </div>
       <button class="btn btn-primary" id="pageAddToCartBtn" style="width:100%; margin-top:14px;">加入購物車</button>
       <button class="btn btn-outline" id="pageContactBtn" style="width:100%; margin-top:8px;">私訊聯絡</button>
 
@@ -1391,6 +1407,11 @@
           <div class="swatch-row" id="detailExtraRow"></div>
         </div>
 
+        <div class="qty-selector" style="margin-top:14px;">
+          <button type="button" class="qty-btn" id="detailQtyMinus">−</button>
+          <input type="number" id="detailQtyInput" class="qty-input" value="1" min="1" max="99">
+          <button type="button" class="qty-btn" id="detailQtyPlus">+</button>
+        </div>
         <button class="btn btn-primary" id="detailAddToCartBtn" style="width:100%; margin-top:10px;">加入購物車</button>
         <button class="btn btn-outline" id="detailShareBtn" style="width:100%; margin-top:8px;">🔗 分享這件商品</button>
       </div>
@@ -1404,23 +1425,6 @@
     <button class="modal-close" id="favClose" aria-label="關閉">×</button>
     <h3>我的收藏</h3>
     <div id="favList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
-  </div>
-</div>
-
-<!-- ============ Chat Modal（客戶與客服的一對一對話） ============ -->
-<div class="modal-overlay big-modal" id="chatOverlay">
-  <div class="modal">
-    <button class="modal-close" id="chatClose" aria-label="關閉">×</button>
-    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
-      <h3 style="margin:0;">聯絡我們</h3>
-      <button type="button" id="chatExpandBtn" class="btn btn-outline btn-sm" style="flex-shrink:0;">展開完整畫面</button>
-    </div>
-    <p class="sub">有任何問題都可以在這裡留言，我們會盡快回覆</p>
-    <div id="chatMessages" style="max-height:340px; overflow-y:auto; margin-bottom:14px; padding:4px;"></div>
-    <form id="chatForm" style="display:flex; gap:8px;">
-      <input type="text" id="chatInput" placeholder="輸入訊息..." style="flex:1; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);" required>
-      <button type="submit" class="btn btn-primary btn-sm">送出</button>
-    </form>
   </div>
 </div>
 
@@ -1950,12 +1954,24 @@ document.getElementById('cartBtn').addEventListener('click', openCart);
 document.getElementById('cartClose').addEventListener('click', closeCart);
 drawerOverlay.addEventListener('click', closeCart);
 
-async function addToCart(productId, variant = {}) {
+// 數量+/-選擇器：共用於商品詳情彈窗跟完整頁面
+function bindQtyStepper(inputId, minusId, plusId) {
+  const input = document.getElementById(inputId);
+  const clamp = () => { input.value = Math.max(1, Math.min(99, parseInt(input.value) || 1)); };
+  document.getElementById(minusId).addEventListener('click', () => { input.value = Math.max(1, (parseInt(input.value) || 1) - 1); });
+  document.getElementById(plusId).addEventListener('click', () => { input.value = Math.min(99, (parseInt(input.value) || 1) + 1); });
+  input.addEventListener('change', clamp);
+}
+bindQtyStepper('detailQtyInput', 'detailQtyMinus', 'detailQtyPlus');
+bindQtyStepper('pageQtyInput', 'pageQtyMinus', 'pageQtyPlus');
+
+async function addToCart(productId, variant = {}, qty = 1) {
   if (!state.user) {
     toast('請先登入會員才能加入購物車');
     openAuth();
     return;
   }
+  qty = Math.max(1, Math.min(99, parseInt(qty) || 1));
   const vColor = variant.variant_color || null;
   const vSize = variant.variant_size || null;
   const vExtra = variant.variant_extra || null;
@@ -1966,9 +1982,9 @@ async function addToCart(productId, variant = {}) {
     (c.variant_extra || null) === vExtra
   );
   if (existing) {
-    await sb.from('cart_items').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
+    await sb.from('cart_items').update({ quantity: existing.quantity + qty }).eq('id', existing.id);
   } else {
-    await sb.from('cart_items').insert({ user_id: state.user.id, product_id: productId, quantity: 1, variant_color: vColor, variant_size: vSize, variant_extra: vExtra });
+    await sb.from('cart_items').insert({ user_id: state.user.id, product_id: productId, quantity: qty, variant_color: vColor, variant_size: vSize, variant_extra: vExtra });
   }
   await loadCart();
   toast('已加入購物車');
@@ -2019,7 +2035,12 @@ function renderCart() {
         <img src="${p.image_url || ''}" alt="">
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name || ''}${variantDesc ? `<span style="color:var(--ink-soft); font-weight:400;">（${variantDesc}）</span>` : ''}</div>
-          <div class="cart-item-meta">${ntd(p.price_ntd)} × ${item.quantity}</div>
+          <div class="cart-item-meta">${ntd(p.price_ntd)}</div>
+          <div class="qty-selector" style="margin:6px 0;">
+            <button type="button" class="qty-btn" data-cart-qty-minus="${item.id}" style="width:26px; height:26px; font-size:14px;">−</button>
+            <input type="number" class="qty-input" data-cart-qty-input="${item.id}" value="${item.quantity}" min="1" max="99" style="width:44px; padding:4px;">
+            <button type="button" class="qty-btn" data-cart-qty-plus="${item.id}" style="width:26px; height:26px; font-size:14px;">+</button>
+          </div>
           <button class="cart-item-remove" data-cart-id="${item.id}">移除</button>
         </div>
       </div>
@@ -2028,6 +2049,27 @@ function renderCart() {
 
   document.getElementById('cartGrandTotal').textContent = ntd(grand);
   document.getElementById('cartDepositTotal').textContent = ntd(deposit);
+
+  async function updateCartQty(itemId, newQty) {
+    newQty = Math.max(1, Math.min(99, parseInt(newQty) || 1));
+    await sb.from('cart_items').update({ quantity: newQty }).eq('id', itemId);
+    await loadCart();
+  }
+  body.querySelectorAll('[data-cart-qty-minus]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = state.cart.find(c => String(c.id) === btn.dataset.cartQtyMinus);
+      if (item) updateCartQty(item.id, item.quantity - 1);
+    });
+  });
+  body.querySelectorAll('[data-cart-qty-plus]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = state.cart.find(c => String(c.id) === btn.dataset.cartQtyPlus);
+      if (item) updateCartQty(item.id, item.quantity + 1);
+    });
+  });
+  body.querySelectorAll('[data-cart-qty-input]').forEach(input => {
+    input.addEventListener('change', () => updateCartQty(input.dataset.cartQtyInput, input.value));
+  });
 
   body.querySelectorAll('.cart-item-remove').forEach(btn => {
     btn.addEventListener('click', () => removeCartItem(btn.dataset.cartId));
@@ -2091,39 +2133,11 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
 /* ============================================================
    客服訊息（客戶端：與客服的一對一對話）
    ============================================================ */
-const chatOverlay = document.getElementById('chatOverlay');
 document.getElementById('chatBtn').addEventListener('click', () => {
   if (!state.user) { toast('請先登入才能聯絡我們'); openAuth(); return; }
   state.chatReturnHash = location.hash;
   location.hash = state.profile?.is_admin ? '#admin-messages' : '#messages';
 });
-document.getElementById('chatClose').addEventListener('click', () => chatOverlay.classList.remove('open'));
-chatOverlay.addEventListener('click', (e) => { if (e.target === chatOverlay) chatOverlay.classList.remove('open'); });
-document.getElementById('chatExpandBtn').addEventListener('click', () => {
-  chatOverlay.classList.remove('open');
-  location.hash = '#messages';
-});
-
-async function loadChatMessages() {
-  const { data, error } = await sb.from('messages').select('*').eq('user_id', state.user.id).order('created_at');
-  const box = document.getElementById('chatMessages');
-  if (error) { box.innerHTML = '<p>讀取訊息失敗</p>'; return; }
-  if (!data || data.length === 0) { box.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前還沒有對話紀錄，有任何問題都可以在下面留言給我們！</p>'; }
-  else {
-    box.innerHTML = data.map(m => `
-      <div class="chat-bubble-row ${m.sender === 'customer' ? 'mine' : ''}">
-        <div>
-          <div class="chat-bubble">${m.content}</div>
-          <div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div>
-        </div>
-      </div>
-    `).join('');
-    box.scrollTop = box.scrollHeight;
-  }
-  // 把客服(admin)發的訊息標記為已讀
-  await sb.from('messages').update({ is_read: true }).eq('user_id', state.user.id).eq('sender', 'admin').eq('is_read', false);
-  updateChatBadge();
-}
 
 async function updateChatBadge() {
   if (!state.user) { document.getElementById('chatBadge').style.display = 'none'; return; }
@@ -2132,16 +2146,6 @@ async function updateChatBadge() {
   badge.style.display = count > 0 ? 'flex' : 'none';
   badge.textContent = count;
 }
-
-document.getElementById('chatForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const input = document.getElementById('chatInput');
-  const content = input.value.trim();
-  if (!content) return;
-  await sb.from('messages').insert({ user_id: state.user.id, sender: 'customer', content });
-  input.value = '';
-  loadChatMessages();
-});
 
 // 完整聊天室：安全文字輸出、圖片私有連結、商品詢問草稿。
 function escapeHtml(value) { const d = document.createElement('div'); d.textContent = value || ''; return d.innerHTML; }
@@ -2165,7 +2169,7 @@ async function renderMessagesPage() {
   if (error) { box.innerHTML = '<p>讀取訊息失敗</p>'; return; }
   const rows = await Promise.all((data || []).map(async m => {
     const image = await signedChatImage(m.image_path);
-    return `<div class="chat-bubble-row ${m.sender === 'customer' ? 'mine' : ''}"><div>${productCardHtml(m)}<div class="chat-bubble">${escapeHtml(m.content)}</div>${image ? `<img class="chat-image" src="${image}" alt="訊息圖片">` : ''}<div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div></div></div>`;
+    return `<div class="chat-bubble-row ${m.sender === 'customer' ? 'mine' : ''}"><div>${productCardHtml(m)}<div class="chat-bubble">${image ? `<img class="chat-image" src="${image}" alt="訊息圖片">` : ''}${m.content ? escapeHtml(m.content) : ''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div></div></div>`;
   }));
   const draft = state.pendingProductInquiry ? productCardHtml(state.pendingProductInquiry, true) : '';
   box.innerHTML = rows.join('') || '<p style="color:var(--ink-soft);font-size:13px">有任何問題都可以傳訊給我們。</p>';
@@ -2204,6 +2208,19 @@ function bindChatImagePreview(inputId, previewId) {
 }
 const clearCustomerImagePreview = bindChatImagePreview('messagesPageImage', 'messagesPageImagePreview');
 const clearAdminImagePreview = bindChatImagePreview('adminChatImage', 'adminChatImagePreview');
+
+// 電腦版聊天室：按 Enter 快捷送出，Shift+Enter 換行不送出
+function bindEnterToSubmit(textareaId, formId) {
+  document.getElementById(textareaId).addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById(formId).requestSubmit();
+    }
+  });
+}
+bindEnterToSubmit('messagesPageInput', 'messagesPageForm');
+bindEnterToSubmit('adminChatInput', 'adminMessagesForm');
+
 document.getElementById('messagesPageForm').addEventListener('submit', async e => {
   e.preventDefault();
   const input = document.getElementById('messagesPageInput'), file = document.getElementById('messagesPageImage').files[0];
@@ -2524,6 +2541,7 @@ function openProductDetail(productId) {
 
   const variantGroups = state.variantsByProduct[p.id] || [];
   state.detailSelection = {};
+  document.getElementById('detailQtyInput').value = 1;
   renderVariantSlot(variantGroups[0], 'detailColorSection', 'detailColorRow', 'detailColorLabel', state.detailSelection, 'color');
   renderVariantSlot(variantGroups[1], 'detailSizeSection', 'detailSizeRow', 'detailSizeLabel', state.detailSelection, 'size');
   renderVariantSlot(variantGroups[2], 'detailExtraSection', 'detailExtraRow', 'detailExtraLabel', state.detailSelection, 'extra');
@@ -2538,7 +2556,7 @@ function openProductDetail(productId) {
     if (variantGroups[2] && variantGroups[2].rows.length > 0 && !state.detailSelection.extra) { toast('請先選擇' + variantGroups[2].type); return; }
     const desc = [state.detailSelection.color, state.detailSelection.size, state.detailSelection.extra].filter(Boolean).join(' / ');
     if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
-    addToCart(p.id, { variant_color: state.detailSelection.color, variant_size: state.detailSelection.size, variant_extra: state.detailSelection.extra });
+    addToCart(p.id, { variant_color: state.detailSelection.color, variant_size: state.detailSelection.size, variant_extra: state.detailSelection.extra }, document.getElementById('detailQtyInput').value);
     productDetailOverlay.classList.remove('open');
   };
 
@@ -2615,6 +2633,7 @@ function renderProductPage(productId) {
   const p = state.products.find(x => String(x.id) === String(productId));
   if (!p) { document.getElementById('productPageView').innerHTML = '<p>找不到這件商品，可能已下架。</p>'; return; }
   pageSelection = { color: null, size: null };
+  document.getElementById('pageQtyInput').value = 1;
 
   document.getElementById('pageDetailImage').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '';
   document.getElementById('pageCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
@@ -2664,7 +2683,7 @@ function renderProductPage(productId) {
     if (pageVariantGroups[2] && pageVariantGroups[2].rows.length > 0 && !pageSelection.extra) { toast('請先選擇' + pageVariantGroups[2].type); return; }
     const desc = [pageSelection.color, pageSelection.size, pageSelection.extra].filter(Boolean).join(' / ');
     if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
-    addToCart(p.id, { variant_color: pageSelection.color, variant_size: pageSelection.size, variant_extra: pageSelection.extra });
+    addToCart(p.id, { variant_color: pageSelection.color, variant_size: pageSelection.size, variant_extra: pageSelection.extra }, document.getElementById('pageQtyInput').value);
   };
 }
 
@@ -4310,7 +4329,7 @@ async function renderAdminMessagesThread() {
   const uid=state.adminChatActiveUser; if (!uid) return;
   const {data} = await sb.from('messages').select('*').eq('user_id',uid).order('created_at');
   const box=document.getElementById('adminChatMessages');
-  const rows=await Promise.all((data||[]).map(async m=>{const image=await signedChatImage(m.image_path); return `<div class="chat-bubble-row ${m.sender==='admin'?'mine':''}"><div>${productCardHtml(m)}<div class="chat-bubble">${escapeHtml(m.content)}</div>${image?`<img class="chat-image" src="${image}" alt="訊息圖片">`:''}<div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}${m.sender==='admin'&&m.is_read?' · 客戶已讀':''}</div></div></div>`;}));
+  const rows=await Promise.all((data||[]).map(async m=>{const image=await signedChatImage(m.image_path); return `<div class="chat-bubble-row ${m.sender==='admin'?'mine':''}"><div>${productCardHtml(m)}<div class="chat-bubble">${image?`<img class="chat-image" src="${image}" alt="訊息圖片">`:''}${m.content?escapeHtml(m.content):''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}${m.sender==='admin'&&m.is_read?' · 客戶已讀':''}</div></div></div>`;}));
   box.innerHTML=rows.join('')||'<p style="color:var(--ink-soft);font-size:13px">尚未有訊息。你可以主動向這位會員問候。</p>';
   box.querySelectorAll('[data-product-link]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.productLink)location.hash=`#product=${el.dataset.productLink}`;}));
   const name=state.adminChatProfile?.display_name || '會員'; document.getElementById('adminChatThreadTitle').textContent=`與 ${name} 的對話`; box.scrollTop=box.scrollHeight;
