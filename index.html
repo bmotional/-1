@@ -784,6 +784,10 @@
         <div class="variant-label" id="pageSizeLabel">選擇尺寸</div>
         <div class="swatch-row" id="pageSizeRow"></div>
       </div>
+      <div id="pageExtraSection" style="display:none">
+        <div class="variant-label" id="pageExtraLabel">選擇款式</div>
+        <div class="swatch-row" id="pageExtraRow"></div>
+      </div>
 
       <button class="btn btn-primary" id="pageAddToCartBtn" style="width:100%; margin-top:14px;">加入購物車</button>
       <button class="btn btn-outline" id="pageContactBtn" style="width:100%; margin-top:8px;">私訊聯絡</button>
@@ -1381,6 +1385,10 @@
           <div class="variant-label" id="detailSizeLabel">選擇尺寸</div>
           <div class="swatch-row" id="detailSizeRow"></div>
         </div>
+        <div id="detailExtraSection" style="display:none">
+          <div class="variant-label" id="detailExtraLabel">選擇款式</div>
+          <div class="swatch-row" id="detailExtraRow"></div>
+        </div>
 
         <button class="btn btn-primary" id="detailAddToCartBtn" style="width:100%; margin-top:10px;">加入購物車</button>
         <button class="btn btn-outline" id="detailShareBtn" style="width:100%; margin-top:8px;">🔗 分享這件商品</button>
@@ -1644,7 +1652,7 @@ function groupVariantsIntoSlots(rows) {
     if (!byType[v.variant_type]) { byType[v.variant_type] = []; order.push(v.variant_type); }
     byType[v.variant_type].push(v);
   });
-  return order.slice(0, 2).map(type => ({ type, rows: byType[type] }));
+  return order.slice(0, 3).map(type => ({ type, rows: byType[type] }));
 }
 
 function renderProducts() {
@@ -1949,15 +1957,17 @@ async function addToCart(productId, variant = {}) {
   }
   const vColor = variant.variant_color || null;
   const vSize = variant.variant_size || null;
+  const vExtra = variant.variant_extra || null;
   const existing = state.cart.find(c =>
     String(c.product_id) === String(productId) &&
     (c.variant_color || null) === vColor &&
-    (c.variant_size || null) === vSize
+    (c.variant_size || null) === vSize &&
+    (c.variant_extra || null) === vExtra
   );
   if (existing) {
     await sb.from('cart_items').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
   } else {
-    await sb.from('cart_items').insert({ user_id: state.user.id, product_id: productId, quantity: 1, variant_color: vColor, variant_size: vSize });
+    await sb.from('cart_items').insert({ user_id: state.user.id, product_id: productId, quantity: 1, variant_color: vColor, variant_size: vSize, variant_extra: vExtra });
   }
   await loadCart();
   toast('已加入購物車');
@@ -1968,7 +1978,7 @@ async function loadCart() {
   if (!state.user) { state.cart = []; renderCart(); return; }
   const { data, error } = await sb
     .from('cart_items')
-    .select('id, quantity, product_id, variant_color, variant_size, products(*)')
+    .select('id, quantity, product_id, variant_color, variant_size, variant_extra, products(*)')
     .eq('user_id', state.user.id);
   if (error) { console.error(error); return; }
   state.cart = data || [];
@@ -2002,7 +2012,7 @@ function renderCart() {
     const lineDeposit = lineTotal * (p.deposit_ratio || 0.5);
     grand += lineTotal;
     deposit += lineDeposit;
-    const variantDesc = [item.variant_color, item.variant_size].filter(Boolean).join(' / ');
+    const variantDesc = [item.variant_color, item.variant_size, item.variant_extra].filter(Boolean).join(' / ');
     return `
       <div class="cart-item">
         <img src="${p.image_url || ''}" alt="">
@@ -2041,7 +2051,7 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
     return {
       product_id: item.product_id, product_name: p.name, brand: p.brand,
       price_ntd: p.price_ntd, deposit_ratio: p.deposit_ratio, quantity: item.quantity,
-      variant_color: item.variant_color || null, variant_size: item.variant_size || null,
+      variant_color: item.variant_color || null, variant_size: item.variant_size || null, variant_extra: item.variant_extra || null,
     };
   });
 
@@ -2515,6 +2525,7 @@ function openProductDetail(productId) {
   state.detailSelection = {};
   renderVariantSlot(variantGroups[0], 'detailColorSection', 'detailColorRow', 'detailColorLabel', state.detailSelection, 'color');
   renderVariantSlot(variantGroups[1], 'detailSizeSection', 'detailSizeRow', 'detailSizeLabel', state.detailSelection, 'size');
+  renderVariantSlot(variantGroups[2], 'detailExtraSection', 'detailExtraRow', 'detailExtraLabel', state.detailSelection, 'extra');
 
   const addBtn = document.getElementById('detailAddToCartBtn');
   const canAdd = p.status === 'available' || p.status === 'preorder';
@@ -2523,9 +2534,10 @@ function openProductDetail(productId) {
   addBtn.onclick = () => {
     if (variantGroups[0] && variantGroups[0].rows.length > 0 && !state.detailSelection.color) { toast('請先選擇' + variantGroups[0].type); return; }
     if (variantGroups[1] && variantGroups[1].rows.length > 0 && !state.detailSelection.size) { toast('請先選擇' + variantGroups[1].type); return; }
-    const desc = [state.detailSelection.color, state.detailSelection.size].filter(Boolean).join(' / ');
+    if (variantGroups[2] && variantGroups[2].rows.length > 0 && !state.detailSelection.extra) { toast('請先選擇' + variantGroups[2].type); return; }
+    const desc = [state.detailSelection.color, state.detailSelection.size, state.detailSelection.extra].filter(Boolean).join(' / ');
     if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
-    addToCart(p.id, { variant_color: state.detailSelection.color, variant_size: state.detailSelection.size });
+    addToCart(p.id, { variant_color: state.detailSelection.color, variant_size: state.detailSelection.size, variant_extra: state.detailSelection.extra });
     productDetailOverlay.classList.remove('open');
   };
 
@@ -2639,6 +2651,7 @@ function renderProductPage(productId) {
   const pageVariantGroups = state.variantsByProduct[p.id] || [];
   renderVariantSlot(pageVariantGroups[0], 'pageColorSection', 'pageColorRow', 'pageColorLabel', pageSelection, 'color');
   renderVariantSlot(pageVariantGroups[1], 'pageSizeSection', 'pageSizeRow', 'pageSizeLabel', pageSelection, 'size');
+  renderVariantSlot(pageVariantGroups[2], 'pageExtraSection', 'pageExtraRow', 'pageExtraLabel', pageSelection, 'extra');
 
   const addBtn = document.getElementById('pageAddToCartBtn');
   const canAdd = p.status === 'available' || p.status === 'preorder';
@@ -2647,9 +2660,10 @@ function renderProductPage(productId) {
   addBtn.onclick = () => {
     if (pageVariantGroups[0] && pageVariantGroups[0].rows.length > 0 && !pageSelection.color) { toast('請先選擇' + pageVariantGroups[0].type); return; }
     if (pageVariantGroups[1] && pageVariantGroups[1].rows.length > 0 && !pageSelection.size) { toast('請先選擇' + pageVariantGroups[1].type); return; }
-    const desc = [pageSelection.color, pageSelection.size].filter(Boolean).join(' / ');
+    if (pageVariantGroups[2] && pageVariantGroups[2].rows.length > 0 && !pageSelection.extra) { toast('請先選擇' + pageVariantGroups[2].type); return; }
+    const desc = [pageSelection.color, pageSelection.size, pageSelection.extra].filter(Boolean).join(' / ');
     if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
-    addToCart(p.id, { variant_color: pageSelection.color, variant_size: pageSelection.size });
+    addToCart(p.id, { variant_color: pageSelection.color, variant_size: pageSelection.size, variant_extra: pageSelection.extra });
   };
 }
 
@@ -2924,7 +2938,7 @@ const ITEM_STATE_COLOR = {
 };
 const TERMINAL_STATES = ['completed', 'refunded_full', 'refunded_partial', 'abandoned_no_refund'];
 
-function variantDesc(it) { return [it.variant_color, it.variant_size].filter(Boolean).join(' / '); }
+function variantDesc(it) { return [it.variant_color, it.variant_size, it.variant_extra].filter(Boolean).join(' / '); }
 
 /* ---------- 依訂單分組，渲染每個明細各自的狀態與動作按鈕 ---------- */
 function renderOrderItemsGrouped(orders) {
@@ -3744,7 +3758,7 @@ function renderVariantGroups() {
     `;
   }).join('');
 
-  document.getElementById('addVariantGroupBtn').style.display = groups.length >= 2 ? 'none' : 'inline-flex';
+  document.getElementById('addVariantGroupBtn').style.display = groups.length >= 3 ? 'none' : 'inline-flex';
 
   container.querySelectorAll('[data-toggle-preset]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3821,7 +3835,7 @@ function renderVariantRow(v, gi, i, isColorType) {
 }
 
 document.getElementById('addVariantGroupBtn').addEventListener('click', () => {
-  if ((state.productEditVariants || []).length >= 2) { toast('最多只能有兩組款式（例如顏色+尺寸）'); return; }
+  if ((state.productEditVariants || []).length >= 3) { toast('最多只能有三組款式（例如顏色+尺寸+自訂款式）'); return; }
   const name = prompt('輸入這組款式的名稱（例如：材質、口味、款式）');
   if (!name) return;
   state.productEditVariants.push({ type: name, rows: [] });
@@ -4061,7 +4075,7 @@ function buildDemandGroups(items) {
     const key = it.product_name || `商品#${it.product_id}`;
     if (!groups[key]) groups[key] = { total: 0, combo: {}, colors: {}, sizes: {} };
     groups[key].total += it.quantity;
-    const comboKey = [it.variant_color, it.variant_size].filter(Boolean).join(' / ') || '（無款式）';
+    const comboKey = [it.variant_color, it.variant_size, it.variant_extra].filter(Boolean).join(' / ') || '（無款式）';
     groups[key].combo[comboKey] = (groups[key].combo[comboKey] || 0) + it.quantity;
     if (it.variant_color) groups[key].colors[it.variant_color] = (groups[key].colors[it.variant_color] || 0) + it.quantity;
     if (it.variant_size) groups[key].sizes[it.variant_size] = (groups[key].sizes[it.variant_size] || 0) + it.quantity;
@@ -4110,7 +4124,7 @@ const DEMAND_EXCLUDED_STATES = ['refunded_full', 'refunded_partial', 'abandoned_
 async function loadDemandSection({ countryKey, categoryKey, listId, stateMatch, mode }) {
   const { data, error } = await sb
     .from('order_items')
-    .select('product_id, product_name, variant_color, variant_size, quantity, state, products(country, category)');
+    .select('product_id, product_name, variant_color, variant_size, variant_extra, quantity, state, products(country, category)');
   const list = document.getElementById(listId);
   if (error) { list.innerHTML = '<p>讀取需求統計失敗</p>'; console.error(error); return; }
 
