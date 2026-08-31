@@ -176,6 +176,8 @@
   .chip.active {
     background: var(--ink); color: var(--bg); border-color: var(--ink);
   }
+  .sort-arrow { display: none; font-size: 10px; margin-left: 2px; }
+  .chip.active .sort-arrow { display: inline; }
 
   /* ============ Product grid ============ */
   .section { padding: 40px 0; }
@@ -521,6 +523,8 @@
     background: var(--bg); font-size: 14px; font-weight: 500; color: var(--ink);
   }
   .oauth-btn:hover { border-color: var(--khaki); }
+  .oauth-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .oauth-btn:disabled:hover { border-color: var(--line); }
   .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--ink-soft); font-size: 12px; }
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
   .auth-switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
@@ -693,6 +697,13 @@
     <button class="chip" data-filter-status="preorder">預購中</button>
     <button class="chip" data-filter-status="coming_soon">即將上架</button>
   </div>
+  <div class="filter-group" id="sortFilters">
+    <span class="filter-label">排序</span>
+    <button class="chip active" data-sort-key="newest">最新 <span class="sort-arrow">▼</span></button>
+    <button class="chip" data-sort-key="popular">熱門 <span class="sort-arrow">▼</span></button>
+    <button class="chip" data-sort-key="price">價格 <span class="sort-arrow">▼</span></button>
+    <button class="chip" data-sort-key="repurchase">回購率 <span class="sort-arrow">▼</span></button>
+  </div>
 </div>
 
 <!-- ============ Product grid ============ -->
@@ -858,7 +869,10 @@
 <div id="notificationsPageView" class="wrap section" style="display:none;">
 
   <button class="btn btn-outline btn-sm" id="notifPageBackBtn" style="margin-bottom:20px;">← 返回</button>
-  <h2 class="section-title">通知</h2>
+  <div style="display:flex; justify-content:space-between; align-items:baseline; max-width:640px;">
+    <h2 class="section-title">通知</h2>
+    <button class="btn btn-outline btn-sm" id="notifPageMarkAllBtn">一鍵已讀</button>
+  </div>
   <div id="notifPageList" style="max-width:640px;"></div>
 </div>
 
@@ -1033,8 +1047,9 @@
       <p class="sub">登入後才能加入購物車與提出許願</p>
 
       <div class="oauth-row">
-        <button class="oauth-btn" id="fbLoginBtn">使用 Facebook 繼續</button>
-        <button class="oauth-btn" id="lineLoginBtn">使用 LINE 繼續</button>
+        <button class="oauth-btn" id="fbLoginBtn" disabled>使用 Facebook 繼續</button>
+        <button class="oauth-btn" id="lineLoginBtn" disabled>使用 LINE 繼續</button>
+        <p style="font-size:11px; color:var(--ink-soft); margin:-4px 0 0; text-align:center;">尚未開啟快速登入</p>
       </div>
       <div class="divider">或使用 Email</div>
 
@@ -1391,7 +1406,10 @@
     <button class="modal-close" id="notifClose" aria-label="關閉">×</button>
     <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
       <h3 style="margin:0;">通知</h3>
-      <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm" style="flex-shrink:0;">展開完整畫面</button>
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button type="button" id="notifMarkAllBtn" class="btn btn-outline btn-sm">一鍵已讀</button>
+        <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm">展開完整畫面</button>
+      </div>
     </div>
     <div id="notifList" style="max-height:420px; overflow-y:auto; padding-right:4px;"></div>
   </div>
@@ -1504,6 +1522,8 @@ const state = {
   products: [],
   filterCategory: 'all',
   filterCountry: 'all',
+  sortKey: 'newest',
+  sortDir: 'desc',
   filterStatus: 'all',
   user: null,      // Supabase auth user
   profile: null,   // profiles 資料表對應的一列，含 is_admin
@@ -1583,6 +1603,15 @@ async function loadProducts() {
   }
   state.products = data || [];
 
+  // 熱門度/回購率統計(供排序使用)，來自公開的彙總 view，不含個別使用者資料
+  const { data: stats } = await sb.from('product_popularity_stats').select('*');
+  const statsMap = {};
+  (stats || []).forEach(s => { statsMap[s.product_id] = s; });
+  state.products.forEach(p => {
+    p._popularity = statsMap[p.id]?.total_quantity || 0;
+    p._repurchaseRate = statsMap[p.id]?.repurchase_rate || 0;
+  });
+
   // 一併撈取這些商品的款式資料(顏色/尺寸)
   const ids = state.products.map(p => p.id);
   state.variantsByProduct = {};
@@ -1609,6 +1638,14 @@ function renderProducts() {
     if (state.filterStatus !== 'all' && p.status !== state.filterStatus) return false;
     return true;
   });
+
+  const sortField = {
+    newest: p => new Date(p.created_at).getTime(),
+    popular: p => p._popularity,
+    price: p => p.price_ntd,
+    repurchase: p => p._repurchaseRate,
+  }[state.sortKey] || (p => new Date(p.created_at).getTime());
+  filtered.sort((a, b) => (sortField(a) - sortField(b)) * (state.sortDir === 'asc' ? 1 : -1));
 
   countEl.textContent = `（${filtered.length} 件）`;
   grid.innerHTML = '';
@@ -1691,6 +1728,21 @@ document.querySelectorAll('[data-filter-status]').forEach(btn => {
     document.querySelectorAll('[data-filter-status]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.filterStatus = btn.dataset.filterStatus;
+    renderProducts();
+  });
+});
+document.querySelectorAll('[data-sort-key]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.sortKey;
+    if (state.sortKey === key) {
+      state.sortDir = state.sortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+      state.sortKey = key;
+      state.sortDir = 'desc';
+    }
+    document.querySelectorAll('[data-sort-key]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    btn.querySelector('.sort-arrow').textContent = state.sortDir === 'desc' ? '▼' : '▲';
     renderProducts();
   });
 });
@@ -2146,6 +2198,8 @@ document.getElementById('notifExpandBtn').addEventListener('click', () => {
   notifOverlay.classList.remove('open');
   location.hash = '#notifications';
 });
+document.getElementById('notifMarkAllBtn').addEventListener('click', markAllNotificationsRead);
+document.getElementById('notifPageMarkAllBtn').addEventListener('click', markAllNotificationsRead);
 
 async function loadNotifications(targetListId = 'notifList') {
   const { data, error } = await sb.from('notifications').select('*').eq('user_id', state.user.id).order('created_at', { ascending: false });
@@ -2176,14 +2230,14 @@ async function loadNotifications(targetListId = 'notifList') {
       const item = (n.order_item_id ? itemMap[n.order_item_id] : null) || order?.fallbackItem;
       if (!order && !item) {
         return `
-          <div class="notif-row ${n.is_read ? '' : 'unread'}">
+          <div class="notif-row ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}">
             <div>${n.content}</div>
             <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-Hant-TW')}</div>
           </div>
         `;
       }
       return `
-        <div class="notif-row notif-rich ${n.is_read ? '' : 'unread'} ${order ? 'notif-clickable' : ''}" ${order ? `data-notif-order="${order.id}"` : ''}>
+        <div class="notif-row notif-rich ${n.is_read ? '' : 'unread'} ${order ? 'notif-clickable' : ''}" data-notif-id="${n.id}" ${order ? `data-notif-order="${order.id}"` : ''}>
           ${item?.products?.image_url ? `<img src="${item.products.image_url}" class="notif-thumb" alt="">` : '<div class="notif-thumb notif-thumb-empty"></div>'}
           <div class="notif-rich-body">
             <div class="notif-rich-top">
@@ -2199,17 +2253,25 @@ async function loadNotifications(targetListId = 'notifList') {
     }).join('');
 
     list.querySelectorAll('[data-notif-order]').forEach(row => {
-      row.addEventListener('click', () => {
+      row.addEventListener('click', async () => {
         document.getElementById('notifOverlay').classList.remove('open');
         state.highlightOrderId = Number(row.dataset.notifOrder);
+        await sb.from('notifications').update({ is_read: true }).eq('id', row.dataset.notifId);
+        updateNotifBadge();
         location.hash = '#active-orders';
       });
     });
   }
-  await sb.from('notifications').update({ is_read: true }).eq('user_id', state.user.id).eq('is_read', false);
   updateNotifBadge();
 }
 function renderNotifPage() { loadNotifications('notifPageList'); }
+
+async function markAllNotificationsRead() {
+  await sb.from('notifications').update({ is_read: true }).eq('user_id', state.user.id).eq('is_read', false);
+  updateNotifBadge();
+  loadNotifications('notifList');
+  if (location.hash === '#notifications') loadNotifications('notifPageList');
+}
 
 async function updateNotifBadge() {
   if (!state.user) { document.getElementById('notifBadge').style.display = 'none'; return; }
@@ -2867,6 +2929,7 @@ function renderOrderItemsGrouped(orders) {
       <div class="order-row-top">
         <span class="order-id">訂單 ${o.order_no || ('#' + o.id)}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
       </div>
+      <div class="notif-rich-amounts" style="margin-bottom:8px;">已付訂金 ${ntd(o.deposit_ntd)}　／　訂單總額 ${ntd(o.total_ntd)}</div>
       ${(o.order_items || []).map(it => renderSingleItemRow(it)).join('')}
     </div>
   `).join('');
@@ -2916,12 +2979,16 @@ function renderSingleItemRow(it) {
   }
 
   return `
-    <div style="border-top:1px solid var(--line); padding:12px 0;">
-      <div class="order-row-top">
-        <span style="font-size:13px;">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
-        <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${ITEM_STATE_LABEL[it.state] || it.state}</span>
+    <div class="notif-rich" style="border-top:1px solid var(--line); padding:12px 0; align-items:flex-start;">
+      ${it.products?.image_url ? `<img src="${it.products.image_url}" class="notif-thumb" alt="">` : '<div class="notif-thumb notif-thumb-empty"></div>'}
+      <div class="notif-rich-body">
+        <div class="order-row-top">
+          <span class="notif-product-name">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
+          <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${ITEM_STATE_LABEL[it.state] || it.state}</span>
+        </div>
+        <div class="notif-rich-msg" style="margin:2px 0 6px;">售價 ${ntd(it.price_ntd)}</div>
+        <div class="order-admin-actions" style="flex-wrap:wrap;">${actionsHtml}</div>
       </div>
-      <div class="order-admin-actions" style="flex-wrap:wrap;">${actionsHtml}</div>
     </div>
   `;
 }
@@ -2937,7 +3004,7 @@ function rangeToDate(range) {
 /* ---------- 歷史訂單（僅終點狀態：已完成/已退款結案/不退款結案），可依日期範圍篩選 ---------- */
 async function loadHistoryOrders(range, targetListId) {
   if (!state.user) return;
-  let query = sb.from('orders').select('id, order_no, created_at, order_items!inner(*)')
+  let query = sb.from('orders').select('id, order_no, created_at, total_ntd, deposit_ntd, order_items!inner(*, products(image_url))')
     .eq('user_id', state.user.id).in('order_items.state', TERMINAL_STATES).order('created_at', { ascending: false });
   const fromDate = rangeToDate(range);
   if (fromDate) query = query.gte('created_at', fromDate.toISOString());
@@ -2952,7 +3019,7 @@ async function loadHistoryOrders(range, targetListId) {
 /* ---------- 進行中訂單（尚未走到終點的所有明細） ---------- */
 async function loadActiveOrders(targetListId) {
   if (!state.user) return;
-  const { data, error } = await sb.from('orders').select('id, order_no, created_at, order_items!inner(*)')
+  const { data, error } = await sb.from('orders').select('id, order_no, created_at, total_ntd, deposit_ntd, order_items!inner(*, products(image_url))')
     .eq('user_id', state.user.id).not('order_items.state', 'in', `(${TERMINAL_STATES.join(',')})`).order('created_at', { ascending: false });
   const list = document.getElementById(targetListId);
   if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; console.error(error); return; }
