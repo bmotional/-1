@@ -182,6 +182,21 @@
     background: #FBEFC9; border: 1px solid var(--brass); border-radius: var(--radius);
     padding: 10px 12px; font-weight: 700; color: #5C4A1E; font-size: 13px; line-height: 1.5;
   }
+  .flow-step {
+    display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+    border-radius: 12px; border: 1px solid var(--line); background: var(--bg-raised);
+  }
+  .flow-step.money { background: #FBF1DC; border-color: var(--brass); }
+  .flow-step-num {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    background: var(--khaki); color: #fff;
+  }
+  .flow-step.money .flow-step-num { background: var(--brass); }
+  .flow-step-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; color: var(--ink); }
+  .flow-step-desc { font-size: 13px; color: var(--ink-soft); }
+  .flow-step-arrow { text-align: center; color: var(--khaki); font-size: 18px; padding: 2px 0; }
   .qty-selector { display: flex; align-items: center; gap: 10px; }
   .qty-btn {
     width: 34px; height: 34px; border: 1px solid var(--line); background: var(--bg-raised);
@@ -703,6 +718,7 @@
     <div class="hero-ctas">
       <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
       <a href="#wishlist" class="btn btn-outline">提出代購許願</a>
+      <a href="#preorder-guide" class="btn btn-outline" style="border-color:var(--brass); color:var(--brass-dark); font-weight:700;">點我看預購流程</a>
     </div>
   </div>
 </section>
@@ -934,6 +950,46 @@
 </div>
 
 <!-- ============ Edit Profile Page（編輯個人資料，獨立分頁） ============ -->
+<div id="preorderGuidePageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="preorderGuideBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">預購流程</h2>
+  <p class="sub" style="max-width:640px; margin-bottom:28px;">代購跟一般網購不太一樣：我們是先收訂金才出國採購，所以下單到收到貨會需要一點時間，這裡幫你把整個流程講清楚。</p>
+
+  <div class="flow-steps" style="max-width:640px; margin-bottom:36px;">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <div><div class="flow-step-title">選購商品</div><div class="flow-step-desc">選顏色尺寸，放入購物車</div></div>
+    </div>
+    <div class="flow-step-arrow">↓</div>
+    <div class="flow-step money">
+      <div class="flow-step-num">2</div>
+      <div><div class="flow-step-title">支付訂金</div><div class="flow-step-desc">訂金70%起，鎖定商品開始採購</div></div>
+    </div>
+    <div class="flow-step-arrow">↓</div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <div><div class="flow-step-title">出國採購</div><div class="flow-step-desc">日韓越實地選購，確保是正品</div></div>
+    </div>
+    <div class="flow-step-arrow">↓</div>
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <div><div class="flow-step-title">抵台出貨</div><div class="flow-step-desc">通知你申請出貨，安排寄送到店</div></div>
+    </div>
+    <div class="flow-step-arrow">↓</div>
+    <div class="flow-step money">
+      <div class="flow-step-num">5</div>
+      <div><div class="flow-step-title">取貨付尾款</div><div class="flow-step-desc">到店取貨，付清剩餘尾款即可帶走</div></div>
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:8px;">完整流程圖（含退款/重寄等情況）</h3>
+  <p class="sub" style="margin-bottom:14px;">改變心意想取消訂單、包裹逾期未取怎麼辦，這張圖都有畫出來。</p>
+  <picture>
+    <source media="(max-width: 780px)" srcset="assets/order-flow-mobile.png">
+    <img src="assets/order-flow-desktop.png" alt="濱水一湖預購完整流程圖" style="width:100%; max-width:900px; border-radius:12px; border:1px solid var(--line); display:block;">
+  </picture>
+</div>
+
 <div id="editProfilePageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="editProfilePageBackBtn" style="margin-bottom:20px;">← 返回</button>
   <h2 class="section-title">編輯個人資料</h2>
@@ -2353,10 +2409,11 @@ function renderRoute() {
   const isEditProfile = hash === '#edit-profile';
   const isHistoryOrders = hash === '#order-history';
   const isActiveOrders = hash === '#active-orders';
+  const isPreorderGuide = hash === '#preorder-guide';
   const adminPage = ADMIN_PANEL_PAGES[hash];
 
   const anyAdminPageOpen = !!adminPage;
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isPreorderGuide) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
@@ -2364,6 +2421,7 @@ function renderRoute() {
   document.getElementById('editProfilePageView').style.display = isEditProfile ? 'block' : 'none';
   document.getElementById('historyOrdersPageView').style.display = isHistoryOrders ? 'block' : 'none';
   document.getElementById('activeOrdersPageView').style.display = isActiveOrders ? 'block' : 'none';
+  document.getElementById('preorderGuidePageView').style.display = isPreorderGuide ? 'block' : 'none';
 
   // 六個「管理後台專屬頁面」共用同一套邏輯：符合目前網址的那個顯示 + 面板移過去 + 載入資料；
   // 其餘的一律隱藏，面板放回管理後台彈窗裡原本的分頁位置。
@@ -2405,6 +2463,7 @@ document.getElementById('messagesPageBackBtn').addEventListener('click', () => {
 document.getElementById('notifPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('adminMessagesPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('editProfilePageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('preorderGuideBackBtn').addEventListener('click', () => { location.hash = ''; });
 Object.values(ADMIN_PANEL_PAGES).forEach(cfg => {
   const backBtn = document.getElementById(cfg.backBtn);
   if (backBtn) backBtn.addEventListener('click', () => { location.hash = ''; });
