@@ -197,6 +197,12 @@
   .flow-step-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; color: var(--ink); }
   .flow-step-desc { font-size: 13px; color: var(--ink-soft); }
   .flow-step-arrow { text-align: center; color: var(--khaki); font-size: 18px; padding: 2px 0; }
+  .refund-policy h3 { font-family: var(--font-display); font-size: 16px; margin: 26px 0 8px; color: var(--ink); }
+  .refund-policy h3:first-of-type { margin-top: 0; }
+  .refund-policy p { font-size: 14px; color: var(--ink-soft); line-height: 1.8; margin: 0 0 10px; }
+  .refund-policy ul { margin: 0 0 10px; padding-left: 20px; }
+  .refund-policy li { font-size: 14px; color: var(--ink-soft); line-height: 1.8; margin-bottom: 6px; }
+  .refund-policy strong { color: var(--ink); }
   .qty-selector { display: flex; align-items: center; gap: 10px; }
   .qty-btn {
     width: 34px; height: 34px; border: 1px solid var(--line); background: var(--bg-raised);
@@ -687,7 +693,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 7H6"/></svg>
         <span class="cart-badge" id="cartBadge" style="display:none">0</span>
       </button>
-      <button class="icon-btn" id="activeOrdersBtn" aria-label="進行中訂單" title="進行中訂單">
+      <button class="icon-btn" id="activeOrdersBtn" aria-label="我的訂單" title="我的訂單">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
         <span class="cart-badge" id="activeOrdersBadge" style="display:none">0</span>
       </button>
@@ -714,7 +720,7 @@
   <div class="hero-inner">
     <div class="hero-eyebrow">日本 · 韓國 · 越南　正品選品代購</div>
     <h1>買不累的 一修尼去日本</h1>
-    <p>我能習慣遠距離，多遠都要在購物車裡。希望我們能像鴨血豆腐一樣，一直ㄗㄞˋ一塊</p>
+    <p>我能習慣遠距離，多遠都要在購物車裡。<br>鴨血豆腐可以一塊再一塊，我也想和你一直在一塊。</p>
     <div class="hero-ctas">
       <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
       <a href="#wishlist" class="btn btn-outline">提出代購許願</a>
@@ -983,11 +989,48 @@
   </div>
 
   <h3 style="font-family:var(--font-display); font-size:16px; margin-bottom:8px;">完整流程圖（含退款/重寄等情況）</h3>
-  <p class="sub" style="margin-bottom:14px;">改變心意想取消訂單、包裹逾期未取怎麼辦?參考:</p>
+  <p class="sub" style="margin-bottom:14px;">改變心意想取消訂單、包裹逾期未取怎麼辦? 請參考：<a href="#refund-policy" style="color:var(--brass-dark); font-weight:600; text-decoration:underline;">點我看退款規範</a></p>
   <picture>
     <source media="(max-width: 780px)" srcset="assets/order-flow-mobile.png">
     <img src="assets/order-flow-desktop.png" alt="濱水一湖預購完整流程圖" style="width:100%; max-width:900px; border-radius:12px; border:1px solid var(--line); display:block;">
   </picture>
+</div>
+
+<!-- ============ 退款規範 全頁畫面 ============ -->
+<div id="refundPolicyPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="refundPolicyBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <div class="refund-policy" style="max-width:720px;">
+    <h2 class="section-title" style="margin-bottom:6px;">濱水一湖服務條款與退款規範</h2>
+    <p class="sub" style="margin-bottom:28px;">為了保障雙方權益，下單並支付訂金前，請詳細閱讀以下內容。完成預購並支付訂金，即表示您已閱讀、瞭解並同意本規範之全部內容。</p>
+
+    <h3>一、服務性質</h3>
+    <p>本站商品皆為接受您個人委託，由賣家親自前往日本、韓國、越南等地實體店面或官方通路採購後帶回台灣的代購服務。每一筆訂單都是依照您指定的品牌、款式、顏色、尺寸與數量所進行的客製化採購，並非既有現貨銷售。</p>
+    <p>依《消費者保護法》第19條及《通訊交易解除權合理例外情事適用準則》第2條第2款規定，客製化代購服務不適用七日猶豫期，恕無法接受無條件退貨退款。</p>
+
+    <h3>二、訂金與付款方式</h3>
+    <p>下單時需支付商品總額70%以上作為訂金，收到訂金後我們才會展開國外採購。訂金收取後，我們就已經實際支出資金進行採購，因此除下列情況外，恕無法接受因個人因素（例如尺寸選錯、單純不想要了）要求取消訂單或退款。商品抵台、正式出貨後，剩餘尾款於超商取貨時支付即可。</p>
+
+    <h3>三、放棄訂單與退款規範</h3>
+    <p>我們把「放棄訂單」依照商品目前的採購進度分成兩種情況處理，進度越後面、我們已經投入的成本越高，能退還的比例也會越低：</p>
+    <ul>
+      <li><strong>商品尚未出貨前放棄：</strong>依訂金金額級距退還5%~15%（金額越高的商品，退款比例越高），確切級距我們會在您申請放棄時，直接顯示試算金額給您確認。</li>
+      <li><strong>商品已出貨、已送達門市後放棄：</strong>依《民法》第249條第2款規定，訂金不予退還。這個階段商品已經確定屬於您委託採購的專屬商品，我們沒有辦法再轉賣給其他人。</li>
+    </ul>
+
+    <h3>四、零食及有效期限商品的特別規定</h3>
+    <p>零食、食品類商品因為有保存期限，一旦開始採購就沒辦法像服飾一樣繼續留著等下一位客人買。依《通訊交易解除權合理例外情事適用準則》第2條第1款「易於腐敗、保存期限較短」之規定，這類商品有獨立於客製化服務之外的合理例外規定。</p>
+    <p>因此零食類商品<strong>一經鎖單開始採購後，若您提出放棄，不適用上述5%~15%的部分退款，訂金將不予退還</strong>。下單前請務必確認好口味與數量。</p>
+    <p>為了避免有心人士大量下單造成庫存無法消化，同一款零食單筆訂單數量超過10件時，我們保留與您另外確認訂單、或請您分開下單的權利。</p>
+
+    <h3>五、開箱檢查與瑕疵處理</h3>
+    <p>拆封包裹時，強烈建議您全程錄影（從包裹外觀、拆開膠帶到取出商品檢查），這是保障您自己權益最有效的方式。如果您在收到商品後發現有重大瑕疵（例如寄錯款式/尺寸/顏色、嚴重破損、主要配件缺失），請於收到包裹3日內，附上照片或影片與我們聯絡，我們會依實際情況協助您換貨、部分補償或退款。</p>
+    <p>若您沒有全程錄影，我們仍然會依照您提供的其他證明（例如照片、聯繫時間點）盡量協助處理，只是相對會需要多一點時間確認狀況，請見諒。</p>
+
+    <h3>六、以下情況不屬於瑕疵</h3>
+    <p>專櫃商品本身可能存在的微小線頭、些微溢膠、布料車縫線些微不對稱、螢幕色差、外包裝紙盒因國際運送擠壓產生的痕跡等，都屬於原廠正常品質範圍，不算是商品瑕疵，恕不接受退換貨。</p>
+
+    <p class="sub" style="margin-top:28px; font-size:11px;">實際退款金額依核算結果為準，若條款內容與現行法規有所牴觸，依現行法規規定辦理。</p>
+  </div>
 </div>
 
 <div id="editProfilePageView" class="wrap section" style="display:none;">
@@ -1194,7 +1237,6 @@
       <p class="sub" id="loggedInEmail"></p>
       <p class="sub" id="loggedInUid" style="font-size:11px;"></p>
       <button class="btn btn-outline" id="editProfileBtn" style="width:100%; margin-bottom:10px;">編輯個人資料</button>
-      <button class="btn btn-outline" id="myOrdersBtn" style="width:100%; margin-bottom:10px;">查看歷史訂單</button>
       <button class="btn btn-outline" id="logoutBtn" style="width:100%">登出</button>
     </div>
   </div>
@@ -1219,30 +1261,33 @@
 </aside>
 
 <!-- ============ 歷史訂單 Modal（只顯示「已完成」的訂單） ============ -->
-<div class="modal-overlay big-modal" id="myOrdersOverlay">
-  <div class="modal" style="display:flex; flex-direction:column; height:70vh; max-height:600px;">
-    <button class="modal-close" id="myOrdersClose" aria-label="關閉">×</button>
-    <h3 style="flex-shrink:0;">歷史訂單</h3>
-    <p class="sub" style="flex-shrink:0;">僅顯示狀態為「已完成」的訂單紀錄</p>
-    <div class="filter-group" id="historyOrdersFilters" style="flex-shrink:0; margin-bottom:14px;">
-      <button class="chip active" data-history-range="all">全部</button>
-      <button class="chip" data-history-range="7d">近7天</button>
-      <button class="chip" data-history-range="1m">一個月</button>
-      <button class="chip" data-history-range="1y">今年</button>
-    </div>
-    <div id="myOrdersList" style="height:420px; overflow-y:auto;"></div>
-    <button class="btn btn-outline" id="historyOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整歷史訂單頁面</button>
-  </div>
-</div>
-
-<!-- ============ 進行中訂單 Modal（待確認/已鎖定，尚未完成或取消） ============ -->
+<!-- ============ 我的訂單 Modal（進行中訂單／查看歷史訂單，用分頁籤切換） ============ -->
 <div class="modal-overlay big-modal" id="activeOrdersOverlay">
   <div class="modal" style="display:flex; flex-direction:column; height:70vh; max-height:600px;">
     <button class="modal-close" id="activeOrdersClose" aria-label="關閉">×</button>
-    <h3 style="flex-shrink:0;">進行中訂單</h3>
-    <p class="sub" style="flex-shrink:0;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
-    <div id="activeOrdersList" style="height:420px; overflow-y:auto;"></div>
-    <button class="btn btn-outline" id="activeOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整進行中訂單頁面</button>
+    <h3 style="flex-shrink:0;">我的訂單</h3>
+    <div class="admin-tabs" style="flex-shrink:0; margin-bottom:14px;">
+      <button class="admin-tab active" data-myorders-tab="active">進行中訂單</button>
+      <button class="admin-tab" data-myorders-tab="history">查看歷史訂單</button>
+    </div>
+
+    <div id="myOrdersActivePane" style="flex-shrink:0;">
+      <p class="sub" style="flex-shrink:0;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
+      <div id="activeOrdersList" style="height:370px; overflow-y:auto;"></div>
+      <button class="btn btn-outline" id="activeOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整進行中訂單頁面</button>
+    </div>
+
+    <div id="myOrdersHistoryPane" style="display:none; flex-shrink:0;">
+      <p class="sub" style="flex-shrink:0;">僅顯示狀態為「已完成」的訂單紀錄</p>
+      <div class="filter-group" id="historyOrdersFilters" style="flex-shrink:0; margin-bottom:14px;">
+        <button class="chip active" data-history-range="all">全部</button>
+        <button class="chip" data-history-range="7d">近7天</button>
+        <button class="chip" data-history-range="1m">一個月</button>
+        <button class="chip" data-history-range="1y">今年</button>
+      </div>
+      <div id="myOrdersList" style="height:330px; overflow-y:auto;"></div>
+      <button class="btn btn-outline" id="historyOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整歷史訂單頁面</button>
+    </div>
   </div>
 </div>
 
@@ -2410,10 +2455,11 @@ function renderRoute() {
   const isHistoryOrders = hash === '#order-history';
   const isActiveOrders = hash === '#active-orders';
   const isPreorderGuide = hash === '#preorder-guide';
+  const isRefundPolicy = hash === '#refund-policy';
   const adminPage = ADMIN_PANEL_PAGES[hash];
 
   const anyAdminPageOpen = !!adminPage;
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isPreorderGuide) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isPreorderGuide || isRefundPolicy) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
@@ -2422,6 +2468,7 @@ function renderRoute() {
   document.getElementById('historyOrdersPageView').style.display = isHistoryOrders ? 'block' : 'none';
   document.getElementById('activeOrdersPageView').style.display = isActiveOrders ? 'block' : 'none';
   document.getElementById('preorderGuidePageView').style.display = isPreorderGuide ? 'block' : 'none';
+  document.getElementById('refundPolicyPageView').style.display = isRefundPolicy ? 'block' : 'none';
 
   // 六個「管理後台專屬頁面」共用同一套邏輯：符合目前網址的那個顯示 + 面板移過去 + 載入資料；
   // 其餘的一律隱藏，面板放回管理後台彈窗裡原本的分頁位置。
@@ -2464,6 +2511,7 @@ document.getElementById('notifPageBackBtn').addEventListener('click', () => { lo
 document.getElementById('adminMessagesPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('editProfilePageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('preorderGuideBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('refundPolicyBackBtn').addEventListener('click', () => { location.hash = ''; });
 Object.values(ADMIN_PANEL_PAGES).forEach(cfg => {
   const backBtn = document.getElementById(cfg.backBtn);
   if (backBtn) backBtn.addEventListener('click', () => { location.hash = ''; });
@@ -3285,17 +3333,32 @@ document.getElementById('warningModalCancelBtn').addEventListener('click', () =>
 
 
 
-/* ---------- 歷史訂單 Modal ---------- */
-document.getElementById('myOrdersBtn').addEventListener('click', () => {
-  closeAuth();
-  document.getElementById('myOrdersOverlay').classList.add('open');
-  loadHistoryOrders(state.historyRange, 'myOrdersList');
+/* ---------- 我的訂單 Modal（進行中訂單／查看歷史訂單，用分頁籤切換） ---------- */
+document.getElementById('activeOrdersBtn').addEventListener('click', () => {
+  if (!state.user) { toast('請先登入才能查看訂單'); openAuth(); return; }
+  document.getElementById('activeOrdersOverlay').classList.add('open');
+  switchMyOrdersTab('active');
 });
-document.getElementById('myOrdersClose').addEventListener('click', () => document.getElementById('myOrdersOverlay').classList.remove('open'));
-document.getElementById('myOrdersOverlay').addEventListener('click', (e) => { if (e.target === document.getElementById('myOrdersOverlay')) document.getElementById('myOrdersOverlay').classList.remove('open'); });
+document.getElementById('activeOrdersClose').addEventListener('click', () => document.getElementById('activeOrdersOverlay').classList.remove('open'));
+document.getElementById('activeOrdersOverlay').addEventListener('click', (e) => { if (e.target === document.getElementById('activeOrdersOverlay')) document.getElementById('activeOrdersOverlay').classList.remove('open'); });
+document.getElementById('activeOrdersFullPageBtn').addEventListener('click', () => {
+  document.getElementById('activeOrdersOverlay').classList.remove('open');
+  location.hash = '#active-orders';
+});
 document.getElementById('historyOrdersFullPageBtn').addEventListener('click', () => {
-  document.getElementById('myOrdersOverlay').classList.remove('open');
+  document.getElementById('activeOrdersOverlay').classList.remove('open');
   location.hash = '#order-history';
+});
+
+function switchMyOrdersTab(tab) {
+  document.querySelectorAll('[data-myorders-tab]').forEach(b => b.classList.toggle('active', b.dataset.myordersTab === tab));
+  document.getElementById('myOrdersActivePane').style.display = tab === 'active' ? 'block' : 'none';
+  document.getElementById('myOrdersHistoryPane').style.display = tab === 'history' ? 'block' : 'none';
+  if (tab === 'active') loadActiveOrders('activeOrdersList');
+  else loadHistoryOrders(state.historyRange, 'myOrdersList');
+}
+document.querySelectorAll('[data-myorders-tab]').forEach(btn => {
+  btn.addEventListener('click', () => switchMyOrdersTab(btn.dataset.myordersTab));
 });
 document.querySelectorAll('[data-history-range]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -3312,19 +3375,6 @@ document.querySelectorAll('[data-history-page-range]').forEach(btn => {
     state.historyRange = btn.dataset.historyPageRange;
     loadHistoryOrders(state.historyRange, 'historyOrdersPageList');
   });
-});
-
-/* ---------- 進行中訂單 Modal ---------- */
-document.getElementById('activeOrdersBtn').addEventListener('click', () => {
-  if (!state.user) { toast('請先登入才能查看訂單'); openAuth(); return; }
-  document.getElementById('activeOrdersOverlay').classList.add('open');
-  loadActiveOrders('activeOrdersList');
-});
-document.getElementById('activeOrdersClose').addEventListener('click', () => document.getElementById('activeOrdersOverlay').classList.remove('open'));
-document.getElementById('activeOrdersOverlay').addEventListener('click', (e) => { if (e.target === document.getElementById('activeOrdersOverlay')) document.getElementById('activeOrdersOverlay').classList.remove('open'); });
-document.getElementById('activeOrdersFullPageBtn').addEventListener('click', () => {
-  document.getElementById('activeOrdersOverlay').classList.remove('open');
-  location.hash = '#active-orders';
 });
 
 /* ============================================================
