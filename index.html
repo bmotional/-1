@@ -91,14 +91,16 @@
     display: flex; gap: 28px; list-style: none;
     margin: 0; padding: 0;
   }
-  nav.main-nav button {
+  nav.main-nav button,
+  nav.main-nav a.nav-wishlist-link {
     background: none; border: none; padding: 8px 0;
     font-size: 15px; color: var(--ink-soft);
     border-bottom: 2px solid transparent;
     transition: color .15s, border-color .15s;
   }
   nav.main-nav button:hover,
-  nav.main-nav button.active {
+  nav.main-nav button.active,
+  nav.main-nav a.nav-wishlist-link:hover {
     color: var(--ink); border-color: var(--brass);
   }
   .header-actions { display: flex; align-items: center; gap: 16px; }
@@ -688,7 +690,7 @@
       <button data-filter-category="女裝">女裝</button>
       <button data-filter-category="飾品">飾品</button>
       <button data-filter-category="零食">零食</button>
-      <button data-filter-category="許願專區">許願專區</button>
+      <a href="#wishlist-public" class="nav-wishlist-link">許願專區</a>
     </nav>
 
     <div class="header-actions">
@@ -1944,11 +1946,7 @@ document.querySelectorAll('[data-filter-category]').forEach(btn => {
     document.querySelectorAll('[data-filter-category]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.filterCategory = btn.dataset.filterCategory;
-    if (state.filterCategory === '許願專區') {
-      document.getElementById('wishlist').scrollIntoView({ behavior: 'smooth' });
-    } else {
-      renderProducts();
-    }
+    renderProducts();
   });
 });
 document.querySelectorAll('[data-filter-country]').forEach(btn => {
@@ -2497,13 +2495,13 @@ async function loadNotifications(targetListId = 'notifList') {
       (orders || []).forEach(o => { orderMap[o.id] = o; });
     }
     if (itemIds.length) {
-      const { data: items } = await sb.from('order_items').select('id, product_name, products(image_url)').in('id', itemIds);
+      const { data: items } = await sb.from('order_items').select('id, product_name, variant_color, variant_size, variant_extra, products(image_url)').in('id', itemIds);
       (items || []).forEach(it => { itemMap[it.id] = it; });
     }
     // 舊資料相容：早期的通知還沒有連結到明確的商品明細，退而求其次抓該訂單的第一項商品來顯示縮圖
     const fallbackOrderIds = orderIds.filter(oid => data.some(n => n.order_id === oid && !n.order_item_id));
     if (fallbackOrderIds.length) {
-      const { data: fallbackItems } = await sb.from('order_items').select('order_id, product_name, products(image_url)').in('order_id', fallbackOrderIds);
+      const { data: fallbackItems } = await sb.from('order_items').select('order_id, product_name, variant_color, variant_size, variant_extra, products(image_url)').in('order_id', fallbackOrderIds);
       (fallbackItems || []).forEach(it => { if (!orderMap[it.order_id].fallbackItem) orderMap[it.order_id].fallbackItem = it; });
     }
 
@@ -2524,7 +2522,7 @@ async function loadNotifications(targetListId = 'notifList') {
           <div class="notif-rich-body">
             <div class="notif-rich-top">
               ${order ? `<span class="notif-order-no">${order.order_no}</span>` : ''}
-              ${item ? `<span class="notif-product-name">${item.product_name}</span>` : ''}
+              ${item ? `<span class="notif-product-name">${item.product_name}${variantDesc(item) ? '（' + variantDesc(item) + '）' : ''}</span>` : ''}
             </div>
             <div class="notif-rich-msg">${n.content}</div>
             ${order ? `<div class="notif-rich-amounts">已付訂金 ${ntd(order.deposit_ntd)}　／　訂單總額 ${ntd(order.total_ntd)}</div>` : ''}
@@ -3277,7 +3275,7 @@ function renderSingleItemRow(it) {
           <span class="notif-product-name" data-order-item-product="${it.product_id}" style="cursor:pointer;">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
           <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${ITEM_STATE_LABEL[it.state] || it.state}</span>
         </div>
-        <div class="notif-rich-msg" style="margin:2px 0 6px;">售價 ${ntd(it.price_ntd)}</div>
+        <div class="notif-rich-msg" style="margin:2px 0 6px;">單價 ${ntd(it.price_ntd)}${it.quantity > 1 ? `　小計 ${ntd(it.price_ntd * it.quantity)}` : ''}</div>
         <div class="order-admin-actions" style="flex-wrap:wrap;">${actionsHtml}</div>
       </div>
     </div>
@@ -3669,6 +3667,7 @@ function renderAdminItemRow(it) {
         </span>
         <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${ITEM_STATE_LABEL[it.state] || it.state}</span>
       </div>
+      <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">單價 ${ntd(it.price_ntd)}${it.quantity > 1 ? `　小計 ${ntd(it.price_ntd * it.quantity)}` : ''}</div>
       <div class="order-admin-actions" style="flex-wrap:wrap; align-items:center;">
         ${actionsHtml}
         <select class="tag-select" data-force-state-for="${it.id}" style="margin-left:auto;">
@@ -4401,16 +4400,18 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
 });
 
 function buildDemandGroups(items) {
-  // 回傳 { productKey: { total, combo:{}, colors:{}, sizes:{}, image } }
+  // 回傳 { productKey: { total, combo:{}, colors:{}, sizes:{}, noVariantQty, image } }
   const groups = {};
   items.forEach(it => {
     const key = it.product_name || `商品#${it.product_id}`;
-    if (!groups[key]) groups[key] = { total: 0, combo: {}, colors: {}, sizes: {}, image: it.products?.image_url || '' };
+    if (!groups[key]) groups[key] = { total: 0, combo: {}, colors: {}, sizes: {}, noVariantQty: 0, image: it.products?.image_url || '' };
     groups[key].total += it.quantity;
     const comboKey = [it.variant_color, it.variant_size, it.variant_extra].filter(Boolean).join(' / ') || '（無款式）';
     groups[key].combo[comboKey] = (groups[key].combo[comboKey] || 0) + it.quantity;
     if (it.variant_color) groups[key].colors[it.variant_color] = (groups[key].colors[it.variant_color] || 0) + it.quantity;
     if (it.variant_size) groups[key].sizes[it.variant_size] = (groups[key].sizes[it.variant_size] || 0) + it.quantity;
+    // 同時沒有顏色也沒有尺寸的件數，獨立計數，確保下方分開統計時加總永遠等於總件數
+    if (!it.variant_color && !it.variant_size) groups[key].noVariantQty += it.quantity;
   });
   return groups;
 }
@@ -4437,7 +4438,11 @@ function renderDemandGroups(groups, mode) {
         body += `<div style="font-size:11px; color:var(--ink-soft); margin:8px 0 2px;">依尺寸</div>`;
         body += sizeKeys.sort((a, b) => g.sizes[b] - g.sizes[a]).map(k => `<div class="demand-row"><span>${k}</span><span>${g.sizes[k]} 件</span></div>`).join('');
       }
-      if (!colorKeys.length && !sizeKeys.length) {
+      // 沒填顏色也沒填尺寸的件數，一定要顯示出來，不然跟總件數對不起來
+      if (g.noVariantQty > 0) {
+        body += `<div class="demand-row" style="margin-top:6px;"><span>（無款式資訊）</span><span>${g.noVariantQty} 件</span></div>`;
+      }
+      if (!colorKeys.length && !sizeKeys.length && !g.noVariantQty) {
         body = `<div class="demand-row"><span>（無款式）</span><span>${g.total} 件</span></div>`;
       }
     }
