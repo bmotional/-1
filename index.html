@@ -1397,13 +1397,14 @@
 </aside>
 
 <!-- ============ 歷史訂單 Modal（只顯示「已完成」的訂單） ============ -->
-<!-- ============ 我的訂單 Modal（進行中訂單／查看歷史訂單，用分頁籤切換） ============ -->
+<!-- ============ 我的訂單 Modal（進行中訂單／退款訂單／查看歷史訂單，用分頁籤切換） ============ -->
 <div class="modal-overlay big-modal" id="activeOrdersOverlay">
   <div class="modal" style="display:flex; flex-direction:column; height:70vh; max-height:600px;">
     <button class="modal-close" id="activeOrdersClose" aria-label="關閉">×</button>
     <h3 style="flex-shrink:0;">我的訂單</h3>
     <div class="admin-tabs" style="flex-shrink:0; margin-bottom:14px;">
       <button class="admin-tab active" data-myorders-tab="active">進行中訂單</button>
+      <button class="admin-tab" data-myorders-tab="refund">退款訂單</button>
       <button class="admin-tab" data-myorders-tab="history">查看歷史訂單</button>
     </div>
 
@@ -1411,7 +1412,23 @@
       <p class="sub" style="flex-shrink:0;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
       <div id="activeOrdersList" style="height:370px; overflow-y:auto;"></div>
       <button class="btn btn-outline" id="activeOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整進行中訂單頁面</button>
-      <a href="#refund-orders" class="btn btn-outline" id="activeOrdersRefundLinkBtn" style="width:100%; margin-top:8px; flex-shrink:0; display:block; text-align:center;">查看退款訂單</a>
+    </div>
+
+    <div id="myOrdersRefundPane" style="display:none; flex-shrink:0;">
+      <p class="sub" style="flex-shrink:0;">已完成退款的紀錄會保留7天方便查看，之後自動歸類為已結案</p>
+      <div class="filter-group" id="myOrdersRefundCategoryFilters" style="flex-shrink:0; margin-bottom:8px;">
+        <button class="chip active" data-myorders-refund-category="active">進行中</button>
+        <button class="chip" data-myorders-refund-category="all">全部</button>
+        <button class="chip" data-myorders-refund-category="closed">已結案</button>
+      </div>
+      <div class="filter-group" id="myOrdersRefundRangeFilters" style="flex-shrink:0; margin-bottom:14px;">
+        <button class="chip active" data-myorders-refund-range="all">全部時間</button>
+        <button class="chip" data-myorders-refund-range="7d">近7天</button>
+        <button class="chip" data-myorders-refund-range="1m">近30天</button>
+        <button class="chip" data-myorders-refund-range="1y">一年</button>
+      </div>
+      <div id="myOrdersRefundList" style="height:290px; overflow-y:auto;"></div>
+      <button class="btn btn-outline" id="refundOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整退款訂單頁面</button>
     </div>
 
     <div id="myOrdersHistoryPane" style="display:none; flex-shrink:0;">
@@ -1424,7 +1441,6 @@
       </div>
       <div id="myOrdersList" style="height:330px; overflow-y:auto;"></div>
       <button class="btn btn-outline" id="historyOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整歷史訂單頁面</button>
-      <a href="#refund-orders" class="btn btn-outline" id="historyOrdersRefundLinkBtn" style="width:100%; margin-top:8px; flex-shrink:0; display:block; text-align:center;">查看退款訂單</a>
     </div>
   </div>
 </div>
@@ -2661,7 +2677,7 @@ function renderRoute() {
   document.getElementById('wishlistPublicPageView').style.display = isWishPublic ? 'block' : 'none';
   if (isWishSubmit && !state.user) { toast('請先登入才能提出許願'); location.hash = ''; openAuth(); }
   if (isWishPublic) loadWishlistPublic();
-  if (isRefundOrders) { if (!state.user) { toast('請先登入才能查看退款訂單'); location.hash = ''; } else { loadRefundOrders(); } }
+  if (isRefundOrders) { if (!state.user) { toast('請先登入才能查看退款訂單'); location.hash = ''; } else { loadRefundOrders('refundOrdersList'); } }
 
   // 六個「管理後台專屬頁面」共用同一套邏輯：符合目前網址的那個顯示 + 面板移過去 + 載入資料；
   // 其餘的一律隱藏，面板放回管理後台彈窗裡原本的分頁位置。
@@ -3446,11 +3462,11 @@ function isRefundStillActive(it) {
   return daysSince < 7;
 }
 
-async function loadRefundOrders() {
+async function loadRefundOrders(targetListId = 'refundOrdersList') {
   if (!state.user) return;
   const { data, error } = await sb.from('orders').select('id, order_no, created_at, order_items!inner(*, products(image_url))')
     .eq('user_id', state.user.id).in('order_items.state', REFUND_RELATED_STATES).order('created_at', { ascending: false });
-  const list = document.getElementById('refundOrdersList');
+  const list = document.getElementById(targetListId);
   if (error) { list.innerHTML = '<p>讀取退款訂單失敗</p>'; console.error(error); return; }
 
   let flat = [];
@@ -3515,7 +3531,7 @@ document.querySelectorAll('[data-refund-category-filter]').forEach(btn => {
     document.querySelectorAll('[data-refund-category-filter]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.refundCategoryFilter = btn.dataset.refundCategoryFilter;
-    loadRefundOrders();
+    loadRefundOrders('refundOrdersList');
   });
 });
 document.querySelectorAll('[data-refund-range-filter]').forEach(btn => {
@@ -3523,7 +3539,23 @@ document.querySelectorAll('[data-refund-range-filter]').forEach(btn => {
     document.querySelectorAll('[data-refund-range-filter]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.refundRangeFilter = btn.dataset.refundRangeFilter;
-    loadRefundOrders();
+    loadRefundOrders('refundOrdersList');
+  });
+});
+document.querySelectorAll('[data-myorders-refund-category]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-myorders-refund-category]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.refundCategoryFilter = btn.dataset.myordersRefundCategory;
+    loadRefundOrders('myOrdersRefundList');
+  });
+});
+document.querySelectorAll('[data-myorders-refund-range]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-myorders-refund-range]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.refundRangeFilter = btn.dataset.myordersRefundRange;
+    loadRefundOrders('myOrdersRefundList');
   });
 });
 document.getElementById('refundOrdersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
@@ -3693,8 +3725,9 @@ async function estimateDepositAmount(itemId) {
 
 function refreshActiveOrdersEverywhere() {
   if (document.getElementById('activeOrdersOverlay').classList.contains('open')) loadActiveOrders('activeOrdersList');
+  if (document.getElementById('myOrdersRefundPane').style.display !== 'none') loadRefundOrders('myOrdersRefundList');
   if (location.hash === '#active-orders') loadActiveOrders('activeOrdersPageList');
-  if (location.hash === '#refund-orders') loadRefundOrders();
+  if (location.hash === '#refund-orders') loadRefundOrders('refundOrdersList');
 }
 
 /* ---------- 強烈警告確認彈窗（用於不可逆的棄單動作） ---------- */
@@ -3731,14 +3764,18 @@ document.getElementById('historyOrdersFullPageBtn').addEventListener('click', ()
   document.getElementById('activeOrdersOverlay').classList.remove('open');
   location.hash = '#order-history';
 });
-document.getElementById('activeOrdersRefundLinkBtn').addEventListener('click', () => { document.getElementById('activeOrdersOverlay').classList.remove('open'); });
-document.getElementById('historyOrdersRefundLinkBtn').addEventListener('click', () => { document.getElementById('activeOrdersOverlay').classList.remove('open'); });
+document.getElementById('refundOrdersFullPageBtn').addEventListener('click', () => {
+  document.getElementById('activeOrdersOverlay').classList.remove('open');
+  location.hash = '#refund-orders';
+});
 
 function switchMyOrdersTab(tab) {
   document.querySelectorAll('[data-myorders-tab]').forEach(b => b.classList.toggle('active', b.dataset.myordersTab === tab));
   document.getElementById('myOrdersActivePane').style.display = tab === 'active' ? 'block' : 'none';
+  document.getElementById('myOrdersRefundPane').style.display = tab === 'refund' ? 'block' : 'none';
   document.getElementById('myOrdersHistoryPane').style.display = tab === 'history' ? 'block' : 'none';
   if (tab === 'active') loadActiveOrders('activeOrdersList');
+  else if (tab === 'refund') loadRefundOrders('myOrdersRefundList');
   else loadHistoryOrders(state.historyRange, 'myOrdersList');
 }
 document.querySelectorAll('[data-myorders-tab]').forEach(btn => {
