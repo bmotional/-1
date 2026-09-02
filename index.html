@@ -2374,54 +2374,20 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   checkoutBtn.disabled = true;
   checkoutBtn.textContent = '送出中...';
 
-  let grand = 0, deposit = 0;
-  const itemsPayload = state.cart.map(item => {
-    const p = item.products || {};
-    const lineTotal = (p.price_ntd || 0) * item.quantity;
-    const lineDeposit = lineTotal * (p.deposit_ratio || 0.5);
-    grand += lineTotal;
-    deposit += lineDeposit;
-    return {
-      product_id: item.product_id, product_name: p.name, brand: p.brand,
-      price_ntd: p.price_ntd, deposit_ratio: p.deposit_ratio, quantity: item.quantity,
-      variant_color: item.variant_color || null, variant_size: item.variant_size || null, variant_extra: item.variant_extra || null,
-    };
-  });
+  // 價格、總額、520元門檻全部交給資料庫函式即時核算，不再相信瀏覽器端算好的數字，
+  // 也不再由前端直接寫入 orders / order_items（一般帳號已經沒有這兩張表的直接寫入權限）。
+  const { data, error } = await sb.rpc('create_preorder');
 
-  if (grand < 520) {
-    toast(`訂單總額需滿NT$520才能送出預購（目前 ${ntd(grand)}）`);
+  if (error) {
+    toast(error.message.includes('NT$') || error.message.includes('購物車') ? error.message : '送出失敗，請稍後再試');
     checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
     return;
   }
 
-  // 1. 寫入訂單主表 orders
-  const { data: order, error: orderErr } = await sb
-    .from('orders')
-    .insert({ user_id: state.user.id, total_ntd: grand, deposit_ntd: Math.round(deposit) })
-    .select().single();
-
-  if (orderErr) {
-    console.error(orderErr);
-    toast('送出失敗，請稍後再試');
-    checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
-    return;
-  }
-
-  // 2. 寫入訂單明細 order_items
-  const rows = itemsPayload.map(it => ({ ...it, order_id: order.id }));
-  const { error: itemsErr } = await sb.from('order_items').insert(rows);
-  if (itemsErr) {
-    console.error(itemsErr);
-    toast('訂單建立但明細寫入失敗，請聯絡我們');
-    checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
-    return;
-  }
-
-  // 3. 清空該使用者的購物車
-  await sb.from('cart_items').delete().eq('user_id', state.user.id);
+  const result = data?.[0];
   await loadCart();
 
-  toast(grand >= 1500 ? '已送出預購！訂單滿NT$1500，享一次免運優惠' : '已送出預購');
+  toast(result && result.new_total_ntd >= 1500 ? '已送出預購！訂單滿NT$1500，享一次免運優惠' : '已送出預購');
   checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
   closeCart();
 });
@@ -3359,13 +3325,13 @@ function renderSingleItemRow(it) {
   if (it.state === 'awaiting_payment') {
     actionsHtml = `<p class="cart-note">訂單已送出，等待賣家確認收款</p>`;
   } else if (it.state === 'paid_pending') {
-    actionsHtml = `<button class="btn btn-outline btn-sm" data-abandon-full-refund="${it.id}" style="color:var(--danger); border-color:var(--danger);">申請退款</button>`;
+    actionsHtml = `<button class="btn btn-outline btn-sm" data-abandon-full-refund="${it.id}" data-item-order-id="${it.order_id}" style="color:var(--danger); border-color:var(--danger);">申請退款</button>`;
   } else if (it.state === 'locked_sourcing') {
     actionsHtml = `<p class="cart-note">已鎖單，賣家已開始採購備貨，此階段無法申請退款</p>`;
   } else if (it.state === 'awaiting_shipping_apply') {
     actionsHtml = `
       <button class="btn btn-primary btn-sm" data-apply-shipping="${it.id}">申請出貨</button>
-      <button class="btn btn-outline btn-sm" data-abandon-refund="${it.id}">放棄訂單並申請退款</button>
+      <button class="btn btn-outline btn-sm" data-abandon-refund="${it.id}" data-item-order-id="${it.order_id}">放棄訂單並申請退款</button>
     `;
   } else if (it.state === 'shipway_setup_pending') {
     actionsHtml = `<p class="status-callout">已送出出貨申請，等待賣家提供賣貨便連結，請留意通知。</p>`;
@@ -3613,7 +3579,18 @@ function bindOrderItemActions() {
         confirmLabel: '確定申請全額退款',
         onConfirm: async () => {
           const { error } = await sb.rpc('customer_request_stage1_refund', { item_id: itemId });
-          if (error) { toast('操作失敗：' + error.message); return; }
+          if (error) {
+            if (error.message.includes('請改為申請整筆訂單退款')) {
+              if (confirm(`${error.message}\n\n要改為申請這整張訂單目前還能退的所有品項一起退款嗎？`)) {
+                const { error: bulkErr } = await sb.rpc('customer_abandon_entire_order', { p_order_id: btn.dataset.itemOrderId });
+                if (bulkErr) { toast('操作失敗：' + bulkErr.message); return; }
+                toast('已受理整筆訂單退款申請，可至「退款訂單」查看進度');
+                refreshActiveOrdersEverywhere();
+              }
+              return;
+            }
+            toast('操作失敗：' + error.message); return;
+          }
           toast('已受理退款申請，可至「退款訂單」查看進度');
           refreshActiveOrdersEverywhere();
         },
@@ -3652,7 +3629,18 @@ function bindOrderItemActions() {
         confirmLabel: '確定放棄並申請退款',
         onConfirm: async () => {
           const { error } = await sb.rpc('customer_abandon_for_refund', { item_id: itemId });
-          if (error) { toast('操作失敗：' + error.message); return; }
+          if (error) {
+            if (error.message.includes('請改為申請整筆訂單退款')) {
+              if (confirm(`${error.message}\n\n要改為申請這整張訂單目前還能退的所有品項一起退款嗎？`)) {
+                const { error: bulkErr } = await sb.rpc('customer_abandon_entire_order', { p_order_id: btn.dataset.itemOrderId });
+                if (bulkErr) { toast('操作失敗：' + bulkErr.message); return; }
+                toast('已受理整筆訂單退款申請，可至「退款訂單」查看進度');
+                refreshActiveOrdersEverywhere();
+              }
+              return;
+            }
+            toast('操作失敗：' + error.message); return;
+          }
           toast('已受理退款申請，可至「退款訂單」查看進度');
           refreshActiveOrdersEverywhere();
         },
