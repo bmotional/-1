@@ -205,6 +205,21 @@
   .refund-policy ul { margin: 0 0 10px; padding-left: 20px; }
   .refund-policy li { font-size: 14px; color: var(--ink-soft); line-height: 1.8; margin-bottom: 6px; }
   .refund-policy strong { color: var(--ink); }
+  .progress-track { display: flex; align-items: flex-start; overflow-x: auto; padding: 8px 2px; margin: 4px 0; }
+  .progress-step { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 56px; }
+  .progress-dot { width: 12px; height: 12px; border-radius: 999px; background: var(--line); border: 2px solid var(--line); flex-shrink: 0; }
+  .progress-step.done .progress-dot { background: var(--sencha); border-color: var(--sencha); }
+  .progress-step.current .progress-dot { background: var(--brass); border-color: var(--brass); box-shadow: 0 0 0 3px #FBEFC9; }
+  .progress-label { font-size: 10px; color: var(--ink-soft); margin-top: 4px; text-align: center; line-height: 1.3; }
+  .progress-step.done .progress-label, .progress-step.current .progress-label { color: var(--ink); font-weight: 600; }
+  .progress-line { flex: 1; height: 2px; background: var(--line); margin-top: 5px; min-width: 16px; }
+  .progress-line.done { background: var(--sencha); }
+  .progress-badge {
+    display: inline-block; font-size: 12px; font-weight: 600; padding: 5px 12px;
+    border-radius: 999px; background: var(--bg-raised); border: 1px solid var(--line); color: var(--ink-soft);
+  }
+  .progress-badge-danger { background: #FBEAE5; border-color: var(--danger); color: var(--danger); }
+  .progress-badge-warn { background: #FBEFC9; border-color: var(--brass); color: #5C4A1E; }
   .wish-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; background: var(--bg-raised); }
   .wish-card-top { display: flex; gap: 14px; }
   .wish-card-img { width: 64px; height: 71px; border-radius: var(--radius); object-fit: cover; background: #E4DCC9; flex-shrink: 0; }
@@ -1427,6 +1442,9 @@
           <button class="chip" data-order-country-filter="japan">日本</button>
           <button class="chip" data-order-country-filter="korea">韓國</button>
         </div>
+        <div style="margin-bottom:14px;">
+          <input type="text" id="adminOrderSearchInput" placeholder="搜尋會員編號/名稱/帳號/信箱..." style="width:100%; max-width:320px; padding:8px 14px; border:1px solid var(--line); border-radius:999px; background:var(--bg); font-size:13px;">
+        </div>
         <div id="adminOrdersBatchBar" style="display:none; margin-bottom:14px; padding:10px 14px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius); align-items:center; gap:12px;">
           <span id="adminOrdersBatchCount" style="font-size:13px;"></span>
           <button class="btn btn-primary btn-sm" id="adminOrdersBatchActionBtn"></button>
@@ -1757,6 +1775,7 @@ const state = {
   adminOrderCountryFilter: 'all',
   adminOrderSelectedItems: new Set(),
   adminOrderBatchState: null,
+  adminOrderSearchQuery: '',
   demandLockedCountry: 'all',
   demandLockedCategory: 'all',
   demandPendingCountry: 'all',
@@ -2352,7 +2371,7 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   await sb.from('cart_items').delete().eq('user_id', state.user.id);
   await loadCart();
 
-  toast(grand >= 1500 ? '已收到你的預購需求，訂單滿NT$1500享一次免運優惠！我們會透過 LINE 與你確認訂金付款方式' : '已收到你的預購需求，我們會透過 LINE 與你確認訂金付款方式');
+  toast(grand >= 1500 ? '已送出預購！訂單滿NT$1500，享一次免運優惠' : '已送出預購');
   checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
   closeCart();
 });
@@ -3210,16 +3229,74 @@ const TERMINAL_STATES = ['completed', 'refunded_full', 'refunded_partial', 'aban
 function variantDesc(it) { return [it.variant_color, it.variant_size, it.variant_extra].filter(Boolean).join(' / '); }
 
 /* ---------- 依訂單分組，渲染每個明細各自的狀態與動作按鈕 ---------- */
-function renderOrderItemsGrouped(orders) {
-  return orders.map(o => `
+const MAIN_MILESTONES = ['paid_pending', 'locked_sourcing', 'awaiting_shipping_apply', 'shipped', 'arrived_store', 'completed'];
+const MAIN_MILESTONE_LABELS = ['已付款', '已鎖單', '已抵台', '已出貨', '已到店', '已完成'];
+function milestoneIndexForState(s) {
+  if (s === 'shipway_setup_pending') return MAIN_MILESTONES.indexOf('awaiting_shipping_apply');
+  return MAIN_MILESTONES.indexOf(s);
+}
+
+// 單一商品明細的進度呈現：主線用6站進度條，退款走另一條獨立的2步驟進度，
+// 包裹退回/不退款結案則直接顯示結案徽章，不硬塞進同一條進度條裡
+function renderItemProgress(it) {
+  if (it.state === 'awaiting_payment') {
+    return `<div class="progress-badge">尚未確認付款</div>`;
+  }
+  if (it.state === 'abandoned_no_refund') {
+    return `<div class="progress-badge progress-badge-danger">已結案，不退款</div>`;
+  }
+  if (it.state === 'package_returned') {
+    return `<div class="progress-badge progress-badge-warn">包裹已退回</div>`;
+  }
+  if (['abandoned_pending_refund', 'refunded_full', 'refunded_partial'].includes(it.state)) {
+    const done = it.state !== 'abandoned_pending_refund';
+    const finalLabel = it.state === 'refunded_full' ? `已全額退款 ${ntd(it.refund_amount_ntd || 0)}`
+      : it.state === 'refunded_partial' ? `已部分退款 ${ntd(it.refund_amount_ntd || 0)}` : '審核中';
+    return `
+      <div class="progress-track">
+        <div class="progress-step done"><span class="progress-dot"></span><span class="progress-label">已提出申請</span></div>
+        <div class="progress-line ${done ? 'done' : ''}"></div>
+        <div class="progress-step ${done ? 'done' : 'current'}"><span class="progress-dot"></span><span class="progress-label">${finalLabel}</span></div>
+      </div>
+    `;
+  }
+  const idx = milestoneIndexForState(it.state);
+  if (idx === -1) return '';
+  return `
+    <div class="progress-track">
+      ${MAIN_MILESTONE_LABELS.map((label, i) => `
+        <div class="progress-step ${i < idx ? 'done' : i === idx ? 'current' : ''}"><span class="progress-dot"></span><span class="progress-label">${label}</span></div>
+        ${i < MAIN_MILESTONE_LABELS.length - 1 ? `<div class="progress-line ${i < idx ? 'done' : ''}"></div>` : ''}
+      `).join('')}
+    </div>
+  `;
+}
+
+// 訂單收合時的單行摘要：列出這張訂單底下各狀態各有幾件
+function summarizeOrderProgress(items) {
+  const counts = {};
+  items.forEach(it => { const label = ITEM_STATE_LABEL[it.state] || it.state; counts[label] = (counts[label] || 0) + 1; });
+  const parts = Object.entries(counts).map(([label, n]) => `${label}×${n}`);
+  return `<p class="cart-note">共${items.length}項商品：${parts.join('、')}</p>`;
+}
+
+function renderOrderItemsGrouped(orders, isHistory = false) {
+  return orders.map(o => {
+    const oid = `ord${o.id}`;
+    return `
     <div class="order-row" id="order-${o.id}">
       <div class="order-row-top">
         <span class="order-id">訂單 ${o.order_no || ('#' + o.id)}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        <button class="btn btn-outline btn-sm" data-toggle-order-progress="${oid}">${isHistory ? '展開查看各項進度' : '收起進度'}</button>
       </div>
       <div class="notif-rich-amounts" style="margin-bottom:8px;">已付訂金 ${ntd(o.deposit_ntd)}　／　訂單總額 ${ntd(o.total_ntd)}</div>
-      ${(o.order_items || []).map(it => renderSingleItemRow(it)).join('')}
+      <div id="${oid}-summary" style="${isHistory ? '' : 'display:none;'}">${summarizeOrderProgress(o.order_items || [])}</div>
+      <div id="${oid}-detail" style="${isHistory ? 'display:none;' : ''}">
+        ${(o.order_items || []).map(it => renderSingleItemRow(it)).join('')}
+      </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderSingleItemRow(it) {
@@ -3267,16 +3344,21 @@ function renderSingleItemRow(it) {
 
   return `
     <div class="notif-rich" style="border-top:1px solid var(--line); padding:12px 0; align-items:flex-start;">
-      <div data-order-item-product="${it.product_id}" style="cursor:pointer; flex-shrink:0;">
+      <div style="flex-shrink:0;">
         ${it.products?.image_url ? `<img src="${it.products.image_url}" class="notif-thumb" alt="">` : '<div class="notif-thumb notif-thumb-empty"></div>'}
       </div>
       <div class="notif-rich-body">
         <div class="order-row-top">
-          <span class="notif-product-name" data-order-item-product="${it.product_id}" style="cursor:pointer;">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
+          <span class="notif-product-name">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
           <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${ITEM_STATE_LABEL[it.state] || it.state}</span>
         </div>
         <div class="notif-rich-msg" style="margin:2px 0 6px;">單價 ${ntd(it.price_ntd)}${it.quantity > 1 ? `　小計 ${ntd(it.price_ntd * it.quantity)}` : ''}</div>
+        ${renderItemProgress(it)}
         <div class="order-admin-actions" style="flex-wrap:wrap;">${actionsHtml}</div>
+        <div class="order-admin-actions" style="flex-wrap:wrap; margin-top:6px;">
+          <button class="btn btn-outline btn-sm" data-view-product-btn="${it.product_id}">查看商品</button>
+          <button class="btn btn-outline btn-sm" data-view-order-btn="${it.order_id}" data-view-order-terminal="${TERMINAL_STATES.includes(it.state)}">查看訂單</button>
+        </div>
       </div>
     </div>
   `;
@@ -3302,7 +3384,21 @@ async function loadHistoryOrders(range, targetListId) {
   const list = document.getElementById(targetListId);
   if (error) { list.innerHTML = '<p>讀取訂單失敗</p>'; console.error(error); return; }
   if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">這個區間沒有已結案的訂單紀錄。</p>'; return; }
-  list.innerHTML = renderOrderItemsGrouped(data);
+  list.innerHTML = renderOrderItemsGrouped(data, true);
+  bindOrderItemActions();
+  applyOrderHighlight();
+}
+
+// 從通知或「查看訂單」按鈕點進來的話，捲動到對應訂單並短暫高亮，看完就清掉避免下次誤觸發
+function applyOrderHighlight() {
+  if (!state.highlightOrderId) return;
+  const target = document.getElementById(`order-${state.highlightOrderId}`);
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('order-highlight');
+    setTimeout(() => target.classList.remove('order-highlight'), 2600);
+  }
+  state.highlightOrderId = null;
 }
 
 /* ---------- 進行中訂單（尚未走到終點的所有明細） ---------- */
@@ -3320,22 +3416,34 @@ async function loadActiveOrders(targetListId) {
   badge.style.display = count > 0 ? 'flex' : 'none';
   badge.textContent = count;
 
-  // 從通知點進來的話，捲動到對應訂單並短暫高亮，看完就清掉避免下次誤觸發
-  if (state.highlightOrderId) {
-    const target = document.getElementById(`order-${state.highlightOrderId}`);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      target.classList.add('order-highlight');
-      setTimeout(() => target.classList.remove('order-highlight'), 2600);
-    }
-    state.highlightOrderId = null;
-  }
+  applyOrderHighlight();
 }
 
 /* ---------- 客戶端動作按鈕綁定 ---------- */
 function bindOrderItemActions() {
-  document.querySelectorAll('[data-order-item-product]').forEach(el => {
-    el.addEventListener('click', () => { location.hash = `#product=${el.dataset.orderItemProduct}`; });
+  document.querySelectorAll('[data-toggle-order-progress]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const oid = btn.dataset.toggleOrderProgress;
+      const summary = document.getElementById(`${oid}-summary`);
+      const detail = document.getElementById(`${oid}-detail`);
+      const showingDetail = detail.style.display !== 'none';
+      detail.style.display = showingDetail ? 'none' : 'block';
+      summary.style.display = showingDetail ? 'block' : 'none';
+      btn.textContent = showingDetail ? '展開查看各項進度' : '收起進度';
+    });
+  });
+  document.querySelectorAll('[data-view-product-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('activeOrdersOverlay').classList.remove('open');
+      location.hash = `#product=${btn.dataset.viewProductBtn}`;
+    });
+  });
+  document.querySelectorAll('[data-view-order-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('activeOrdersOverlay').classList.remove('open');
+      state.highlightOrderId = Number(btn.dataset.viewOrderBtn);
+      location.hash = btn.dataset.viewOrderTerminal === 'true' ? '#order-history' : '#active-orders';
+    });
   });
   document.querySelectorAll('[data-abandon-full-refund]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -3579,28 +3687,37 @@ async function loadAdminOrders() {
   const countEl = document.getElementById('adminOrdersCount');
   if (error) { list.innerHTML = '<p>讀取訂單失敗，請確認管理員權限是否設定正確</p>'; console.error(error); return; }
 
-  const userIds = [...new Set((data || []).map(o => o.user_id))];
-  let nameMap = {};
-  if (userIds.length > 0) {
-    const { data: profs } = await sb.from('profiles').select('id, display_name').in('id', userIds);
-    (profs || []).forEach(p => { nameMap[p.id] = p.display_name; });
-  }
+  const { data: members } = await sb.rpc('admin_list_members');
+  const memberMap = {};
+  (members || []).forEach(m => { memberMap[m.id] = m; });
 
   const totalItemCount = (data || []).reduce((s, o) => s + (o.order_items || []).length, 0);
   countEl.textContent = `共 ${data.length} 筆訂單，${totalItemCount} 項商品明細`;
 
-  // 依狀態/產地篩選出每張訂單裡「符合條件」的明細；訂單底下一項都不符合就整張隱藏
-  const rows = (data || []).map(o => ({ ...o, matchedItems: (o.order_items || []).filter(adminItemMatchesFilters) }))
+  const searchQ = (state.adminOrderSearchQuery || '').trim().toLowerCase();
+  const matchesSearch = (o) => {
+    if (!searchQ) return true;
+    const m = memberMap[o.user_id];
+    if (!m) return false;
+    return [m.display_name, m.uid, m.account, m.email].filter(Boolean).some(v => v.toLowerCase().includes(searchQ));
+  };
+
+  // 依狀態/產地/會員搜尋篩選出每張訂單裡「符合條件」的明細；訂單底下一項都不符合就整張隱藏
+  const rows = (data || []).filter(matchesSearch).map(o => ({ ...o, matchedItems: (o.order_items || []).filter(adminItemMatchesFilters) }))
     .filter(o => o.matchedItems.length > 0);
 
   if (rows.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的訂單。</p>'; renderAdminOrdersBatchBar(); return; }
 
   list.innerHTML = rows.map(o => {
     const hasAwaitingPayment = (o.order_items || []).some(it => it.state === 'awaiting_payment');
+    const m = memberMap[o.user_id];
     return `
     <div class="order-row">
       <div class="order-row-top">
-        <span class="order-id">訂單 ${o.order_no || ('#' + o.id)}　${nameMap[o.user_id] || '（未命名會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+        <span class="order-id" style="display:flex; align-items:center; gap:8px;">
+          <img src="${m?.avatar_url || DEFAULT_AVATAR_SVG}" style="width:26px; height:26px; border-radius:999px; object-fit:cover; flex-shrink:0;" alt="">
+          訂單 ${o.order_no || ('#' + o.id)}　${m ? `${m.display_name || '（未命名）'}（${m.uid || '—'}）` : '（未知會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}
+        </span>
         ${hasAwaitingPayment ? `<button class="btn btn-primary btn-sm" data-confirm-payment-order="${o.id}">確認整筆訂單已付款</button>` : ''}
       </div>
       <div class="order-total"><span>訂金</span><span>${ntd(o.deposit_ntd)}</span></div>
@@ -3797,6 +3914,15 @@ document.querySelectorAll('[data-order-country-filter]').forEach(btn => {
 document.getElementById('adminOrdersBatchClearBtn').addEventListener('click', () => {
   state.adminOrderSelectedItems.clear(); state.adminOrderBatchState = null;
   loadAdminOrders();
+});
+
+let adminOrderSearchTimer;
+document.getElementById('adminOrderSearchInput').addEventListener('input', (e) => {
+  clearTimeout(adminOrderSearchTimer);
+  adminOrderSearchTimer = setTimeout(() => {
+    state.adminOrderSearchQuery = e.target.value;
+    loadAdminOrders();
+  }, 250);
 });
 
 document.getElementById('processOverdueBtn').addEventListener('click', async () => {
