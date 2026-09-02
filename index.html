@@ -203,6 +203,21 @@
   .refund-policy ul { margin: 0 0 10px; padding-left: 20px; }
   .refund-policy li { font-size: 14px; color: var(--ink-soft); line-height: 1.8; margin-bottom: 6px; }
   .refund-policy strong { color: var(--ink); }
+  .wish-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; background: var(--bg-raised); }
+  .wish-card-top { display: flex; gap: 14px; }
+  .wish-card-img { width: 64px; height: 71px; border-radius: var(--radius); object-fit: cover; background: #E4DCC9; flex-shrink: 0; }
+  .wish-card-name { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+  .wish-card-meta { font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; }
+  .wish-card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+  .wish-card-actions { display: flex; align-items: center; gap: 14px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .wish-like-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; font-size: 13px; color: var(--ink-soft); cursor: pointer; }
+  .wish-like-btn.liked { color: var(--danger); font-weight: 700; }
+  .wish-price-row { display: flex; gap: 8px; align-items: center; }
+  .wish-price-row input { width: 100px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); font-size: 12px; }
+  .wish-comments { margin-top: 10px; }
+  .wish-comment-row { font-size: 12px; color: var(--ink-soft); padding: 5px 0; border-top: 1px dashed var(--line); }
+  .wish-comment-form { display: flex; gap: 8px; margin-top: 8px; }
+  .wish-comment-form input { flex: 1; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; }
   .qty-selector { display: flex; align-items: center; gap: 10px; }
   .qty-btn {
     width: 34px; height: 34px; border: 1px solid var(--line); background: var(--bg-raised);
@@ -457,16 +472,20 @@
   }
   .preset-swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid var(--line); }
 
-  .demand-group { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; background: var(--bg); }
-  .demand-group-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-  .demand-group-name { font-weight: 600; font-size: 15px; }
-  .demand-group-total { font-family: var(--font-display); font-size: 15px; color: var(--brass-dark); }
+  .demand-group { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 16px; margin-bottom: 10px; background: var(--bg); }
+  .demand-group-top { display: flex; align-items: center; gap: 10px; }
+  .demand-group-name { font-weight: 600; font-size: 14px; }
+  .demand-group-total { font-family: var(--font-display); font-size: 14px; color: var(--brass-dark); flex-shrink: 0; }
+  .demand-thumb { width: 36px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #E4DCC9; }
+  .demand-thumb-empty { background: #E4DCC9; }
+  .demand-collapse-arrow { color: var(--ink-soft); font-size: 12px; flex-shrink: 0; width: 14px; text-align: center; }
   .demand-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); padding: 3px 0 3px 14px; }
 
-  .chat-bubble-row { display: flex; margin-bottom: 10px; }
+  .chat-bubble-row { display: flex; margin-bottom: 10px; gap: 8px; align-items: flex-end; }
   .chat-bubble-row.mine { justify-content: flex-end; }
+  .chat-avatar { width: 28px; height: 28px; border-radius: 999px; object-fit: cover; flex-shrink: 0; background: var(--bg-raised); border: 1px solid var(--line); }
   .chat-bubble {
-    max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5;
+    max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5;
   }
   .chat-bubble-row.mine .chat-bubble { background: var(--ink); color: var(--bg); border-bottom-right-radius: 3px; }
   .chat-bubble-row:not(.mine) .chat-bubble { background: var(--bg-raised); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
@@ -479,7 +498,7 @@
   .chat-compose { padding:12px; border-top:1px solid var(--line); display:flex; gap:8px; align-items:flex-end; }
   .chat-compose textarea { flex:1; min-height:42px; max-height:110px; resize:vertical; padding:10px; font:inherit; border:1px solid var(--line); background:var(--bg); }
   .chat-preview { border:1px solid var(--brass); background:#fffaf0; padding:10px; margin:0 0 12px; font-size:13px; cursor:pointer; }
-  .chat-preview img,.chat-image { max-width:220px; max-height:260px; object-fit:cover; border-radius:4px; display:block; margin-top:6px; }
+  .chat-preview img,.chat-image { max-width: min(220px, 100%); max-height:260px; object-fit:cover; border-radius:4px; display:block; margin-top:6px; }
   .chat-draft { opacity:.68; border-style:dashed; }
   .chat-inbox-row { padding:11px 8px; border-bottom:1px solid var(--line); cursor:pointer; }
   .chat-inbox-row:hover,.chat-inbox-row.active { background:var(--bg); }
@@ -638,10 +657,10 @@
   @media (max-width: 640px) {
     .hero { padding: 32px 0 28px; }
     .filter-bar {
-      padding: 22px 0 26px; flex-direction: column; align-items: flex-start; gap: 16px;
+      padding: 28px 0 32px; margin-top: 8px; flex-direction: column; align-items: flex-start; gap: 18px;
     }
     .filter-group { gap: 8px; row-gap: 10px; }
-    .section-title { margin-top: 6px; }
+    .section-title { margin-top: 18px; }
   }
   @media (max-width: 480px) {
     .wrap { padding: 0 16px; }
@@ -723,7 +742,7 @@
     <p>我能習慣遠距離，多遠都要在購物車裡。<br>鴨血豆腐可以一塊再一塊，我也想和你一直在一塊。</p>
     <div class="hero-ctas">
       <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
-      <a href="#wishlist" class="btn btn-outline">提出代購許願</a>
+      <a href="#wishlist-submit" class="btn btn-outline">提出代購許願</a>
       <a href="#preorder-guide" class="btn btn-outline" style="border-color:var(--brass); color:var(--brass-dark); font-weight:700;">點我看預購流程</a>
     </div>
   </div>
@@ -752,6 +771,9 @@
     <button class="chip" data-sort-key="price">價格 <span class="sort-arrow">▼</span></button>
     <button class="chip" data-sort-key="repurchase">回購率 <span class="sort-arrow">▼</span></button>
   </div>
+  <div class="filter-group" id="searchFilterGroup" style="flex:1; min-width:180px;">
+    <input type="text" id="productSearchInput" placeholder="搜尋商品名稱或品牌..." style="width:100%; max-width:320px; padding:8px 14px; border:1px solid var(--line); border-radius:999px; background:var(--bg-raised); font-size:13px;">
+  </div>
 </div>
 
 <!-- ============ Product grid ============ -->
@@ -767,24 +789,15 @@
 
 <!-- ============ Wishlist ============ -->
 <section class="wishlist-section" id="wishlist">
-  <div class="wrap section wishlist-inner">
-    <div class="wishlist-copy">
+  <div class="wrap section wishlist-inner" style="grid-template-columns:1fr;">
+    <div class="wishlist-copy" style="text-align:center;">
       <h2>許願專區</h2>
-      <p>沒看到你想要的品牌嗎？留下品牌名稱與想要的款式，下次出國採購時我們會優先評估。</p>
-      <p style="margin-top:16px; font-size:12px;">需要先登入會員才能送出許願（方便我們回覆通知你）。</p>
+      <p>沒看到你想要的品牌嗎？留下品牌名稱與想要的款式，下次出國採購時我們會優先評估。也可以看看大家都在許什麼願，一起按讚支持！</p>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
+        <a href="#wishlist-submit" class="btn btn-primary">提出我的許願</a>
+        <a href="#wishlist-public" class="btn btn-outline">瀏覽大家的許願</a>
+      </div>
     </div>
-    <form id="wishlistForm">
-      <div class="field">
-        <label for="wishBrand">品牌 / 商品名稱</label>
-        <input type="text" id="wishBrand" required placeholder="例如：depound、Datt">
-      </div>
-      <div class="field">
-        <label for="wishDesc">補充說明（款式、尺寸、預算等）</label>
-        <textarea id="wishDesc" placeholder="想要的款式、顏色、尺寸或其他細節"></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary">送出許願</button>
-      <div class="form-msg" id="wishMsg"></div>
-    </form>
   </div>
 </section>
 
@@ -807,7 +820,7 @@
       <div class="card-brand" id="pageBrand"></div>
       <h1 id="pageName" style="font-family:var(--font-display); margin:6px 0 14px;"></h1>
       <div class="price-value" id="pagePrice" style="font-size:22px; margin-bottom:16px;"></div>
-      <p id="pageDesc" style="font-size:14px; color:var(--ink-soft); margin-bottom:20px; line-height:1.7;"></p>
+      <p id="pageDesc" style="font-size:14px; color:var(--ink-soft); margin-bottom:20px; line-height:1.7; white-space:pre-wrap;"></p>
 
       <div id="pageColorSection" style="display:none">
         <div class="variant-label" id="pageColorLabel">選擇顏色</div>
@@ -822,6 +835,7 @@
         <div class="swatch-row" id="pageExtraRow"></div>
       </div>
 
+      <div id="pageRefundNote" style="display:none;" class="status-callout">此商品採購後即不接受任何退款，請確認品項與數量後再加入購物車。</div>
       <div class="qty-selector" style="margin-top:16px;">
         <button type="button" class="qty-btn" id="pageQtyMinus">−</button>
         <input type="number" id="pageQtyInput" class="qty-input" value="1" min="1" max="99">
@@ -845,7 +859,7 @@
 <!-- ============ 聯絡我們 全頁畫面 ============ -->
 <div id="messagesPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="messagesPageBackBtn" style="margin-bottom:20px;">← 返回</button>
-  <div class="chat-shell show-thread" style="grid-template-columns:1fr; max-width:720px;">
+  <div class="chat-shell show-thread" style="grid-template-columns:1fr; max-width:860px;">
     <div class="chat-thread">
       <div class="chat-thread-head">濱水一湖｜聯絡我們</div>
       <div class="chat-log" id="messagesPageMessages"></div>
@@ -1031,6 +1045,78 @@
 
     <p class="sub" style="margin-top:28px; font-size:11px;">實際退款金額依核算結果為準，若條款內容與現行法規有所牴觸，依現行法規規定辦理。</p>
   </div>
+</div>
+
+<!-- ============ 提出我的許願 ============ -->
+<div id="wishlistSubmitPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="wishlistSubmitBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">提出我的許願</h2>
+  <p class="sub" style="max-width:560px; margin-bottom:22px;">留下你想要的品牌與商品，我們審核後會公開在許願專區讓大家一起支持！</p>
+
+  <form id="wishSubmitForm" style="max-width:560px;">
+    <div class="field">
+      <label for="wishName">商品名稱/品牌（必填）</label>
+      <input type="text" id="wishName" required placeholder="例如：depound、Datt">
+    </div>
+    <div class="form-grid-2">
+      <div class="field">
+        <label for="wishCountry">國家</label>
+        <select id="wishCountry" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+          <option value="日本">日本</option><option value="韓國">韓國</option><option value="越南">越南</option><option value="其他">其他（自填）</option>
+        </select>
+        <input type="text" id="wishCountryOther" placeholder="請輸入國家" style="display:none; margin-top:6px;">
+      </div>
+      <div class="field">
+        <label for="wishCategory">類別</label>
+        <select id="wishCategory" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+          <option value="服裝">服裝</option><option value="飾品">飾品</option><option value="食品">食品</option><option value="美妝">美妝</option><option value="保養品">保養品</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>圖片（選填）</label>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <img id="wishImagePreview" style="display:none; width:72px; height:79px; object-fit:cover; border-radius:var(--radius); border:1px solid var(--line);">
+        <label class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-block;">
+          上傳並裁切圖片
+          <input type="file" id="wishImageInput" accept="image/*" style="display:none;">
+        </label>
+      </div>
+    </div>
+
+    <div class="form-grid-2">
+      <div class="field"><label for="wishSize">尺寸（選填）</label><input type="text" id="wishSize" placeholder="例如：M、42號"></div>
+      <div class="field">
+        <label for="wishColor">顏色（選填）</label>
+        <select id="wishColor" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+          <option value="">不指定</option>
+          <option value="黑色">黑色</option><option value="白色">白色</option><option value="灰色">灰色</option><option value="藍色">藍色</option>
+          <option value="紅色">紅色</option><option value="粉色">粉色</option><option value="橙色">橙色</option><option value="其他">其他（自填）</option>
+        </select>
+        <input type="text" id="wishColorOther" placeholder="請輸入顏色" style="display:none; margin-top:6px;">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="wishSocialLink">官網或粉專連結（選填）</label>
+      <input type="url" id="wishSocialLink" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label for="wishDesc">補充說明</label>
+      <textarea id="wishDesc" placeholder="想要的款式與其他細節等"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%">送出許願</button>
+    <div class="form-msg" id="wishMsg"></div>
+  </form>
+</div>
+
+<!-- ============ 瀏覽大家的許願 ============ -->
+<div id="wishlistPublicPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="wishlistPublicBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">許願專區</h2>
+  <p class="sub" style="max-width:560px; margin-bottom:22px;">審核通過公開的許願，歡迎按讚支持、留言，也可以填寫你覺得合理的價格，幫助我們評估要不要真的去採購。</p>
+  <div id="wishlistPublicList" style="max-width:640px;"></div>
 </div>
 
 <div id="editProfilePageView" class="wrap section" style="display:none;">
@@ -1255,6 +1341,7 @@
   <div class="cart-footer">
     <div class="cart-total"><span>預估訂金合計</span><span id="cartDepositTotal">NT$0</span></div>
     <div class="cart-total grand"><span>商品總額</span><span id="cartGrandTotal">NT$0</span></div>
+    <p id="cartShippingHint" class="cart-note" style="color:var(--brass-dark); font-weight:600;"></p>
     <p class="cart-note">此為預購委任代購，實際收款以訂金比例為準，出國採購後將另行通知尾款。</p>
     <button class="btn btn-primary" style="width:100%" id="checkoutBtn">送出預購需求</button>
   </div>
@@ -1493,7 +1580,7 @@
         <div class="card-brand" id="detailBrand"></div>
         <h3 id="detailName" style="margin:4px 0 10px;"></h3>
         <div class="price-value" id="detailPrice" style="margin-bottom:14px;"></div>
-        <p id="detailDesc" style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;"></p>
+        <p id="detailDesc" style="font-size:13px; color:var(--ink-soft); margin-bottom:16px; white-space:pre-wrap;"></p>
 
         <div id="detailColorSection" style="display:none">
           <div class="variant-label" id="detailColorLabel">選擇顏色</div>
@@ -1508,6 +1595,7 @@
           <div class="swatch-row" id="detailExtraRow"></div>
         </div>
 
+        <div id="detailRefundNote" style="display:none;" class="status-callout">此商品採購後即不接受任何退款，請確認品項與數量後再加入購物車。</div>
         <div class="qty-selector" style="margin-top:14px;">
           <button type="button" class="qty-btn" id="detailQtyMinus">−</button>
           <input type="number" id="detailQtyInput" class="qty-input" value="1" min="1" max="99">
@@ -1590,6 +1678,13 @@
           </div>
           <div class="field"><label for="pfDeposit">訂金比例(0-1，如0.75)</label><input type="number" id="pfDeposit" step="0.05" min="0" max="1"></div>
         </div>
+        <div class="field" id="pfRefundableField" style="display:none;">
+          <label for="pfRefundable">零食退貨設定</label>
+          <select id="pfRefundable" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
+            <option value="true">零食（可退貨）— 出貨前放棄比照一般商品5%~15%分級退款</option>
+            <option value="false">零食（不能退貨）— 商品抵台後即不接受任何退款</option>
+          </select>
+        </div>
         <div class="field"><label for="pfDesc">商品說明</label><textarea id="pfDesc" style="min-height:56px;"></textarea></div>
         <div class="field">
           <label style="display:flex; align-items:center; gap:8px;">
@@ -1647,6 +1742,7 @@ const state = {
   filterCategory: 'all',
   filterCountry: 'all',
   sortKey: 'newest',
+  searchQuery: '',
   sortDir: 'desc',
   filterStatus: 'all',
   user: null,      // Supabase auth user
@@ -1770,6 +1866,11 @@ function renderProducts() {
     if (state.filterCategory !== 'all' && p.category !== state.filterCategory) return false;
     if (state.filterCountry !== 'all' && p.country !== state.filterCountry) return false;
     if (state.filterStatus !== 'all' && p.status !== state.filterStatus) return false;
+    if (state.searchQuery) {
+      const q = state.searchQuery.toLowerCase();
+      const haystack = `${p.name || ''} ${p.brand || ''}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
 
@@ -1800,6 +1901,7 @@ function renderProducts() {
     card.innerHTML = `
       <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}" data-open-page="${p.id}" title="查看大圖與詳情（開新分頁）">
         <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
+        ${p.is_refundable === false ? '<span class="status-badge" style="left:auto; right:10px; background:var(--danger);">不可退貨</span>' : ''}
         <button class="heart-btn ${isFav ? 'active' : ''}" data-toggle-fav="${p.id}" aria-label="加入收藏">
           <svg viewBox="0 0 24 24"><path class="heart-fill" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
         </button>
@@ -1879,6 +1981,15 @@ document.querySelectorAll('[data-sort-key]').forEach(btn => {
     btn.querySelector('.sort-arrow').textContent = state.sortDir === 'desc' ? '▼' : '▲';
     renderProducts();
   });
+});
+
+let productSearchTimer;
+document.getElementById('productSearchInput').addEventListener('input', (e) => {
+  clearTimeout(productSearchTimer);
+  productSearchTimer = setTimeout(() => {
+    state.searchQuery = e.target.value.trim();
+    renderProducts();
+  }, 200);
 });
 
 /* ============================================================
@@ -2151,6 +2262,12 @@ function renderCart() {
   document.getElementById('cartGrandTotal').textContent = ntd(grand);
   document.getElementById('cartDepositTotal').textContent = ntd(deposit);
 
+  const shippingHint = document.getElementById('cartShippingHint');
+  if (grand === 0) { shippingHint.textContent = ''; }
+  else if (grand < 520) { shippingHint.textContent = `再加購 ${ntd(520 - grand)} 即可送出預購（最低訂購金額NT$520）`; }
+  else if (grand < 1500) { shippingHint.textContent = `再加購 ${ntd(1500 - grand)} 即可享一次免運優惠！`; }
+  else { shippingHint.textContent = '已滿NT$1500，享一次免運優惠！'; }
+
   async function updateCartQty(itemId, newQty) {
     newQty = Math.max(1, Math.min(99, parseInt(newQty) || 1));
     await sb.from('cart_items').update({ quantity: newQty }).eq('id', itemId);
@@ -2181,6 +2298,11 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   if (!state.user) { toast('請先登入'); openAuth(); return; }
   if (state.cart.length === 0) { toast('購物車是空的'); return; }
 
+  const nonRefundableNames = state.cart.filter(item => item.products?.is_refundable === false).map(item => item.products.name);
+  if (nonRefundableNames.length > 0) {
+    if (!confirm(`購物車內以下商品採購後即不接受退款：\n${nonRefundableNames.join('、')}\n\n確定要送出這筆預購需求嗎？`)) return;
+  }
+
   const checkoutBtn = document.getElementById('checkoutBtn');
   checkoutBtn.disabled = true;
   checkoutBtn.textContent = '送出中...';
@@ -2198,6 +2320,12 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
       variant_color: item.variant_color || null, variant_size: item.variant_size || null, variant_extra: item.variant_extra || null,
     };
   });
+
+  if (grand < 520) {
+    toast(`訂單總額需滿NT$520才能送出預購（目前 ${ntd(grand)}）`);
+    checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
+    return;
+  }
 
   // 1. 寫入訂單主表 orders
   const { data: order, error: orderErr } = await sb
@@ -2226,7 +2354,7 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   await sb.from('cart_items').delete().eq('user_id', state.user.id);
   await loadCart();
 
-  toast('已收到你的預購需求，我們會透過 LINE 與你確認訂金付款方式');
+  toast(grand >= 1500 ? '已收到你的預購需求，訂單滿NT$1500享一次免運優惠！我們會透過 LINE 與你確認訂金付款方式' : '已收到你的預購需求，我們會透過 LINE 與你確認訂金付款方式');
   checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
   closeCart();
 });
@@ -2268,9 +2396,14 @@ async function renderMessagesPage() {
   const box = document.getElementById('messagesPageMessages');
   const { data, error } = await sb.from('messages').select('*').eq('user_id', state.user.id).order('created_at');
   if (error) { box.innerHTML = '<p>讀取訊息失敗</p>'; return; }
+  const { data: adminProf } = await sb.rpc('get_admin_public_profile');
+  const adminAvatar = adminProf?.[0]?.avatar_url || DEFAULT_AVATAR_SVG;
+  const myAvatar = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
   const rows = await Promise.all((data || []).map(async m => {
     const image = await signedChatImage(m.image_path);
-    return `<div class="chat-bubble-row ${m.sender === 'customer' ? 'mine' : ''}"><div>${productCardHtml(m)}<div class="chat-bubble">${image ? `<img class="chat-image" src="${image}" alt="訊息圖片">` : ''}${m.content ? escapeHtml(m.content) : ''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div></div></div>`;
+    const isMine = m.sender === 'customer';
+    const avatar = isMine ? myAvatar : adminAvatar;
+    return `<div class="chat-bubble-row ${isMine ? 'mine' : ''}">${!isMine ? `<img class="chat-avatar" src="${avatar}" alt="">` : ''}<div>${productCardHtml(m)}<div class="chat-bubble">${image ? `<img class="chat-image" src="${image}" alt="訊息圖片">` : ''}${m.content ? escapeHtml(m.content) : ''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div></div>${isMine ? `<img class="chat-avatar" src="${avatar}" alt="">` : ''}</div>`;
   }));
   const draft = state.pendingProductInquiry ? productCardHtml(state.pendingProductInquiry, true) : '';
   box.innerHTML = rows.join('') || '<p style="color:var(--ink-soft);font-size:13px">有任何問題都可以傳訊給我們。</p>';
@@ -2456,10 +2589,12 @@ function renderRoute() {
   const isActiveOrders = hash === '#active-orders';
   const isPreorderGuide = hash === '#preorder-guide';
   const isRefundPolicy = hash === '#refund-policy';
+  const isWishSubmit = hash === '#wishlist-submit';
+  const isWishPublic = hash === '#wishlist-public';
   const adminPage = ADMIN_PANEL_PAGES[hash];
 
   const anyAdminPageOpen = !!adminPage;
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isPreorderGuide || isRefundPolicy) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isPreorderGuide || isRefundPolicy || isWishSubmit || isWishPublic) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
@@ -2469,6 +2604,10 @@ function renderRoute() {
   document.getElementById('activeOrdersPageView').style.display = isActiveOrders ? 'block' : 'none';
   document.getElementById('preorderGuidePageView').style.display = isPreorderGuide ? 'block' : 'none';
   document.getElementById('refundPolicyPageView').style.display = isRefundPolicy ? 'block' : 'none';
+  document.getElementById('wishlistSubmitPageView').style.display = isWishSubmit ? 'block' : 'none';
+  document.getElementById('wishlistPublicPageView').style.display = isWishPublic ? 'block' : 'none';
+  if (isWishSubmit && !state.user) { toast('請先登入才能提出許願'); location.hash = ''; openAuth(); }
+  if (isWishPublic) loadWishlistPublic();
 
   // 六個「管理後台專屬頁面」共用同一套邏輯：符合目前網址的那個顯示 + 面板移過去 + 載入資料；
   // 其餘的一律隱藏，面板放回管理後台彈窗裡原本的分頁位置。
@@ -2512,6 +2651,8 @@ document.getElementById('adminMessagesPageBackBtn').addEventListener('click', ()
 document.getElementById('editProfilePageBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('preorderGuideBackBtn').addEventListener('click', () => { location.hash = ''; });
 document.getElementById('refundPolicyBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('wishlistSubmitBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.getElementById('wishlistPublicBackBtn').addEventListener('click', () => { location.hash = ''; });
 Object.values(ADMIN_PANEL_PAGES).forEach(cfg => {
   const backBtn = document.getElementById(cfg.backBtn);
   if (backBtn) backBtn.addEventListener('click', () => { location.hash = ''; });
@@ -2649,6 +2790,7 @@ function openProductDetail(productId) {
   const variantGroups = state.variantsByProduct[p.id] || [];
   state.detailSelection = {};
   document.getElementById('detailQtyInput').value = 1;
+  document.getElementById('detailRefundNote').style.display = p.is_refundable === false ? 'block' : 'none';
   renderVariantSlot(variantGroups[0], 'detailColorSection', 'detailColorRow', 'detailColorLabel', state.detailSelection, 'color');
   renderVariantSlot(variantGroups[1], 'detailSizeSection', 'detailSizeRow', 'detailSizeLabel', state.detailSelection, 'size');
   renderVariantSlot(variantGroups[2], 'detailExtraSection', 'detailExtraRow', 'detailExtraLabel', state.detailSelection, 'extra');
@@ -2741,6 +2883,7 @@ function renderProductPage(productId) {
   if (!p) { document.getElementById('productPageView').innerHTML = '<p>找不到這件商品，可能已下架。</p>'; return; }
   pageSelection = { color: null, size: null };
   document.getElementById('pageQtyInput').value = 1;
+  document.getElementById('pageRefundNote').style.display = p.is_refundable === false ? 'block' : 'none';
 
   document.getElementById('pageDetailImage').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '';
   document.getElementById('pageCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
@@ -3126,10 +3269,12 @@ function renderSingleItemRow(it) {
 
   return `
     <div class="notif-rich" style="border-top:1px solid var(--line); padding:12px 0; align-items:flex-start;">
-      ${it.products?.image_url ? `<img src="${it.products.image_url}" class="notif-thumb" alt="">` : '<div class="notif-thumb notif-thumb-empty"></div>'}
+      <div data-order-item-product="${it.product_id}" style="cursor:pointer; flex-shrink:0;">
+        ${it.products?.image_url ? `<img src="${it.products.image_url}" class="notif-thumb" alt="">` : '<div class="notif-thumb notif-thumb-empty"></div>'}
+      </div>
       <div class="notif-rich-body">
         <div class="order-row-top">
-          <span class="notif-product-name">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
+          <span class="notif-product-name" data-order-item-product="${it.product_id}" style="cursor:pointer;">${it.product_name}${desc ? '（' + desc + '）' : ''} × ${it.quantity}</span>
           <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${ITEM_STATE_LABEL[it.state] || it.state}</span>
         </div>
         <div class="notif-rich-msg" style="margin:2px 0 6px;">售價 ${ntd(it.price_ntd)}</div>
@@ -3191,6 +3336,9 @@ async function loadActiveOrders(targetListId) {
 
 /* ---------- 客戶端動作按鈕綁定 ---------- */
 function bindOrderItemActions() {
+  document.querySelectorAll('[data-order-item-product]').forEach(el => {
+    el.addEventListener('click', () => { location.hash = `#product=${el.dataset.orderItemProduct}`; });
+  });
   document.querySelectorAll('[data-abandon-full-refund]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const itemId = btn.dataset.abandonFullRefund;
@@ -3668,7 +3816,7 @@ document.getElementById('processOverdueBtn').addEventListener('click', async () 
 async function loadAdminWishlist() {
   const { data, error } = await sb
     .from('wishlist_requests')
-    .select('id, brand_name, description, created_at, user_id, admin_read, admin_tag')
+    .select('id, brand_name, description, country, category, image_url, created_at, user_id, admin_read, admin_tag, is_public, admin_default_price')
     .order('created_at', { ascending: false });
   const list = document.getElementById('adminWishlistList');
   if (error) { list.innerHTML = '<p>讀取許願失敗</p>'; console.error(error); return; }
@@ -3688,11 +3836,29 @@ async function loadAdminWishlist() {
 
   if (filtered.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的許願紀錄。</p>'; return; }
 
-  list.innerHTML = filtered.map(w => `
+  const wishIds = filtered.map(w => w.id);
+  const { data: votes } = wishIds.length ? await sb.from('wishlist_price_votes').select('*').in('wishlist_id', wishIds) : { data: [] };
+
+  list.innerHTML = filtered.map(w => {
+    const wishVotes = (votes || []).filter(v => v.wishlist_id === w.id);
+    const def = w.admin_default_price;
+    let validVotes = [], invalidVotes = [];
+    if (def) {
+      wishVotes.forEach(v => {
+        if (v.price < def * 0.75 || v.price > def * 2) invalidVotes.push(v); else validVotes.push(v);
+      });
+    } else {
+      validVotes = wishVotes;
+    }
+    const avg = validVotes.length ? Math.round(validVotes.reduce((s, v) => s + Number(v.price), 0) / validVotes.length) : null;
+
+    return `
     <div class="wish-row ${w.admin_read ? '' : 'unread-row'}">
-      <div class="wish-row-brand">${w.brand_name}</div>
+      <div class="wish-row-brand">${w.brand_name}${w.is_public ? '<span style="color:var(--sencha); font-size:11px; margin-left:8px;">● 已公開</span>' : ''}</div>
+      <div class="wish-row-meta">${[w.country, w.category].filter(Boolean).join(' · ')}</div>
       ${w.description ? `<div class="wish-row-desc">${w.description}</div>` : ''}
       <div class="wish-row-meta">${nameMap[w.user_id] || '（未命名會員）'}　${new Date(w.created_at).toLocaleDateString('zh-Hant-TW')}</div>
+      ${wishVotes.length ? `<div class="wish-row-meta" style="margin-top:6px;">收到 ${wishVotes.length} 筆可接受價格填寫，有效 ${validVotes.length} 筆${avg ? `，定價參考均值 NT$${avg}` : ''}${invalidVotes.length ? `（另有 ${invalidVotes.length} 筆判定為無效統計）` : ''}</div>` : ''}
       <div class="order-admin-actions" style="flex-wrap:wrap; margin-top:8px;">
         <button class="btn btn-outline btn-sm" data-toggle-read-wish="${w.id}" data-current-read="${w.admin_read}">${w.admin_read ? '標記未讀' : '標記已讀'}</button>
         <select class="tag-select" data-tag-wish="${w.id}">
@@ -3701,9 +3867,12 @@ async function loadAdminWishlist() {
           <option value="watch" ${w.admin_tag === 'watch' ? 'selected' : ''}>再觀察</option>
           <option value="spam" ${w.admin_tag === 'spam' ? 'selected' : ''}>垃圾訊息</option>
         </select>
+        <button class="btn btn-primary btn-sm" data-toggle-public-wish="${w.id}" data-current-public="${w.is_public}">${w.is_public ? '取消公開' : '審核通過並公開'}</button>
+        <input type="number" placeholder="預設可接受價格" data-default-price-wish="${w.id}" value="${w.admin_default_price || ''}" style="width:120px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-size:12px;">
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   list.querySelectorAll('[data-toggle-read-wish]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -3714,6 +3883,22 @@ async function loadAdminWishlist() {
   list.querySelectorAll('[data-tag-wish]').forEach(sel => {
     sel.addEventListener('change', async () => {
       await sb.from('wishlist_requests').update({ admin_tag: sel.value || null }).eq('id', sel.dataset.tagWish);
+      loadAdminWishlist();
+    });
+  });
+  list.querySelectorAll('[data-toggle-public-wish]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const makePublic = btn.dataset.currentPublic !== 'true';
+      await sb.from('wishlist_requests').update({ is_public: makePublic }).eq('id', btn.dataset.togglePublicWish);
+      toast(makePublic ? '已公開此許願' : '已取消公開');
+      loadAdminWishlist();
+    });
+  });
+  list.querySelectorAll('[data-default-price-wish]').forEach(input => {
+    input.addEventListener('change', async () => {
+      const val = input.value ? Number(input.value) : null;
+      await sb.from('wishlist_requests').update({ admin_default_price: val }).eq('id', input.dataset.defaultPriceWish);
+      toast('已更新預設可接受價格');
       loadAdminWishlist();
     });
   });
@@ -3758,6 +3943,11 @@ async function loadAdminProducts() {
 
 document.getElementById('newProductBtn').addEventListener('click', () => openProductEditor(null));
 
+function toggleRefundableFieldVisibility() {
+  document.getElementById('pfRefundableField').style.display = document.getElementById('pfCategory').value === '零食' ? 'block' : 'none';
+}
+document.getElementById('pfCategory').addEventListener('change', toggleRefundableFieldVisibility);
+
 async function openProductEditor(product) {
   const title = document.getElementById('productEditTitle');
   document.getElementById('productEditId').value = product ? product.id : '';
@@ -3770,6 +3960,8 @@ async function openProductEditor(product) {
   document.getElementById('pfDeposit').value = product ? product.deposit_ratio : 0.5;
   document.getElementById('pfDesc').value = product ? (product.description || '') : '';
   document.getElementById('pfHidden').checked = product ? !!product.is_hidden : false;
+  document.getElementById('pfRefundable').value = product ? String(product.is_refundable !== false) : 'true';
+  toggleRefundableFieldVisibility();
   document.getElementById('productImageMsg').textContent = '';
   document.getElementById('productEditMsg').textContent = '';
 
@@ -3993,9 +4185,10 @@ document.getElementById('productImageAddInput').addEventListener('change', (e) =
    可拖曳移動選取框、拖曳右下角調整大小，即時預覽縮圖效果
    ============================================================ */
 const CROP_RATIO = 1 / 1.1;
-const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, box: { x: 0, y: 0, w: 0, h: 0 }, dragMode: null, dragStart: null };
+const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, box: { x: 0, y: 0, w: 0, h: 0 }, dragMode: null, dragStart: null, target: 'product' };
 
-function openCropTool(file) {
+function openCropTool(file, target = 'product') {
+  cropState.target = target;
   const reader = new FileReader();
   reader.onload = (ev) => {
     const img = new Image();
@@ -4120,12 +4313,19 @@ document.getElementById('cropConfirmBtn').addEventListener('click', async () => 
   outCanvas.toBlob(async (blob) => {
     if (!blob) { msg.textContent = '裁切失敗，請重試'; msg.className = 'form-msg err'; return; }
     const filePath = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
-    const { error: uploadErr } = await sb.storage.from('product-images').upload(filePath, blob, { contentType: 'image/jpeg' });
+    const bucket = cropState.target === 'wishlist' ? 'wishlist-images' : 'product-images';
+    const { error: uploadErr } = await sb.storage.from(bucket).upload(filePath, blob, { contentType: 'image/jpeg' });
     if (uploadErr) { msg.textContent = '上傳失敗：' + uploadErr.message; msg.className = 'form-msg err'; return; }
-    const { data: pub } = sb.storage.from('product-images').getPublicUrl(filePath);
-    state.productEditImages = state.productEditImages || [];
-    state.productEditImages.push(pub.publicUrl);
-    renderProductImageGallery();
+    const { data: pub } = sb.storage.from(bucket).getPublicUrl(filePath);
+    if (cropState.target === 'wishlist') {
+      state.wishSubmitImageUrl = pub.publicUrl;
+      document.getElementById('wishImagePreview').src = pub.publicUrl;
+      document.getElementById('wishImagePreview').style.display = 'block';
+    } else {
+      state.productEditImages = state.productEditImages || [];
+      state.productEditImages.push(pub.publicUrl);
+      renderProductImageGallery();
+    }
     document.getElementById('imageCropOverlay').classList.remove('open');
     toast('圖片已新增');
   }, 'image/jpeg', 0.85);
@@ -4147,6 +4347,7 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     deposit_ratio: Number(document.getElementById('pfDeposit').value),
     description: document.getElementById('pfDesc').value.trim(),
     is_hidden: document.getElementById('pfHidden').checked,
+    is_refundable: document.getElementById('pfCategory').value === '零食' ? document.getElementById('pfRefundable').value === 'true' : true,
     image_url: (state.productEditImages && state.productEditImages[0]) || '',
   };
 
@@ -4200,11 +4401,11 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
 });
 
 function buildDemandGroups(items) {
-  // 回傳 { productKey: { total, combo:{}, colors:{}, sizes:{} } }
+  // 回傳 { productKey: { total, combo:{}, colors:{}, sizes:{}, image } }
   const groups = {};
   items.forEach(it => {
     const key = it.product_name || `商品#${it.product_id}`;
-    if (!groups[key]) groups[key] = { total: 0, combo: {}, colors: {}, sizes: {} };
+    if (!groups[key]) groups[key] = { total: 0, combo: {}, colors: {}, sizes: {}, image: it.products?.image_url || '' };
     groups[key].total += it.quantity;
     const comboKey = [it.variant_color, it.variant_size, it.variant_extra].filter(Boolean).join(' / ') || '（無款式）';
     groups[key].combo[comboKey] = (groups[key].combo[comboKey] || 0) + it.quantity;
@@ -4214,12 +4415,14 @@ function buildDemandGroups(items) {
   return groups;
 }
 
+let demandGroupUid = 0;
 function renderDemandGroups(groups, mode) {
   const keys = Object.keys(groups).sort((a, b) => groups[b].total - groups[a].total);
   if (keys.length === 0) return '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的商品。</p>';
 
-  return keys.map(name => {
+  const html = keys.map(name => {
     const g = groups[name];
+    const gid = `dg${demandGroupUid++}`;
     let body = '';
     if (mode === 'combo') {
       body = Object.keys(g.combo).sort((a, b) => g.combo[b] - g.combo[a])
@@ -4240,14 +4443,31 @@ function renderDemandGroups(groups, mode) {
     }
     return `
       <div class="demand-group">
-        <div class="demand-group-top">
-          <span class="demand-group-name">${name}</span>
+        <div class="demand-group-top" data-demand-toggle="${gid}" style="cursor:pointer;">
+          ${g.image ? `<img src="${g.image}" class="demand-thumb" alt="">` : '<div class="demand-thumb demand-thumb-empty"></div>'}
+          <span class="demand-group-name" style="flex:1;">${name}</span>
           <span class="demand-group-total">共 ${g.total} 件</span>
+          <span class="demand-collapse-arrow" id="${gid}-arrow">▸</span>
         </div>
-        ${body}
+        <div id="${gid}-body" style="display:none; margin-top:8px;">${body}</div>
       </div>
     `;
   }).join('');
+
+  setTimeout(() => {
+    document.querySelectorAll('[data-demand-toggle]').forEach(header => {
+      header.addEventListener('click', () => {
+        const gid = header.dataset.demandToggle;
+        const bodyEl = document.getElementById(`${gid}-body`);
+        const arrowEl = document.getElementById(`${gid}-arrow`);
+        const open = bodyEl.style.display !== 'none';
+        bodyEl.style.display = open ? 'none' : 'block';
+        arrowEl.textContent = open ? '▸' : '▾';
+      });
+    });
+  }, 0);
+
+  return html;
 }
 
 const DEMAND_EXCLUDED_STATES = ['refunded_full', 'refunded_partial', 'abandoned_no_refund'];
@@ -4255,7 +4475,7 @@ const DEMAND_EXCLUDED_STATES = ['refunded_full', 'refunded_partial', 'abandoned_
 async function loadDemandSection({ countryKey, categoryKey, listId, stateMatch, mode }) {
   const { data, error } = await sb
     .from('order_items')
-    .select('product_id, product_name, variant_color, variant_size, variant_extra, quantity, state, products(country, category)');
+    .select('product_id, product_name, variant_color, variant_size, variant_extra, quantity, state, products(country, category, image_url)');
   const list = document.getElementById(listId);
   if (error) { list.innerHTML = '<p>讀取需求統計失敗</p>'; console.error(error); return; }
 
@@ -4305,7 +4525,20 @@ bindDemandFilterGroup('all', 'demandAllCountry', 'demandAllCategory', loadDemand
 /* ============================================================
    許願專區
    ============================================================ */
-document.getElementById('wishlistForm').addEventListener('submit', async (e) => {
+document.getElementById('wishCountry').addEventListener('change', (e) => {
+  document.getElementById('wishCountryOther').style.display = e.target.value === '其他' ? 'block' : 'none';
+});
+document.getElementById('wishColor').addEventListener('change', (e) => {
+  document.getElementById('wishColorOther').style.display = e.target.value === '其他' ? 'block' : 'none';
+});
+document.getElementById('wishImageInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  openCropTool(file, 'wishlist');
+  e.target.value = '';
+});
+
+document.getElementById('wishSubmitForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msg = document.getElementById('wishMsg');
   if (!state.user) {
@@ -4313,19 +4546,121 @@ document.getElementById('wishlistForm').addEventListener('submit', async (e) => 
     openAuth();
     return;
   }
-  const brand_name = document.getElementById('wishBrand').value.trim();
+  const brand_name = document.getElementById('wishName').value.trim();
+  const countrySel = document.getElementById('wishCountry').value;
+  const country = countrySel === '其他' ? document.getElementById('wishCountryOther').value.trim() : countrySel;
+  const category = document.getElementById('wishCategory').value;
+  const colorSel = document.getElementById('wishColor').value;
+  const color = colorSel === '其他' ? document.getElementById('wishColorOther').value.trim() : colorSel;
+  const size = document.getElementById('wishSize').value.trim();
+  const social_link = document.getElementById('wishSocialLink').value.trim();
   const description = document.getElementById('wishDesc').value.trim();
 
   const { error } = await sb.from('wishlist_requests').insert({
-    user_id: state.user.id, brand_name, description,
+    user_id: state.user.id, brand_name, country: country || null, category: category || null,
+    image_url: state.wishSubmitImageUrl || null, size: size || null, color: color || null,
+    social_link: social_link || null, description: description || null,
   });
   if (error) {
     msg.textContent = '送出失敗，請稍後再試'; msg.className = 'form-msg err';
     return;
   }
-  msg.textContent = '收到你的許願了，謝謝！'; msg.className = 'form-msg ok';
+  msg.textContent = '收到你的許願了，審核通過後會公開在許願專區，謝謝！'; msg.className = 'form-msg ok';
   e.target.reset();
+  state.wishSubmitImageUrl = null;
+  document.getElementById('wishImagePreview').style.display = 'none';
+  document.getElementById('wishCountryOther').style.display = 'none';
+  document.getElementById('wishColorOther').style.display = 'none';
 });
+
+/* ============================================================
+   許願專區公開瀏覽（按讚／留言／填寫可接受價格）
+   ============================================================ */
+const WISH_COUNTRY_LABEL2 = {}; // country 現在是自由文字，直接顯示，不需對照表
+
+async function loadWishlistPublic() {
+  const list = document.getElementById('wishlistPublicList');
+  const { data: wishes, error } = await sb.from('wishlist_requests').select('*').eq('is_public', true).order('created_at', { ascending: false });
+  if (error) { list.innerHTML = '<p>讀取失敗</p>'; console.error(error); return; }
+  if (!wishes || wishes.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前還沒有公開的許願。</p>'; return; }
+
+  const ids = wishes.map(w => w.id);
+  const [{ data: likes }, { data: comments }] = await Promise.all([
+    sb.from('wishlist_likes').select('wishlist_id, user_id').in('wishlist_id', ids),
+    sb.from('wishlist_comments').select('*').in('wishlist_id', ids).order('created_at'),
+  ]);
+
+  list.innerHTML = wishes.map(w => {
+    const wishLikes = (likes || []).filter(l => l.wishlist_id === w.id);
+    const likedByMe = state.user && wishLikes.some(l => l.user_id === state.user.id);
+    const wishComments = (comments || []).filter(c => c.wishlist_id === w.id);
+    return `
+      <div class="wish-card">
+        <div class="wish-card-top">
+          ${w.image_url ? `<img src="${w.image_url}" class="wish-card-img" alt="">` : ''}
+          <div>
+            <div class="wish-card-name">${w.brand_name}</div>
+            <div class="wish-card-meta">${[w.country, w.category, w.color, w.size].filter(Boolean).join(' · ')}</div>
+            ${w.description ? `<div class="wish-card-desc">${escapeHtml(w.description)}</div>` : ''}
+            ${w.social_link ? `<a href="${w.social_link}" target="_blank" style="font-size:12px; color:var(--brass-dark);">官網/粉專連結 →</a>` : ''}
+          </div>
+        </div>
+        <div class="wish-card-actions">
+          <button class="wish-like-btn ${likedByMe ? 'liked' : ''}" data-wish-like="${w.id}">♥ ${wishLikes.length}</button>
+          <div class="wish-price-row">
+            <input type="number" placeholder="可接受價格" data-wish-price-input="${w.id}">
+            <button class="btn btn-outline btn-sm" data-wish-price-submit="${w.id}">送出</button>
+          </div>
+        </div>
+        <div class="wish-comments" id="wish-comments-${w.id}">
+          ${wishComments.map(c => `<div class="wish-comment-row">${escapeHtml(c.content)}</div>`).join('')}
+        </div>
+        <form class="wish-comment-form" data-wish-comment-form="${w.id}">
+          <input type="text" placeholder="留言支持一下..." required>
+          <button class="btn btn-outline btn-sm" type="submit">送出</button>
+        </form>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-wish-like]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!state.user) { toast('請先登入才能按讚'); openAuth(); return; }
+      const wid = btn.dataset.wishLike;
+      if (btn.classList.contains('liked')) {
+        await sb.from('wishlist_likes').delete().eq('wishlist_id', wid).eq('user_id', state.user.id);
+      } else {
+        await sb.from('wishlist_likes').insert({ wishlist_id: wid, user_id: state.user.id });
+      }
+      loadWishlistPublic();
+    });
+  });
+  list.querySelectorAll('[data-wish-price-submit]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!state.user) { toast('請先登入才能填寫價格'); openAuth(); return; }
+      const wid = btn.dataset.wishPriceSubmit;
+      const val = document.querySelector(`[data-wish-price-input="${wid}"]`).value;
+      if (!val || Number(val) <= 0) { toast('請輸入有效金額'); return; }
+      const { error } = await sb.from('wishlist_price_votes').upsert({ wishlist_id: wid, user_id: state.user.id, price: Number(val) }, { onConflict: 'wishlist_id,user_id' });
+      if (error) { toast('送出失敗：' + error.message); return; }
+      toast('已記錄你覺得合理的價格，謝謝！');
+    });
+  });
+  list.querySelectorAll('[data-wish-comment-form]').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!state.user) { toast('請先登入才能留言'); openAuth(); return; }
+      const wid = form.dataset.wishCommentForm;
+      const input = form.querySelector('input');
+      const content = input.value.trim();
+      if (!content) return;
+      const { error } = await sb.from('wishlist_comments').insert({ wishlist_id: wid, user_id: state.user.id, content });
+      if (error) { toast('留言失敗：' + error.message); return; }
+      input.value = '';
+      loadWishlistPublic();
+    });
+  });
+}
 
 /* ============================================================
    手機版導覽選單
@@ -4437,8 +4772,16 @@ async function openAdminMessagesThread(userId, profile) {
 async function renderAdminMessagesThread() {
   const uid=state.adminChatActiveUser; if (!uid) return;
   const {data} = await sb.from('messages').select('*').eq('user_id',uid).order('created_at');
+  const { data: custProf } = await sb.from('profiles').select('avatar_url').eq('id', uid).maybeSingle();
+  const customerAvatar = custProf?.avatar_url || DEFAULT_AVATAR_SVG;
+  const myAvatar = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
   const box=document.getElementById('adminChatMessages');
-  const rows=await Promise.all((data||[]).map(async m=>{const image=await signedChatImage(m.image_path); return `<div class="chat-bubble-row ${m.sender==='admin'?'mine':''}"><div>${productCardHtml(m)}<div class="chat-bubble">${image?`<img class="chat-image" src="${image}" alt="訊息圖片">`:''}${m.content?escapeHtml(m.content):''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}${m.sender==='admin'&&m.is_read?' · 客戶已讀':''}</div></div></div>`;}));
+  const rows=await Promise.all((data||[]).map(async m=>{
+    const image=await signedChatImage(m.image_path);
+    const isMine = m.sender === 'admin';
+    const avatar = isMine ? myAvatar : customerAvatar;
+    return `<div class="chat-bubble-row ${isMine?'mine':''}">${!isMine?`<img class="chat-avatar" src="${avatar}" alt="">`:''}<div>${productCardHtml(m)}<div class="chat-bubble">${image?`<img class="chat-image" src="${image}" alt="訊息圖片">`:''}${m.content?escapeHtml(m.content):''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}${m.sender==='admin'&&m.is_read?' · 客戶已讀':''}</div></div>${isMine?`<img class="chat-avatar" src="${avatar}" alt="">`:''}</div>`;
+  }));
   box.innerHTML=rows.join('')||'<p style="color:var(--ink-soft);font-size:13px">尚未有訊息。你可以主動向這位會員問候。</p>';
   box.querySelectorAll('[data-product-link]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.productLink)location.hash=`#product=${el.dataset.productLink}`;}));
   const name=state.adminChatProfile?.display_name || '會員'; document.getElementById('adminChatThreadTitle').textContent=`與 ${name} 的對話`; box.scrollTop=box.scrollHeight;
