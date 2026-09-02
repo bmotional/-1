@@ -220,6 +220,7 @@
   }
   .progress-badge-danger { background: #FBEAE5; border-color: var(--danger); color: var(--danger); }
   .progress-badge-warn { background: #FBEFC9; border-color: var(--brass); color: #5C4A1E; }
+  .refund-order-active { border: 2px solid var(--danger) !important; background: #FFF7F5; }
   .wish-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; background: var(--bg-raised); }
   .wish-card-top { display: flex; gap: 14px; }
   .wish-card-img { width: 64px; height: 71px; border-radius: var(--radius); object-fit: cover; background: #E4DCC9; flex-shrink: 0; }
@@ -969,11 +970,15 @@
   <button class="btn btn-outline btn-sm" id="historyOrdersPageBackBtn" style="margin-bottom:20px;">← 返回</button>
   <h2 class="section-title">歷史訂單</h2>
   <p class="sub" style="margin-bottom:14px;">僅顯示狀態為「已完成」的訂單紀錄</p>
-  <div class="filter-group" id="historyOrdersPageFilters" style="margin-bottom:20px;">
+  <div class="filter-group" id="historyOrdersPageFilters" style="margin-bottom:16px;">
     <button class="chip active" data-history-page-range="all">全部</button>
     <button class="chip" data-history-page-range="7d">近7天</button>
     <button class="chip" data-history-page-range="1m">一個月</button>
     <button class="chip" data-history-page-range="1y">今年</button>
+  </div>
+  <div style="margin-bottom:20px;">
+    <a href="#active-orders" class="btn btn-outline btn-sm">查看進行中訂單</a>
+    <a href="#refund-orders" class="btn btn-outline btn-sm">查看退款訂單</a>
   </div>
   <div id="historyOrdersPageList" style="max-width:640px;"></div>
 </div>
@@ -982,8 +987,35 @@
 <div id="activeOrdersPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="activeOrdersPageBackBtn" style="margin-bottom:20px;">← 返回</button>
   <h2 class="section-title">進行中訂單</h2>
-  <p class="sub" style="margin-bottom:20px;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
+  <p class="sub" style="margin-bottom:16px;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
+  <div style="margin-bottom:20px;">
+    <a href="#order-history" class="btn btn-outline btn-sm">查看歷史訂單</a>
+    <a href="#refund-orders" class="btn btn-outline btn-sm">查看退款訂單</a>
+  </div>
   <div id="activeOrdersPageList" style="max-width:640px;"></div>
+</div>
+
+<!-- ============ 退款訂單 全頁畫面 ============ -->
+<div id="refundOrdersPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="refundOrdersPageBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <h2 class="section-title">退款訂單</h2>
+  <p class="sub" style="margin-bottom:16px;">已完成退款的紀錄會保留7天方便查看，之後會自動歸類為已結案。</p>
+  <div class="filter-group" id="refundOrdersCategoryFilters" style="margin-bottom:10px;">
+    <button class="chip active" data-refund-category-filter="active">進行中</button>
+    <button class="chip" data-refund-category-filter="all">全部</button>
+    <button class="chip" data-refund-category-filter="closed">已結案</button>
+  </div>
+  <div class="filter-group" id="refundOrdersRangeFilters" style="margin-bottom:16px;">
+    <button class="chip active" data-refund-range-filter="all">全部時間</button>
+    <button class="chip" data-refund-range-filter="7d">近7天</button>
+    <button class="chip" data-refund-range-filter="1m">近30天</button>
+    <button class="chip" data-refund-range-filter="1y">一年</button>
+  </div>
+  <div style="margin-bottom:20px;">
+    <a href="#active-orders" class="btn btn-outline btn-sm">查看進行中訂單</a>
+    <a href="#order-history" class="btn btn-outline btn-sm">查看歷史訂單</a>
+  </div>
+  <div id="refundOrdersList" style="max-width:640px;"></div>
 </div>
 
 <!-- ============ Edit Profile Page（編輯個人資料，獨立分頁） ============ -->
@@ -1379,6 +1411,7 @@
       <p class="sub" style="flex-shrink:0;">已送出但尚未完成（或取消）的訂單，包含待確認、已鎖定採購中</p>
       <div id="activeOrdersList" style="height:370px; overflow-y:auto;"></div>
       <button class="btn btn-outline" id="activeOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整進行中訂單頁面</button>
+      <a href="#refund-orders" class="btn btn-outline" id="activeOrdersRefundLinkBtn" style="width:100%; margin-top:8px; flex-shrink:0; display:block; text-align:center;">查看退款訂單</a>
     </div>
 
     <div id="myOrdersHistoryPane" style="display:none; flex-shrink:0;">
@@ -1391,6 +1424,7 @@
       </div>
       <div id="myOrdersList" style="height:330px; overflow-y:auto;"></div>
       <button class="btn btn-outline" id="historyOrdersFullPageBtn" style="width:100%; margin-top:14px; flex-shrink:0;">前往完整歷史訂單頁面</button>
+      <a href="#refund-orders" class="btn btn-outline" id="historyOrdersRefundLinkBtn" style="width:100%; margin-top:8px; flex-shrink:0; display:block; text-align:center;">查看退款訂單</a>
     </div>
   </div>
 </div>
@@ -2604,6 +2638,7 @@ function renderRoute() {
   const isEditProfile = hash === '#edit-profile';
   const isHistoryOrders = hash === '#order-history';
   const isActiveOrders = hash === '#active-orders';
+  const isRefundOrders = hash === '#refund-orders';
   const isPreorderGuide = hash === '#preorder-guide';
   const isRefundPolicy = hash === '#refund-policy';
   const isWishSubmit = hash === '#wishlist-submit';
@@ -2611,7 +2646,7 @@ function renderRoute() {
   const adminPage = ADMIN_PANEL_PAGES[hash];
 
   const anyAdminPageOpen = !!adminPage;
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isPreorderGuide || isRefundPolicy || isWishSubmit || isWishPublic) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isRefundOrders || isPreorderGuide || isRefundPolicy || isWishSubmit || isWishPublic) ? 'none' : 'block';
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
@@ -2619,12 +2654,14 @@ function renderRoute() {
   document.getElementById('editProfilePageView').style.display = isEditProfile ? 'block' : 'none';
   document.getElementById('historyOrdersPageView').style.display = isHistoryOrders ? 'block' : 'none';
   document.getElementById('activeOrdersPageView').style.display = isActiveOrders ? 'block' : 'none';
+  document.getElementById('refundOrdersPageView').style.display = isRefundOrders ? 'block' : 'none';
   document.getElementById('preorderGuidePageView').style.display = isPreorderGuide ? 'block' : 'none';
   document.getElementById('refundPolicyPageView').style.display = isRefundPolicy ? 'block' : 'none';
   document.getElementById('wishlistSubmitPageView').style.display = isWishSubmit ? 'block' : 'none';
   document.getElementById('wishlistPublicPageView').style.display = isWishPublic ? 'block' : 'none';
   if (isWishSubmit && !state.user) { toast('請先登入才能提出許願'); location.hash = ''; openAuth(); }
   if (isWishPublic) loadWishlistPublic();
+  if (isRefundOrders) { if (!state.user) { toast('請先登入才能查看退款訂單'); location.hash = ''; } else { loadRefundOrders(); } }
 
   // 六個「管理後台專屬頁面」共用同一套邏輯：符合目前網址的那個顯示 + 面板移過去 + 載入資料；
   // 其餘的一律隱藏，面板放回管理後台彈窗裡原本的分頁位置。
@@ -3401,6 +3438,96 @@ function applyOrderHighlight() {
   state.highlightOrderId = null;
 }
 
+/* ---------- 退款訂單：審核中、已完成退款(7天內)算進行中，7天後自動視為已結案 ---------- */
+const REFUND_RELATED_STATES = ['abandoned_pending_refund', 'refunded_full', 'refunded_partial', 'abandoned_no_refund'];
+function isRefundStillActive(it) {
+  if (it.state === 'abandoned_pending_refund') return true;
+  const daysSince = (Date.now() - new Date(it.state_updated_at).getTime()) / 86400000;
+  return daysSince < 7;
+}
+
+async function loadRefundOrders() {
+  if (!state.user) return;
+  const { data, error } = await sb.from('orders').select('id, order_no, created_at, order_items!inner(*, products(image_url))')
+    .eq('user_id', state.user.id).in('order_items.state', REFUND_RELATED_STATES).order('created_at', { ascending: false });
+  const list = document.getElementById('refundOrdersList');
+  if (error) { list.innerHTML = '<p>讀取退款訂單失敗</p>'; console.error(error); return; }
+
+  let flat = [];
+  (data || []).forEach(o => {
+    (o.order_items || []).forEach(it => {
+      if (REFUND_RELATED_STATES.includes(it.state)) flat.push({ it, order: o });
+    });
+  });
+
+  const catFilter = state.refundCategoryFilter || 'active';
+  const fromDate = rangeToDate(state.refundRangeFilter || 'all');
+  flat = flat.filter(({ it }) => {
+    const active = isRefundStillActive(it);
+    if (catFilter === 'active' && !active) return false;
+    if (catFilter === 'closed' && active) return false;
+    if (fromDate && new Date(it.state_updated_at) < fromDate) return false;
+    return true;
+  });
+  flat.sort((a, b) => new Date(b.it.state_updated_at) - new Date(a.it.state_updated_at));
+
+  if (flat.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">沒有符合篩選條件的退款紀錄。</p>'; return; }
+
+  list.innerHTML = flat.map(({ it, order }) => {
+    const active = isRefundStillActive(it);
+    const desc = variantDesc(it);
+    return `
+      <div class="notif-rich ${active ? 'refund-order-active' : ''}" style="border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:14px; align-items:flex-start;">
+        ${it.products?.image_url ? `<img src="${it.products.image_url}" class="notif-thumb" alt="">` : '<div class="notif-thumb notif-thumb-empty"></div>'}
+        <div class="notif-rich-body">
+          <div class="order-row-top">
+            <span class="notif-product-name">${it.product_name}${desc ? '（' + desc + '）' : ''}</span>
+            <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}">${active ? '進行中' : '已結案'}</span>
+          </div>
+          <div class="notif-rich-msg" style="margin:2px 0 6px;">訂單 ${order.order_no || ('#' + order.id)}</div>
+          ${renderItemProgress(it)}
+          <div class="order-admin-actions" style="flex-wrap:wrap; margin-top:8px;">
+            <button class="btn btn-outline btn-sm" data-refund-contact-btn="${it.id}" data-order-no="${order.order_no || order.id}">聯絡我們</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-refund-contact-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const match = flat.find(f => String(f.it.id) === btn.dataset.refundContactBtn);
+      if (!match) return;
+      const stateLabel = ITEM_STATE_LABEL[match.it.state] || match.it.state;
+      state.pendingProductInquiry = {
+        product_id: match.it.product_id,
+        product_name: `退款訂單 ${btn.dataset.orderNo}｜${match.it.product_name}｜狀態：${stateLabel}`,
+        product_image_url: match.it.products?.image_url || '',
+      };
+      state.chatReturnHash = location.hash;
+      location.hash = '#messages';
+    });
+  });
+}
+
+document.querySelectorAll('[data-refund-category-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-refund-category-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.refundCategoryFilter = btn.dataset.refundCategoryFilter;
+    loadRefundOrders();
+  });
+});
+document.querySelectorAll('[data-refund-range-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-refund-range-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.refundRangeFilter = btn.dataset.refundRangeFilter;
+    loadRefundOrders();
+  });
+});
+document.getElementById('refundOrdersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+
 /* ---------- 進行中訂單（尚未走到終點的所有明細） ---------- */
 async function loadActiveOrders(targetListId) {
   if (!state.user) return;
@@ -3455,7 +3582,7 @@ function bindOrderItemActions() {
         onConfirm: async () => {
           const { error } = await sb.rpc('customer_request_stage1_refund', { item_id: itemId });
           if (error) { toast('操作失敗：' + error.message); return; }
-          toast('已受理退款申請');
+          toast('已受理退款申請，可至「退款訂單」查看進度');
           refreshActiveOrdersEverywhere();
         },
       });
@@ -3494,7 +3621,7 @@ function bindOrderItemActions() {
         onConfirm: async () => {
           const { error } = await sb.rpc('customer_abandon_for_refund', { item_id: itemId });
           if (error) { toast('操作失敗：' + error.message); return; }
-          toast('已受理退款申請');
+          toast('已受理退款申請，可至「退款訂單」查看進度');
           refreshActiveOrdersEverywhere();
         },
       });
@@ -3567,6 +3694,7 @@ async function estimateDepositAmount(itemId) {
 function refreshActiveOrdersEverywhere() {
   if (document.getElementById('activeOrdersOverlay').classList.contains('open')) loadActiveOrders('activeOrdersList');
   if (location.hash === '#active-orders') loadActiveOrders('activeOrdersPageList');
+  if (location.hash === '#refund-orders') loadRefundOrders();
 }
 
 /* ---------- 強烈警告確認彈窗（用於不可逆的棄單動作） ---------- */
@@ -3603,6 +3731,8 @@ document.getElementById('historyOrdersFullPageBtn').addEventListener('click', ()
   document.getElementById('activeOrdersOverlay').classList.remove('open');
   location.hash = '#order-history';
 });
+document.getElementById('activeOrdersRefundLinkBtn').addEventListener('click', () => { document.getElementById('activeOrdersOverlay').classList.remove('open'); });
+document.getElementById('historyOrdersRefundLinkBtn').addEventListener('click', () => { document.getElementById('activeOrdersOverlay').classList.remove('open'); });
 
 function switchMyOrdersTab(tab) {
   document.querySelectorAll('[data-myorders-tab]').forEach(b => b.classList.toggle('active', b.dataset.myordersTab === tab));
