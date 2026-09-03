@@ -1324,7 +1324,7 @@
 
       <form id="loginForm">
         <div class="field">
-          <label for="loginIdentifier">帳號或 Email</label>
+          <label for="loginIdentifier">帳號</label>
           <input type="text" id="loginIdentifier" required>
         </div>
         <div class="field">
@@ -1358,7 +1358,7 @@
           <input type="password" id="signupPassword" required minlength="6">
         </div>
         <div class="field">
-          <label for="signupEmail">電子信箱（選填）</label>
+          <label for="signupEmail">電子信箱（選填，僅供聯絡使用，登入請一律使用帳號）</label>
           <input type="email" id="signupEmail">
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%">註冊</button>
@@ -2089,10 +2089,7 @@ function refreshAuthView() {
     loginV.style.display = 'none';
     signupV.style.display = 'none';
     loggedInV.style.display = 'block';
-    const isPlaceholderEmail = (state.user.email || '').endsWith('@internal.local');
-    document.getElementById('loggedInEmail').textContent = isPlaceholderEmail
-      ? `帳號：${state.profile?.account || ''}`
-      : (state.user.email || '');
+    document.getElementById('loggedInEmail').textContent = `帳號：${state.profile?.account || ''}${state.profile?.contact_email ? '　聯絡信箱：' + state.profile.contact_email : ''}`;
   } else {
     loggedInV.style.display = 'none';
     loginV.style.display = 'block';
@@ -2127,16 +2124,17 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  // 若沒填信箱，系統自動產生一組使用者看不到的內部信箱，僅用來滿足登入系統的需求
-  const authEmail = emailInput || `${account}_${Date.now()}@internal.local`;
+  // 帳號@internal.local 是固定可推算的登入信箱，不再需要時間戳記；
+  // 如果客戶有填真實信箱，存進 contact_email（僅供聯絡用途，不會拿來登入）
+  const authEmail = `${account.toLowerCase()}@internal.local`;
 
-  // 顯示名稱／Instagram／帳號一併放進 user_metadata，
+  // 顯示名稱／Instagram／帳號／聯絡信箱一併放進 user_metadata，
   // 資料庫觸發器會在建立帳號的同一個交易內自動建立對應的 profiles 資料列（含會員編號），
   // 不再依賴前端另外呼叫 upsert，徹底避開 session 套用時間差造成的權限錯誤。
   const { data, error } = await sb.auth.signUp({
     email: authEmail,
     password,
-    options: { data: { display_name: displayName, instagram: instagram || null, account } },
+    options: { data: { display_name: displayName, instagram: instagram || null, account, contact_email: emailInput || null } },
   });
   if (error) {
     msg.textContent = error.message; msg.className = 'form-msg err';
@@ -2154,7 +2152,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   toast('歡迎加入濱水一湖');
 });
 
-// 帳號或Email + 密碼 登入
+// 帳號 + 密碼 登入（帳號@internal.local 直接算得出來，不需要查資料庫，也就不會有查詢洩漏信箱的問題）
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const identifier = document.getElementById('loginIdentifier').value.trim();
@@ -2162,14 +2160,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const msg = document.getElementById('loginMsg');
   msg.textContent = '登入中...'; msg.className = 'form-msg';
 
-  // 先把「帳號或Email」轉換成真正登入用的Email
-  const { data: resolvedEmail, error: resolveErr } = await sb.rpc('resolve_login_email', { identifier });
-  if (resolveErr || !resolvedEmail) {
-    msg.textContent = '帳號或密碼錯誤'; msg.className = 'form-msg err';
-    return;
-  }
+  const authEmail = `${identifier.toLowerCase()}@internal.local`;
 
-  const { data, error } = await sb.auth.signInWithPassword({ email: resolvedEmail, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email: authEmail, password });
   if (error) {
     msg.textContent = '帳號或密碼錯誤'; msg.className = 'form-msg err';
     return;
@@ -3023,7 +3016,7 @@ function updateAdminUI() {
    「編輯」都會讓該區塊的欄位一起進入可編輯狀態，一定要按「儲存」
    才會真的送出更新；按「取消」若偵測到有改過內容，會先詢問是否儲存。
    ============================================================ */
-function validateAccountFormat(v) { return /^[A-Za-z0-9_.\-!@#$%^&*]{6,}$/.test(v); }
+function validateAccountFormat(v) { return /^[A-Za-z0-9_.\-]{6,}$/.test(v); }
 function validateDisplayName(v) { const t = (v || '').trim(); return t.length >= 2 && t.length <= 20; }
 
 // 沒有上傳頭貼時的預設圖：純色系人形剪影，不帶五官，跟站內配色一致
@@ -3090,6 +3083,10 @@ async function saveEpAccount() {
     const { data: available, error: checkErr } = await sb.rpc('is_account_available', { check_account: newAccount });
     if (checkErr) { msg.textContent = '檢查帳號時發生問題：' + checkErr.message; msg.className = 'form-msg err'; return; }
     if (!available) { msg.textContent = '這個帳號已經被使用了，請換一個'; msg.className = 'form-msg err'; return; }
+    // 登入信箱是「帳號@internal.local」直接算出來的，帳號改了，登入信箱也要跟著同步，
+    // 不然改完帳號後反而會用新帳號登入不了
+    const { error: emailSyncErr } = await sb.auth.updateUser({ email: `${newAccount.toLowerCase()}@internal.local` });
+    if (emailSyncErr) { msg.textContent = '帳號更新失敗：' + emailSyncErr.message; msg.className = 'form-msg err'; return; }
     const { error: accErr } = await sb.from('profiles').update({ account: newAccount }).eq('id', state.user.id);
     if (accErr) { msg.textContent = '帳號更新失敗：' + accErr.message; msg.className = 'form-msg err'; return; }
   }
