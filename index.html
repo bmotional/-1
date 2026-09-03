@@ -2143,6 +2143,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   msg.textContent = '註冊成功！'; msg.className = 'form-msg ok';
   state.user = data.user;
   await loadProfile();
+  await mergeGuestCartIntoAccount();
   await loadCart();
   await loadFavorites();
   await updateChatBadge();
@@ -2169,6 +2170,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   }
   state.user = data.user;
   await loadProfile();
+  await mergeGuestCartIntoAccount();
   await loadCart();
   await loadFavorites();
   await updateChatBadge();
@@ -2212,7 +2214,8 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 // 監聽登入狀態變化（包含 OAuth 導回）
 sb.auth.onAuthStateChange((event, session) => {
   state.user = session ? session.user : null;
-  if (state.user) { loadCart(); loadProfile(); loadFavorites(); }
+  if (state.user) { loadProfile(); loadFavorites(); }
+  loadCart();
 });
 
 /* ============================================================
@@ -2237,16 +2240,32 @@ function bindQtyStepper(inputId, minusId, plusId) {
 bindQtyStepper('detailQtyInput', 'detailQtyMinus', 'detailQtyPlus');
 bindQtyStepper('pageQtyInput', 'pageQtyMinus', 'pageQtyPlus');
 
+const GUEST_CART_KEY = 'guestCart';
+function getGuestCart() { try { return JSON.parse(localStorage.getItem(GUEST_CART_KEY) || '[]'); } catch { return []; } }
+function saveGuestCart(items) { localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items)); }
+
 async function addToCart(productId, variant = {}, qty = 1) {
-  if (!state.user) {
-    toast('請先登入會員才能加入購物車');
-    openAuth();
-    return;
-  }
   qty = Math.max(1, Math.min(99, parseInt(qty) || 1));
   const vColor = variant.variant_color || null;
   const vSize = variant.variant_size || null;
   const vExtra = variant.variant_extra || null;
+
+  if (!state.user) {
+    // 訪客購物車：先存在瀏覽器本機，真正送出預購前才會要求登入/註冊
+    const guestCart = getGuestCart();
+    const existing = guestCart.find(c =>
+      String(c.product_id) === String(productId) &&
+      (c.variant_color || null) === vColor && (c.variant_size || null) === vSize && (c.variant_extra || null) === vExtra
+    );
+    if (existing) existing.quantity = Math.min(99, existing.quantity + qty);
+    else guestCart.push({ product_id: productId, quantity: qty, variant_color: vColor, variant_size: vSize, variant_extra: vExtra });
+    saveGuestCart(guestCart);
+    await loadCart();
+    toast('已加入購物車');
+    openCart();
+    return;
+  }
+
   const existing = state.cart.find(c =>
     String(c.product_id) === String(productId) &&
     (c.variant_color || null) === vColor &&
@@ -2264,7 +2283,21 @@ async function addToCart(productId, variant = {}, qty = 1) {
 }
 
 async function loadCart() {
-  if (!state.user) { state.cart = []; renderCart(); return; }
+  if (!state.user) {
+    // 訪客：把本機購物車組成跟登入狀態一模一樣的資料形狀，商品資訊直接從已經載入的商品清單查
+    const guestCart = getGuestCart();
+    state.cart = guestCart.map((item, i) => ({
+      id: `guest-${i}`,
+      quantity: item.quantity,
+      product_id: item.product_id,
+      variant_color: item.variant_color,
+      variant_size: item.variant_size,
+      variant_extra: item.variant_extra,
+      products: state.products.find(p => String(p.id) === String(item.product_id)) || {},
+    }));
+    renderCart();
+    return;
+  }
   const { data, error } = await sb
     .from('cart_items')
     .select('id, quantity, product_id, variant_color, variant_size, variant_extra, products(*)')
@@ -2275,8 +2308,36 @@ async function loadCart() {
 }
 
 async function removeCartItem(cartItemId) {
+  if (!state.user) {
+    const idx = state.cart.findIndex(c => c.id === cartItemId);
+    const guestCart = getGuestCart();
+    if (idx >= 0) { guestCart.splice(idx, 1); saveGuestCart(guestCart); }
+    await loadCart();
+    return;
+  }
   await sb.from('cart_items').delete().eq('id', cartItemId);
   await loadCart();
+}
+
+// 登入或註冊成功後，把訪客購物車併進真正的帳號購物車：同款式商品加總數量，不同的直接新增
+async function mergeGuestCartIntoAccount() {
+  const guestCart = getGuestCart();
+  if (guestCart.length === 0 || !state.user) return;
+  const { data: existingItems } = await sb.from('cart_items').select('id, product_id, quantity, variant_color, variant_size, variant_extra').eq('user_id', state.user.id);
+  for (const item of guestCart) {
+    const match = (existingItems || []).find(c =>
+      String(c.product_id) === String(item.product_id) &&
+      (c.variant_color || null) === (item.variant_color || null) &&
+      (c.variant_size || null) === (item.variant_size || null) &&
+      (c.variant_extra || null) === (item.variant_extra || null)
+    );
+    if (match) {
+      await sb.from('cart_items').update({ quantity: Math.min(99, match.quantity + item.quantity) }).eq('id', match.id);
+    } else {
+      await sb.from('cart_items').insert({ user_id: state.user.id, product_id: item.product_id, quantity: item.quantity, variant_color: item.variant_color, variant_size: item.variant_size, variant_extra: item.variant_extra });
+    }
+  }
+  localStorage.removeItem(GUEST_CART_KEY);
 }
 
 function renderCart() {
@@ -2330,6 +2391,13 @@ function renderCart() {
 
   async function updateCartQty(itemId, newQty) {
     newQty = Math.max(1, Math.min(99, parseInt(newQty) || 1));
+    if (!state.user) {
+      const idx = state.cart.findIndex(c => c.id === itemId);
+      const guestCart = getGuestCart();
+      if (idx >= 0 && guestCart[idx]) { guestCart[idx].quantity = newQty; saveGuestCart(guestCart); }
+      await loadCart();
+      return;
+    }
     await sb.from('cart_items').update({ quantity: newQty }).eq('id', itemId);
     await loadCart();
   }
