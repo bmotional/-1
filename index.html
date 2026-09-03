@@ -9,6 +9,9 @@
 <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
+<!-- Cloudflare Turnstile（登入/註冊防機器人驗證） -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <!-- Fonts: Noto Serif TC (display) + Noto Sans TC (body) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1331,6 +1334,7 @@
           <label for="loginPassword">密碼</label>
           <input type="password" id="loginPassword" required>
         </div>
+        <div id="loginTurnstile" style="margin-bottom:14px;"></div>
         <button type="submit" class="btn btn-primary" style="width:100%">登入</button>
         <div class="form-msg" id="loginMsg"></div>
       </form>
@@ -1350,8 +1354,8 @@
           <input type="text" id="signupInstagram" placeholder="@yourname">
         </div>
         <div class="field">
-          <label for="signupAccount">帳號（登入用，至少6碼，可用英數字與符號）</label>
-          <input type="text" id="signupAccount" required pattern="[A-Za-z0-9_.\-!@#$%^&amp;*]{6,}" title="至少6個字元，可用英文字母、數字與符號">
+          <label for="signupAccount">帳號（登入用，至少6碼，可用英數字、底線、句點、連字號）</label>
+          <input type="text" id="signupAccount" required pattern="[A-Za-z0-9_.\-]{6,}" title="至少6個字元，可用英文字母、數字、底線、句點、連字號">
         </div>
         <div class="field">
           <label for="signupPassword">密碼（至少6碼）</label>
@@ -1361,6 +1365,7 @@
           <label for="signupEmail">電子信箱（選填，僅供聯絡使用，登入請一律使用帳號）</label>
           <input type="email" id="signupEmail">
         </div>
+        <div id="signupTurnstile" style="margin-bottom:14px;"></div>
         <button type="submit" class="btn btn-primary" style="width:100%">註冊</button>
         <div class="form-msg" id="signupMsg"></div>
       </form>
@@ -2063,7 +2068,31 @@ document.getElementById('productSearchInput').addEventListener('input', (e) => {
    會員系統（Supabase Auth）
    ============================================================ */
 const authOverlay = document.getElementById('authOverlay');
-function openAuth() { authOverlay.classList.add('open'); refreshAuthView(); }
+const TURNSTILE_SITE_KEY = '0x4AAAAAAEmB_pKQiDMFxZC3';
+let loginTurnstileWidgetId = null, signupTurnstileWidgetId = null;
+let loginCaptchaToken = null, signupCaptchaToken = null;
+
+function renderTurnstileWidgets() {
+  if (typeof turnstile === 'undefined') { setTimeout(renderTurnstileWidgets, 300); return; }
+  if (loginTurnstileWidgetId === null) {
+    loginTurnstileWidgetId = turnstile.render('#loginTurnstile', {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => { loginCaptchaToken = token; },
+      'error-callback': () => { loginCaptchaToken = null; },
+      'expired-callback': () => { loginCaptchaToken = null; },
+    });
+  }
+  if (signupTurnstileWidgetId === null) {
+    signupTurnstileWidgetId = turnstile.render('#signupTurnstile', {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => { signupCaptchaToken = token; },
+      'error-callback': () => { signupCaptchaToken = null; },
+      'expired-callback': () => { signupCaptchaToken = null; },
+    });
+  }
+}
+
+function openAuth() { authOverlay.classList.add('open'); refreshAuthView(); renderTurnstileWidgets(); }
 function closeAuth() { authOverlay.classList.remove('open'); }
 
 document.getElementById('acctBtn').addEventListener('click', openAuth);
@@ -2115,6 +2144,10 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
     msg.textContent = '帳號至少需要6個字元，可用英文字母、數字與符號'; msg.className = 'form-msg err';
     return;
   }
+  if (!signupCaptchaToken) {
+    msg.textContent = '請先完成驗證'; msg.className = 'form-msg err';
+    return;
+  }
   msg.textContent = '處理中...'; msg.className = 'form-msg';
 
   // 先檢查帳號是否已被使用，避免建立了登入帳號卻因帳號重複而卡住
@@ -2134,8 +2167,9 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   const { data, error } = await sb.auth.signUp({
     email: authEmail,
     password,
-    options: { data: { display_name: displayName, instagram: instagram || null, account, contact_email: emailInput || null } },
+    options: { data: { display_name: displayName, instagram: instagram || null, account, contact_email: emailInput || null }, captchaToken: signupCaptchaToken },
   });
+  turnstile.reset(signupTurnstileWidgetId); signupCaptchaToken = null;
   if (error) {
     msg.textContent = error.message; msg.className = 'form-msg err';
     return;
@@ -2159,11 +2193,17 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const identifier = document.getElementById('loginIdentifier').value.trim();
   const password = document.getElementById('loginPassword').value;
   const msg = document.getElementById('loginMsg');
+
+  if (!loginCaptchaToken) {
+    msg.textContent = '請先完成驗證'; msg.className = 'form-msg err';
+    return;
+  }
   msg.textContent = '登入中...'; msg.className = 'form-msg';
 
   const authEmail = `${identifier.toLowerCase()}@internal.local`;
 
-  const { data, error } = await sb.auth.signInWithPassword({ email: authEmail, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email: authEmail, password, options: { captchaToken: loginCaptchaToken } });
+  turnstile.reset(loginTurnstileWidgetId); loginCaptchaToken = null;
   if (error) {
     msg.textContent = '帳號或密碼錯誤'; msg.className = 'form-msg err';
     return;
