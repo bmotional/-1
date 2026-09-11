@@ -826,7 +826,10 @@
 
 <!-- ============ 商品專屬頁面(取代原本的小視窗,點圖片會切換到這裡) ============ -->
 <div id="productPageView" class="wrap section" style="display:none;">
-  <button class="btn btn-outline btn-sm" id="productPageBackBtn" style="margin-bottom:20px;">← 返回商品列表</button>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <button class="btn btn-outline btn-sm" id="productPageBackBtn">← 返回商品列表</button>
+    <button class="btn btn-outline btn-sm" id="pageAdminEditBtn" style="display:none;">✎ 編輯商品</button>
+  </div>
   <div class="product-edit-layout" style="grid-template-columns: 1fr 1fr; gap:40px;">
     <div>
       <div class="detail-image" id="pageDetailImage" style="aspect-ratio:3/4;"></div>
@@ -841,6 +844,7 @@
       <div class="card-brand" id="pageBrand"></div>
       <h1 id="pageName" style="font-family:var(--font-display); margin:6px 0 14px;"></h1>
       <div class="price-value" id="pagePrice" style="font-size:22px; margin-bottom:16px;"></div>
+      <a id="pageOfficialLink" href="#" target="_blank" rel="noopener" style="display:none; font-size:14px; color:var(--brass-dark); font-weight:600; text-decoration:underline; margin-bottom:16px;">點我跳轉至該商品官網頁面 →</a>
       <p id="pageDesc" style="font-size:14px; color:var(--ink-soft); margin-bottom:20px; line-height:1.7; white-space:pre-wrap;"></p>
 
       <div id="pageColorSection" style="display:none">
@@ -1642,6 +1646,7 @@
 <div class="modal-overlay product-modal" id="productDetailOverlay">
   <div class="modal">
     <button class="modal-close" id="productDetailClose" aria-label="關閉">×</button>
+    <button class="btn btn-outline btn-sm" id="detailAdminEditBtn" style="display:none; position:absolute; top:16px; right:56px;">✎ 編輯商品</button>
     <div class="product-edit-layout">
       <div>
         <div class="detail-image" id="detailImage"></div>
@@ -1655,6 +1660,7 @@
         <div class="card-brand" id="detailBrand"></div>
         <h3 id="detailName" style="margin:4px 0 10px;"></h3>
         <div class="price-value" id="detailPrice" style="margin-bottom:14px;"></div>
+        <a id="detailOfficialLink" href="#" target="_blank" rel="noopener" style="display:none; font-size:13px; color:var(--brass-dark); font-weight:600; text-decoration:underline; margin-bottom:14px;">點我跳轉至該商品官網頁面 →</a>
         <p id="detailDesc" style="font-size:13px; color:var(--ink-soft); margin-bottom:16px; white-space:pre-wrap;"></p>
 
         <div id="detailColorSection" style="display:none">
@@ -1761,6 +1767,10 @@
           </select>
         </div>
         <div class="field"><label for="pfDesc">商品說明</label><textarea id="pfDesc" style="min-height:56px;"></textarea></div>
+        <div class="field">
+          <label for="pfOfficialUrl">商品官網連結（選填，客戶可點去看官方預覽圖與參考價格）</label>
+          <input type="url" id="pfOfficialUrl" placeholder="https://...">
+        </div>
         <div class="field">
           <label style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" id="pfHidden" style="width:auto;"> 隱藏此商品（客戶完全看不到，但資料保留）
@@ -1981,6 +1991,7 @@ function renderProducts() {
         <button class="heart-btn ${isFav ? 'active' : ''}" data-toggle-fav="${p.id}" aria-label="加入收藏">
           <svg viewBox="0 0 24 24"><path class="heart-fill" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
         </button>
+        ${state.profile?.is_admin ? `<button class="heart-btn" style="top:48px;" data-admin-edit-card="${p.id}" aria-label="編輯商品" title="編輯商品">✎</button>` : ''}
         ${!p.image_url ? '尚無商品圖' : ''}
       </div>
       <div class="card-body">
@@ -2003,6 +2014,13 @@ function renderProducts() {
   grid.querySelectorAll('[data-open-page]').forEach(el => {
     el.addEventListener('click', () => { location.hash = `#product=${el.dataset.openPage}`; });
   });
+  grid.querySelectorAll('[data-admin-edit-card]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const p = state.products.find(x => String(x.id) === btn.dataset.adminEditCard);
+      if (p) openProductEditor(p);
+    });
+  });
   grid.querySelectorAll('[data-toggle-fav]').forEach(btn => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.toggleFav, btn); });
   });
@@ -2020,7 +2038,13 @@ document.querySelectorAll('[data-filter-category]').forEach(btn => {
     document.querySelectorAll('[data-filter-category]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.filterCategory = btn.dataset.filterCategory;
+    // 如果目前人在其他頁面（商品詳情、訂單、聊天室等），點分類要先跳回商城首頁才看得到篩選結果
+    const onOtherPage = document.getElementById('mainView').style.display === 'none';
+    if (onOtherPage) { location.hash = '#products'; }
     renderProducts();
+    if (onOtherPage) {
+      setTimeout(() => document.getElementById('products').scrollIntoView({ behavior: 'smooth' }), 120);
+    }
   });
 });
 document.querySelectorAll('[data-filter-country]').forEach(btn => {
@@ -2072,22 +2096,26 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAAEmB_pKQiDMFxZC3';
 let loginTurnstileWidgetId = null, signupTurnstileWidgetId = null;
 let loginCaptchaToken = null, signupCaptchaToken = null;
 
+let turnstileLoadPending = false;
 function renderTurnstileWidgets() {
-  if (typeof turnstile === 'undefined') { setTimeout(renderTurnstileWidgets, 300); return; }
+  if (typeof turnstile === 'undefined') {
+    if (!turnstileLoadPending) { turnstileLoadPending = true; setTimeout(() => { turnstileLoadPending = false; renderTurnstileWidgets(); }, 300); }
+    return;
+  }
   if (loginTurnstileWidgetId === null) {
     loginTurnstileWidgetId = turnstile.render('#loginTurnstile', {
       sitekey: TURNSTILE_SITE_KEY,
-      callback: (token) => { loginCaptchaToken = token; },
+      callback: (token) => { loginCaptchaToken = token; document.getElementById('loginMsg').textContent = ''; },
       'error-callback': () => { loginCaptchaToken = null; },
-      'expired-callback': () => { loginCaptchaToken = null; },
+      'expired-callback': () => { loginCaptchaToken = null; document.getElementById('loginMsg').textContent = '驗證已過期，請重新勾選驗證框'; document.getElementById('loginMsg').className = 'form-msg err'; },
     });
   }
   if (signupTurnstileWidgetId === null) {
     signupTurnstileWidgetId = turnstile.render('#signupTurnstile', {
       sitekey: TURNSTILE_SITE_KEY,
-      callback: (token) => { signupCaptchaToken = token; },
+      callback: (token) => { signupCaptchaToken = token; document.getElementById('signupMsg').textContent = ''; },
       'error-callback': () => { signupCaptchaToken = null; },
-      'expired-callback': () => { signupCaptchaToken = null; },
+      'expired-callback': () => { signupCaptchaToken = null; document.getElementById('signupMsg').textContent = '驗證已過期，請重新勾選驗證框'; document.getElementById('signupMsg').className = 'form-msg err'; },
     });
   }
 }
@@ -2205,7 +2233,10 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const { data, error } = await sb.auth.signInWithPassword({ email: authEmail, password, options: { captchaToken: loginCaptchaToken } });
   turnstile.reset(loginTurnstileWidgetId); loginCaptchaToken = null;
   if (error) {
-    msg.textContent = '帳號或密碼錯誤'; msg.className = 'form-msg err';
+    msg.textContent = error.message.toLowerCase().includes('captcha')
+      ? '驗證已過期，請重新完成下方驗證後再登入一次'
+      : '帳號或密碼錯誤';
+    msg.className = 'form-msg err';
     return;
   }
   state.user = data.user;
@@ -2918,6 +2949,18 @@ function openProductDetail(productId) {
   document.getElementById('detailPrice').textContent = ntd(p.price_ntd);
   document.getElementById('detailDesc').textContent = p.description || '';
 
+  const detailOfficialLink = document.getElementById('detailOfficialLink');
+  if (p.official_url) { detailOfficialLink.href = p.official_url; detailOfficialLink.style.display = 'inline-block'; }
+  else { detailOfficialLink.style.display = 'none'; }
+
+  const detailAdminEditBtn = document.getElementById('detailAdminEditBtn');
+  if (state.profile?.is_admin) {
+    detailAdminEditBtn.style.display = 'inline-block';
+    detailAdminEditBtn.onclick = () => { productDetailOverlay.classList.remove('open'); openProductEditor(p); };
+  } else {
+    detailAdminEditBtn.style.display = 'none';
+  }
+
   const isFav = state.favoriteIds.has(p.id);
   const heartBtn = document.getElementById('detailHeartBtn');
   heartBtn.classList.toggle('active', isFav);
@@ -3029,6 +3072,18 @@ function renderProductPage(productId) {
   document.getElementById('pagePrice').textContent = ntd(p.price_ntd);
   document.getElementById('pageDesc').textContent = p.description || '';
   loadRelatedProducts(p);
+
+  const pageOfficialLink = document.getElementById('pageOfficialLink');
+  if (p.official_url) { pageOfficialLink.href = p.official_url; pageOfficialLink.style.display = 'inline-block'; }
+  else { pageOfficialLink.style.display = 'none'; }
+
+  const pageAdminEditBtn = document.getElementById('pageAdminEditBtn');
+  if (state.profile?.is_admin) {
+    pageAdminEditBtn.style.display = 'inline-block';
+    pageAdminEditBtn.onclick = () => openProductEditor(p);
+  } else {
+    pageAdminEditBtn.style.display = 'none';
+  }
 
   const isFav = state.favoriteIds.has(p.id);
   const heartBtn = document.getElementById('pageHeartBtn');
@@ -4345,6 +4400,7 @@ async function openProductEditor(product) {
   document.getElementById('pfDeposit').value = product ? product.deposit_ratio : 0.5;
   document.getElementById('pfDesc').value = product ? (product.description || '') : '';
   document.getElementById('pfHidden').checked = product ? !!product.is_hidden : false;
+  document.getElementById('pfOfficialUrl').value = product ? (product.official_url || '') : '';
   document.getElementById('pfRefundable').value = product ? String(product.is_refundable !== false) : 'true';
   toggleRefundableFieldVisibility();
   document.getElementById('productImageMsg').textContent = '';
@@ -4732,6 +4788,7 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     deposit_ratio: Number(document.getElementById('pfDeposit').value),
     description: document.getElementById('pfDesc').value.trim(),
     is_hidden: document.getElementById('pfHidden').checked,
+    official_url: document.getElementById('pfOfficialUrl').value.trim() || null,
     is_refundable: document.getElementById('pfCategory').value === '零食' ? document.getElementById('pfRefundable').value === 'true' : true,
     image_url: (state.productEditImages && state.productEditImages[0]) || '',
   };
