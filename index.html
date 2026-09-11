@@ -2511,7 +2511,10 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
   const { data, error } = await sb.rpc('create_preorder');
 
   if (error) {
-    toast(error.message.includes('NT$') || error.message.includes('購物車') ? error.message : '送出失敗，請稍後再試');
+    console.error('create_preorder failed:', error);
+    toast(error.message.includes('NT$') || error.message.includes('購物車')
+      ? error.message
+      : `送出失敗：${error.message || '未知錯誤'}`);
     checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
     return;
   }
