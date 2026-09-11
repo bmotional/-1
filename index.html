@@ -411,6 +411,7 @@
   @media (max-width: 640px) { .product-edit-layout { grid-template-columns: 1fr; } }
   .product-page-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
   @media (max-width: 780px) { .product-page-layout { grid-template-columns: 1fr; gap: 20px; } }
+  @media (max-width: 640px) { .product-page-toolbar { flex-direction: row-reverse; } }
 
   .prod-admin-row {
     display: flex; gap: 14px; align-items: center; border: 1px solid var(--line);
@@ -483,7 +484,21 @@
   .size-chip.unavailable { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
   .variant-label { font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; letter-spacing: 0.03em; }
 
-  .detail-image { width: 100%; aspect-ratio: 4/5; border-radius: var(--radius); overflow: hidden; background: #E4DCC9; margin-bottom: 16px; }
+  .detail-image { width: 100%; aspect-ratio: 4/5; border-radius: var(--radius); overflow: hidden; background: #E4DCC9; margin-bottom: 16px; padding: 7px; box-sizing: border-box; position: relative; }
+  .gallery-wrap { width: 100%; height: 100%; position: relative; border-radius: calc(var(--radius) - 3px); overflow: hidden; }
+  .gallery-main-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gallery-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px;
+    border-radius: 999px; background: rgba(20,18,15,0.38); color: #fff; border: none;
+    font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background .15s; backdrop-filter: blur(2px);
+  }
+  .gallery-arrow:hover { background: rgba(20,18,15,0.6); }
+  .gallery-arrow-left { left: 10px; }
+  .gallery-arrow-right { right: 10px; }
+  .gallery-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+  .gallery-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.55); transition: all .15s; }
+  .gallery-dot.active { background: #fff; width: 16px; border-radius: 4px; }
   .detail-image img { width: 100%; height: 100%; object-fit: cover; }
 
   .admin-variant-row {
@@ -768,7 +783,6 @@
     <p>我能習慣遠距離，多遠都要在購物車裡。<br>鴨血豆腐可以一塊再一塊，我也想和你一直在一塊。</p>
     <div class="hero-ctas">
       <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
-      <a href="#wishlist-public" class="btn btn-outline">許願專區</a>
       <a href="#preorder-guide" class="btn btn-outline" style="border-color:var(--brass); color:var(--brass-dark); font-weight:700;">點我看預購流程</a>
     </div>
   </div>
@@ -817,7 +831,7 @@
 
 <!-- ============ 商品專屬頁面(取代原本的小視窗,點圖片會切換到這裡) ============ -->
 <div id="productPageView" class="wrap section" style="display:none;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+  <div class="product-page-toolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
     <button class="btn btn-outline btn-sm" id="productPageBackBtn">← 返回商品列表</button>
     <button class="btn btn-outline btn-sm" id="pageAdminEditBtn" style="display:none;">✎ 編輯商品</button>
   </div>
@@ -1515,7 +1529,7 @@
           <button class="btn btn-primary btn-sm" id="adminOrdersBatchActionBtn"></button>
           <button class="btn btn-outline btn-sm" id="adminOrdersBatchClearBtn">清除選取</button>
         </div>
-        <div id="adminOrdersList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="adminOrdersList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1532,7 +1546,7 @@
           <button class="chip" data-wish-tag-filter="watch">再觀察</button>
           <button class="chip" data-wish-tag-filter="spam">垃圾訊息</button>
         </div>
-        <div id="adminWishlistList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="adminWishlistList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1550,7 +1564,7 @@
             <button class="btn btn-primary btn-sm" id="newProductBtn">+ 新增商品</button>
           </div>
         </div>
-        <div id="adminProductsList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="adminProductsList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1576,7 +1590,7 @@
           <button class="chip" data-demand-locked-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-locked-category-filter="零食">零食</button>
         </div>
-        <div id="demandLockedList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="demandLockedList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1602,7 +1616,7 @@
           <button class="chip" data-demand-pending-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-pending-category-filter="零食">零食</button>
         </div>
-        <div id="demandPendingList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="demandPendingList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
 
@@ -1628,7 +1642,7 @@
           <button class="chip" data-demand-all-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-all-category-filter="零食">零食</button>
         </div>
-        <div id="demandAllList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+        <div id="demandAllList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
     </div>
   </div>
@@ -1700,7 +1714,7 @@
   <div class="modal">
     <button class="modal-close" id="favClose" aria-label="關閉">×</button>
     <h3>我的收藏</h3>
-    <div id="favList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+    <div id="favList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
   </div>
 </div>
 
@@ -1715,7 +1729,7 @@
         <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm">展開完整畫面</button>
       </div>
     </div>
-    <div id="notifList" style="height:420px; overflow-y:auto; padding-right:4px;"></div>
+    <div id="notifList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
   </div>
 </div>
 
@@ -2946,12 +2960,39 @@ function renderVariantSlot(slot, sectionId, rowId, labelId, selectionObj, select
   }
 }
 
+// 商品圖庫輪播：半透明箭頭+小圓點，客戶端跟管理端的商品詳情共用同一套
+async function renderProductGallery(product, containerId) {
+  const container = document.getElementById(containerId);
+  const { data: rows } = await sb.from('product_images').select('image_url').eq('product_id', product.id).order('position');
+  const images = (rows && rows.length) ? rows.map(r => r.image_url) : (product.image_url ? [product.image_url] : []);
+  if (images.length === 0) { container.innerHTML = ''; return; }
+
+  let idx = 0;
+  function draw() {
+    container.innerHTML = `
+      <div class="gallery-wrap">
+        <img src="${images[idx]}" class="gallery-main-img" alt="">
+        ${images.length > 1 ? `
+          <button type="button" class="gallery-arrow gallery-arrow-left" aria-label="上一張">‹</button>
+          <button type="button" class="gallery-arrow gallery-arrow-right" aria-label="下一張">›</button>
+          <div class="gallery-dots">${images.map((_, i) => `<span class="gallery-dot ${i === idx ? 'active' : ''}"></span>`).join('')}</div>
+        ` : ''}
+      </div>
+    `;
+    if (images.length > 1) {
+      container.querySelector('.gallery-arrow-left').addEventListener('click', () => { idx = (idx - 1 + images.length) % images.length; draw(); });
+      container.querySelector('.gallery-arrow-right').addEventListener('click', () => { idx = (idx + 1) % images.length; draw(); });
+    }
+  }
+  draw();
+}
+
 function openProductDetail(productId) {
   const p = state.products.find(x => String(x.id) === String(productId));
   if (!p) return;
   state.detailSelection = { productId: p.id, color: null, size: null };
 
-  document.getElementById('detailImage').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="">` : '';
+  renderProductGallery(p, 'detailImage');
   document.getElementById('detailCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
   document.getElementById('detailBrand').textContent = p.brand || '';
   document.getElementById('detailName').textContent = p.name;
@@ -3074,7 +3115,7 @@ function renderProductPage(productId) {
   document.getElementById('pageQtyInput').value = 1;
   document.getElementById('pageRefundNote').style.display = p.is_refundable === false ? 'block' : 'none';
 
-  document.getElementById('pageDetailImage').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '';
+  renderProductGallery(p, 'pageDetailImage');
   document.getElementById('pageCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
   document.getElementById('pageBrand').textContent = p.brand || '';
   document.getElementById('pageName').textContent = p.name;
