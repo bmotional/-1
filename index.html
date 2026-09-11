@@ -123,6 +123,8 @@
     padding: 0 3px;
   }
   .mobile-nav-toggle { display: none; flex-shrink: 0; }
+  .menu-item-badge { position: static !important; margin-left: 8px; }
+  .account-menu-btn { display: flex; align-items: center; justify-content: space-between; }
 
   /* ============ Hero ============ */
   .hero {
@@ -407,6 +409,8 @@
   .product-modal .modal { max-width: 760px; max-height: 88vh; overflow-y: auto; }
   .product-edit-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
   @media (max-width: 640px) { .product-edit-layout { grid-template-columns: 1fr; } }
+  .product-page-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 780px) { .product-page-layout { grid-template-columns: 1fr; gap: 20px; } }
 
   .prod-admin-row {
     display: flex; gap: 14px; align-items: center; border: 1px solid var(--line);
@@ -615,6 +619,15 @@
   .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--ink-soft); font-size: 12px; }
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
   .auth-switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
+  .account-menu-links { margin: 16px 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .account-menu-link {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 16px;
+    background: var(--bg-raised); border: none; border-bottom: 1px solid var(--line);
+    font-size: 14px; color: var(--ink); text-align: left;
+  }
+  .account-menu-link:last-child { border-bottom: none; }
+  .account-menu-link:hover { background: var(--bg); }
+  .account-menu-link svg { flex-shrink: 0; color: var(--ink-soft); }
   .auth-switch button { background: none; border: none; color: var(--brass-dark); font-weight: 600; }
 
   /* ============ Cart drawer ============ */
@@ -725,17 +738,9 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m21 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L1 7"/></svg>
         <span class="cart-badge" id="notifBadge" style="display:none">0</span>
       </button>
-      <button class="icon-btn" id="favBtn" aria-label="我的收藏" title="我的收藏">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-        <span class="cart-badge" id="favBadge" style="display:none">0</span>
-      </button>
       <button class="icon-btn" id="cartBtn" aria-label="購物車">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 7H6"/></svg>
         <span class="cart-badge" id="cartBadge" style="display:none">0</span>
-      </button>
-      <button class="icon-btn" id="activeOrdersBtn" aria-label="我的訂單" title="我的訂單">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
-        <span class="cart-badge" id="activeOrdersBadge" style="display:none">0</span>
       </button>
       <button class="icon-btn" id="adminBtn" style="display:none" aria-label="管理後台" title="管理後台">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
@@ -763,7 +768,7 @@
     <p>我能習慣遠距離，多遠都要在購物車裡。<br>鴨血豆腐可以一塊再一塊，我也想和你一直在一塊。</p>
     <div class="hero-ctas">
       <a href="#products" class="btn btn-primary">瀏覽本季選品</a>
-      <a href="#wishlist-submit" class="btn btn-outline">提出代購許願</a>
+      <a href="#wishlist-public" class="btn btn-outline">許願專區</a>
       <a href="#preorder-guide" class="btn btn-outline" style="border-color:var(--brass); color:var(--brass-dark); font-weight:700;">點我看預購流程</a>
     </div>
   </div>
@@ -804,21 +809,7 @@
     <!-- 商品卡片由 JS 從 Supabase 動態產生 -->
   </div>
   <div class="empty-state" id="emptyState" style="display:none">
-    目前沒有符合篩選條件的商品，換個分類看看，或到下方許願專區提出你想要的品牌。
-  </div>
-</section>
-
-<!-- ============ Wishlist ============ -->
-<section class="wishlist-section" id="wishlist">
-  <div class="wrap section wishlist-inner" style="grid-template-columns:1fr;">
-    <div class="wishlist-copy" style="text-align:center;">
-      <h2>許願專區</h2>
-      <p>沒看到你想要的品牌嗎？留下品牌名稱與想要的款式，下次出國採購時我們會優先評估。也可以看看大家都在許什麼願，一起按讚支持！</p>
-      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
-        <a href="#wishlist-submit" class="btn btn-primary">提出我的許願</a>
-        <a href="#wishlist-public" class="btn btn-outline">瀏覽大家的許願</a>
-      </div>
-    </div>
+    目前沒有符合篩選條件的商品，換個分類看看，或到<a href="#wishlist-public" style="color:var(--brass-dark); text-decoration:underline;">許願專區</a>提出你想要的品牌。
   </div>
 </section>
 
@@ -826,11 +817,11 @@
 
 <!-- ============ 商品專屬頁面(取代原本的小視窗,點圖片會切換到這裡) ============ -->
 <div id="productPageView" class="wrap section" style="display:none;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
     <button class="btn btn-outline btn-sm" id="productPageBackBtn">← 返回商品列表</button>
     <button class="btn btn-outline btn-sm" id="pageAdminEditBtn" style="display:none;">✎ 編輯商品</button>
   </div>
-  <div class="product-edit-layout" style="grid-template-columns: 1fr 1fr; gap:40px;">
+  <div class="product-page-layout">
     <div>
       <div class="detail-image" id="pageDetailImage" style="aspect-ratio:3/4;"></div>
       <button class="heart-btn" id="pageHeartBtn" style="position:static; width:100%; height:auto; padding:12px; display:flex; gap:8px; margin-top:12px;">
@@ -1170,7 +1161,10 @@
 <!-- ============ 瀏覽大家的許願 ============ -->
 <div id="wishlistPublicPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="wishlistPublicBackBtn" style="margin-bottom:20px;">← 返回</button>
-  <h2 class="section-title">許願專區</h2>
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px; margin-bottom:6px;">
+    <h2 class="section-title" style="margin-bottom:0;">許願專區</h2>
+    <a href="#wishlist-submit" class="btn btn-primary btn-sm">+ 提出我的許願</a>
+  </div>
   <p class="sub" style="max-width:560px; margin-bottom:22px;">審核通過公開的許願，歡迎按讚支持、留言，也可以填寫你覺得合理的價格，幫助我們評估要不要真的去採購。</p>
   <div id="wishlistPublicList" style="max-width:640px;"></div>
 </div>
@@ -1307,7 +1301,7 @@
     </div>
     <div class="footer-links">
       <a href="#products">商品</a>
-      <a href="#wishlist">許願專區</a>
+      <a href="#wishlist-public">許願專區</a>
       <a href="#" id="footerAcctLink">會員登入</a>
     </div>
   </div>
@@ -1380,6 +1374,18 @@
       <h3>會員中心</h3>
       <p class="sub" id="loggedInEmail"></p>
       <p class="sub" id="loggedInUid" style="font-size:11px;"></p>
+      <div class="account-menu-links">
+        <button type="button" class="account-menu-link" id="menuFavBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          我的收藏
+          <span class="cart-badge" id="favBadge" style="display:none; position:static; margin-left:auto;">0</span>
+        </button>
+        <button type="button" class="account-menu-link" id="menuOrdersBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+          我的訂單
+          <span class="cart-badge" id="activeOrdersBadge" style="display:none; position:static; margin-left:auto;">0</span>
+        </button>
+      </div>
       <button class="btn btn-outline" id="editProfileBtn" style="width:100%; margin-bottom:10px;">編輯個人資料</button>
       <button class="btn btn-outline" id="logoutBtn" style="width:100%">登出</button>
     </div>
@@ -2866,8 +2872,8 @@ async function toggleFavorite(productId, btnEl) {
 }
 
 const favOverlay = document.getElementById('favOverlay');
-document.getElementById('favBtn').addEventListener('click', () => {
-  if (!state.user) { toast('請先登入才能查看收藏'); openAuth(); return; }
+document.getElementById('menuFavBtn').addEventListener('click', () => {
+  closeAuth();
   favOverlay.classList.add('open');
   renderFavList();
 });
@@ -3900,8 +3906,8 @@ document.getElementById('warningModalCancelBtn').addEventListener('click', () =>
 
 
 /* ---------- 我的訂單 Modal（進行中訂單／查看歷史訂單，用分頁籤切換） ---------- */
-document.getElementById('activeOrdersBtn').addEventListener('click', () => {
-  if (!state.user) { toast('請先登入才能查看訂單'); openAuth(); return; }
+document.getElementById('menuOrdersBtn').addEventListener('click', () => {
+  closeAuth();
   document.getElementById('activeOrdersOverlay').classList.add('open');
   switchMyOrdersTab('active');
 });
