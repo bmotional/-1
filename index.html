@@ -542,15 +542,28 @@
   .chat-bubble-row.mine .chat-bubble { background: var(--ink); color: var(--bg); border-bottom-right-radius: 3px; }
   .chat-bubble-row:not(.mine) .chat-bubble { background: var(--bg-raised); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
   .chat-bubble-time { font-size: 10px; color: var(--ink-soft); margin-top: 3px; }
-  .chat-shell { max-width: 1080px; margin: 0 auto; border:1px solid var(--line); background:var(--bg-raised); display:grid; grid-template-columns:320px 1fr; min-height:600px; }
+  .chat-shell { max-width: 1080px; margin: 0 auto; border:1px solid var(--line); background:var(--bg-raised); display:grid; grid-template-columns:320px 1fr; height: 600px; }
   .chat-inbox { border-right:1px solid var(--line); padding:14px; overflow:auto; }
   .chat-thread { min-width:0; display:flex; flex-direction:column; }
   .chat-thread-head { padding:14px 18px; border-bottom:1px solid var(--line); font-weight:600; }
-  .chat-log { flex:1; overflow-y:auto; padding:18px; min-height:420px; }
+  .chat-log { flex:1; overflow-y:auto; padding:18px; min-height: 0; }
   .chat-compose { padding:12px; border-top:1px solid var(--line); display:flex; gap:8px; align-items:flex-end; }
   .chat-compose textarea { flex:1; min-height:42px; max-height:110px; resize:vertical; padding:10px; font:inherit; border:1px solid var(--line); background:var(--bg); }
   .chat-preview { border:1px solid var(--brass); background:#fffaf0; padding:10px; margin:0 0 12px; font-size:13px; cursor:pointer; }
   .chat-preview img,.chat-image { max-width: min(220px, 100%); max-height:260px; object-fit:cover; border-radius:4px; display:block; margin-top:6px; }
+  .order-preview-card { cursor: default; max-width: 280px; }
+  .order-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .order-card-status { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+  .order-card-status.pending { background: #FBEFC9; color: #5C4A1E; }
+  .order-card-status.paid { background: var(--sencha); color: #fff; }
+  .order-card-item { display: flex; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--line); }
+  .order-card-item:first-of-type { border-top: none; }
+  .order-card-item-img { width: 36px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #E4DCC9; }
+  .order-card-item-noimg { background: #E4DCC9; }
+  .order-card-item-info { min-width: 0; }
+  .order-card-item-name { font-size: 12px; color: var(--ink); line-height: 1.4; }
+  .order-card-item-price { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .order-card-total { font-size: 12px; font-weight: 700; color: var(--ink); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
   .chat-draft { opacity:.68; border-style:dashed; }
   .chat-inbox-row { padding:11px 8px; border-bottom:1px solid var(--line); cursor:pointer; }
   .chat-inbox-row:hover,.chat-inbox-row.active { background:var(--bg); }
@@ -2531,7 +2544,7 @@ function renderCart() {
         <img src="${p.image_url || ''}" alt="">
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name || ''}${variantDesc ? `<span style="color:var(--ink-soft); font-weight:400;">（${variantDesc}）</span>` : ''}</div>
-          <div class="cart-item-meta">${ntd(p.price_ntd)}</div>
+          <div class="cart-item-meta">單價 ${ntd(p.price_ntd)}${item.quantity > 1 ? `　小計 ${ntd(p.price_ntd * item.quantity)}` : ''}</div>
           <div class="qty-selector" style="margin:6px 0;">
             <button type="button" class="qty-btn" data-cart-qty-minus="${item.id}" style="width:26px; height:26px; font-size:14px;">−</button>
             <input type="number" class="qty-input" data-cart-qty-input="${item.id}" value="${item.quantity}" min="1" max="99" style="width:44px; padding:4px;">
@@ -2604,7 +2617,6 @@ document.getElementById('meetupCheckoutBtn').addEventListener('click', async () 
   const meetupBtn = document.getElementById('meetupCheckoutBtn');
   meetupBtn.disabled = true;
   meetupBtn.textContent = '送出中...';
-  const itemCount = state.cart.length;
 
   // 價格、總額、520元門檻全部交給資料庫函式即時核算，不再相信瀏覽器端算好的數字，
   // 也不再由前端直接寫入 orders / order_items（一般帳號已經沒有這兩張表的直接寫入權限）。
@@ -2628,14 +2640,16 @@ document.getElementById('meetupCheckoutBtn').addEventListener('click', async () 
   await loadCart();
 
   // 訂單成立後，自動附上訂單參考傳一則訊息通知我們，方便直接在聊天室看到訂單資訊、快速處理
+  // 詳細金額/商品明細已經由訂單卡片本身呈現，這裡訊息文字只需要簡短說明用意即可，不用重複
   if (result) {
-    const content = `我想申請面交付款\n訂單編號：${result.new_order_no}\n共${itemCount}項商品\n總金額：${ntd(result.new_total_ntd)}　訂金：${ntd(result.new_deposit_ntd)}`;
-    await sb.from('messages').insert({ user_id: state.user.id, sender: 'customer', content, order_id: result.new_order_id });
+    await sb.from('messages').insert({ user_id: state.user.id, sender: 'customer', content: '我想申請面交付款，麻煩跟我約時間地點～', order_id: result.new_order_id });
   }
 
-  toast('已送出面交申請，我們收到後會跟你討論時間地點～');
+  toast('申請已送出，請留意聊天室訊息與訂單狀態');
   meetupBtn.disabled = false; meetupBtn.textContent = '提出面交申請';
   closeCart();
+  state.chatReturnHash = location.hash;
+  location.hash = '#messages';
 });
 
 /* ============================================================
@@ -2728,16 +2742,51 @@ function productCardHtml(m, draft=false) {
     <div style="margin-top:5px;color:var(--ink-soft)">${draft ? '點此回到商品頁；送出後店家才會收到。' : '點此查看商品'}</div>
   </div>`;
 }
-// 面交申請訊息會附帶訂單參考，管理員這邊直接給快捷按鈕，不用另外去訂單管理找
+// 面交申請訊息會附帶訂單參考，管理員這邊直接給快捷按鈕，不用另外去訂單管理找。
+// 需要事先呼叫 attachOrderPreviews() 把 _orderInfo / _orderItems 準備好才能正確渲染。
 function orderCardHtml(m, isAdminView) {
   if (!m.order_id) return '';
-  return `<div class="chat-preview" data-order-ref="${m.order_id}">
-    <strong>面交訂單申請</strong>
+  const order = m._orderInfo;
+  const items = m._orderItems || [];
+  const stillAwaitingPayment = items.some(it => it.state === 'awaiting_payment');
+  const itemsHtml = items.map(it => {
+    const desc = [it.variant_color, it.variant_size, it.variant_extra].filter(Boolean).join(' / ');
+    return `
+      <div class="order-card-item">
+        ${it.products?.image_url ? `<img src="${it.products.image_url}" class="order-card-item-img" alt="">` : '<div class="order-card-item-img order-card-item-noimg"></div>'}
+        <div class="order-card-item-info">
+          <div class="order-card-item-name">${escapeHtml(it.product_name)}${desc ? `（${escapeHtml(desc)}）` : ''} × ${it.quantity}</div>
+          <div class="order-card-item-price">單價 ${ntd(it.price_ntd)}${it.quantity > 1 ? `　小計 ${ntd(it.price_ntd * it.quantity)}` : ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `<div class="chat-preview order-preview-card" data-order-ref="${m.order_id}">
+    <div class="order-card-top">
+      <strong>面交訂單申請${order ? `　${order.order_no}` : ''}</strong>
+      <span class="order-card-status ${stillAwaitingPayment ? 'pending' : 'paid'}">${stillAwaitingPayment ? '待確認付款' : '已確認付款'}</span>
+    </div>
+    ${itemsHtml}
+    ${order ? `<div class="order-card-total">訂金 ${ntd(order.deposit_ntd)}　／　總額 ${ntd(order.total_ntd)}</div>` : ''}
     ${isAdminView ? `<div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
       <button type="button" class="btn btn-outline btn-sm" data-order-quick-view="${m.order_id}">查看訂單</button>
-      <button type="button" class="btn btn-primary btn-sm" data-order-quick-confirm="${m.order_id}">確認已付款</button>
-    </div>` : '<div style="margin-top:5px;color:var(--ink-soft);font-size:12px;">我們確認收款後會更新訂單狀態</div>'}
+      <button type="button" class="btn btn-primary btn-sm" data-order-quick-confirm="${m.order_id}" ${stillAwaitingPayment ? '' : 'disabled'}>${stillAwaitingPayment ? '確認已付款' : '已付款'}</button>
+    </div>` : ''}
   </div>`;
+}
+
+// 補上每則面交申請訊息需要的訂單詳細資料(商品明細、金額、目前狀態)，渲染前先呼叫這個
+async function attachOrderPreviews(messages) {
+  const orderIds = [...new Set(messages.filter(m => m.order_id).map(m => m.order_id))];
+  if (orderIds.length === 0) return messages;
+  const [{ data: orders }, { data: items }] = await Promise.all([
+    sb.from('orders').select('id, order_no, total_ntd, deposit_ntd').in('id', orderIds),
+    sb.from('order_items').select('order_id, product_name, price_ntd, quantity, variant_color, variant_size, variant_extra, state, products(image_url)').in('order_id', orderIds),
+  ]);
+  const orderMap = new Map((orders || []).map(o => [o.id, o]));
+  const itemsMap = new Map();
+  (items || []).forEach(it => { if (!itemsMap.has(it.order_id)) itemsMap.set(it.order_id, []); itemsMap.get(it.order_id).push(it); });
+  return messages.map(m => m.order_id ? { ...m, _orderInfo: orderMap.get(m.order_id), _orderItems: itemsMap.get(m.order_id) || [] } : m);
 }
 const CHAT_PAGE_SIZE = 15;
 let customerChatState = { messages: [], hasMore: true, loading: false };
@@ -2773,8 +2822,9 @@ async function renderMessagesPage() {
 
 async function drawCustomerChat(box, adminAvatar, myAvatar) {
   const withImages = await Promise.all(customerChatState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
+  const withOrders = await attachOrderPreviews(withImages);
   const draft = state.pendingProductInquiry ? productCardHtml(state.pendingProductInquiry, true) : '';
-  let html = buildChatBubblesHtml(withImages, myAvatar, adminAvatar, m => m.sender === 'customer');
+  let html = buildChatBubblesHtml(withOrders, myAvatar, adminAvatar, m => m.sender === 'customer');
   box.innerHTML = html || '<p style="color:var(--ink-soft);font-size:13px">有任何問題都可以傳訊給我們。</p>';
   if (draft) box.insertAdjacentHTML('beforeend', `<div class="chat-bubble-row mine"><div>${draft}</div></div>`);
   box.querySelectorAll('[data-product-link]').forEach(el => el.addEventListener('click', () => { if (el.dataset.productLink) location.hash = `#product=${el.dataset.productLink}`; }));
@@ -5517,17 +5567,27 @@ async function renderAdminMessagesThread() {
 
 async function drawAdminChat(box, customerAvatar, myAvatar) {
   const withImages = await Promise.all(adminChatMsgState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
-  const html = buildChatBubblesHtml(withImages, myAvatar, customerAvatar, m => m.sender === 'admin', m => (m.sender === 'admin' && m.is_read) ? ' · 客戶已讀' : '', true);
+  const withOrders = await attachOrderPreviews(withImages);
+  const html = buildChatBubblesHtml(withOrders, myAvatar, customerAvatar, m => m.sender === 'admin', m => (m.sender === 'admin' && m.is_read) ? ' · 客戶已讀' : '', true);
   box.innerHTML = html || '<p style="color:var(--ink-soft);font-size:13px">尚未有訊息。你可以主動向這位會員問候。</p>';
   box.querySelectorAll('[data-product-link]').forEach(el => el.addEventListener('click', () => { if (el.dataset.productLink) location.hash = `#product=${el.dataset.productLink}`; }));
   box.querySelectorAll('[data-order-quick-view]').forEach(btn => {
     btn.addEventListener('click', () => { location.hash = '#admin-orders'; });
   });
-  box.querySelectorAll('[data-order-quick-confirm]').forEach(btn => {
+  box.querySelectorAll('[data-order-quick-confirm]:not([disabled])').forEach(btn => {
     btn.addEventListener('click', async () => {
+      if (btn.disabled) return; // 防止極短時間內被連點兩次
       if (!confirm('確認已經收到這筆訂單的訂金款項嗎？確認後訂單會轉為「已付款，等待鎖單」狀態。')) return;
+      btn.disabled = true; btn.textContent = '處理中...';
       const { error } = await sb.rpc('admin_confirm_payment_order', { p_order_id: btn.dataset.orderQuickConfirm });
-      if (error) { toast('操作失敗：' + error.message); return; }
+      if (error) { toast('操作失敗：' + error.message); btn.disabled = false; btn.textContent = '確認已付款'; return; }
+      // 立即更新畫面，不用等下一次重新整理才看到狀態改變
+      btn.textContent = '已付款';
+      const card = btn.closest('.order-preview-card');
+      if (card) {
+        const statusEl = card.querySelector('.order-card-status');
+        if (statusEl) { statusEl.textContent = '已確認付款'; statusEl.className = 'order-card-status paid'; }
+      }
       toast('已確認付款');
     });
   });
