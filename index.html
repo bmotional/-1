@@ -372,7 +372,8 @@
   /* ============ Orders / Admin panel ============ */
   .order-row {
     border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 12px; background: var(--bg);
+    padding: 14px 16px; margin-bottom: 16px; background: var(--bg-raised);
+    box-shadow: 0 1px 3px rgba(42,40,35,0.06);
   }
   .order-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .order-id { font-size: 12px; color: var(--ink-soft); }
@@ -382,6 +383,12 @@
   .order-status-pending { background: var(--brass); }
   .order-status-locked { background: var(--ink); }
   .order-status-fulfilled { background: var(--sencha); }
+  .order-summary-list { display: flex; flex-direction: column; gap: 10px; }
+  .order-summary-item { display: flex; gap: 10px; align-items: flex-start; }
+  .order-summary-item-img { width: 40px; height: 45px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #E4DCC9; }
+  .order-summary-item-noimg { background: #E4DCC9; }
+  .order-summary-item-info { min-width: 0; }
+  .order-summary-item-name { font-size: 13px; color: var(--ink); line-height: 1.4; }
   .order-status-cancelled { background: var(--danger); }
   .order-items-list { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; }
   .order-items-list div { padding: 2px 0; }
@@ -782,6 +789,7 @@
       <button data-filter-category="女裝">女裝</button>
       <button data-filter-category="飾品">飾品</button>
       <button data-filter-category="零食">零食</button>
+      <button data-filter-category="美妝與保養品">美妝與保養品</button>
       <a href="#wishlist-public" class="nav-wishlist-link">許願專區</a>
     </nav>
 
@@ -943,6 +951,12 @@
 <!-- ============ 聯絡我們 全頁畫面 ============ -->
 <div id="messagesPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="messagesPageBackBtn" style="margin-bottom:20px;">← 返回</button>
+  <div id="messagesPageAdminToggle" style="display:none; margin-bottom:16px;">
+    <div class="admin-tabs">
+      <button class="admin-tab active" disabled>個人身分聊天室</button>
+      <a href="#admin-messages" class="admin-tab" style="text-decoration:none; display:inline-block;">管理者聊天室</a>
+    </div>
+  </div>
   <div class="chat-shell show-thread" style="grid-template-columns:1fr; max-width:860px;">
     <div class="chat-thread">
       <div class="chat-thread-head">濱水一湖｜聯絡我們</div>
@@ -960,6 +974,10 @@
 <!-- ============ 管理者完整收件匣 ============ -->
 <div id="adminMessagesPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="adminMessagesPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <div class="admin-tabs" style="margin-bottom:16px;">
+    <a href="#messages" class="admin-tab" style="text-decoration:none; display:inline-block;">個人身分聊天室</a>
+    <button class="admin-tab active" disabled>管理者聊天室</button>
+  </div>
   <div class="chat-shell" id="adminChatShell">
     <aside class="chat-inbox">
       <input id="adminChatSearch" type="search" placeholder="搜尋會員名稱..." style="width:100%; padding:10px; border:1px solid var(--line); background:var(--bg); margin-bottom:10px;">
@@ -1439,14 +1457,14 @@
     </div>
 
     <div id="authLoggedInView" style="display:none">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:6px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:2px;">
         <h3 style="margin:0;">會員中心</h3>
-        <div style="text-align:center; flex-shrink:0;">
-          <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:56px; height:56px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin-bottom:6px;">
-          <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="font-size:11px; padding:5px 10px;">上傳新頭貼</button>
+        <div style="text-align:center; flex-shrink:0; width:76px; margin-top:6px; margin-right:-4px;">
+          <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:64px; height:64px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin:0 auto 8px;">
+          <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="font-size:12px; padding:6px 10px; width:100%;">上傳新頭貼</button>
         </div>
       </div>
-      <p class="sub" style="margin-bottom:4px;">使用者名稱：<span id="loggedInName"></span></p>
+      <p class="sub" style="margin-bottom:2px;">使用者名稱：<span id="loggedInName"></span></p>
       <p class="sub" style="margin-bottom:16px;">會員編號：<span id="loggedInUid"></span></p>
       <div class="account-menu-links">
         <button type="button" class="account-menu-link" id="menuFavBtn">
@@ -1651,6 +1669,7 @@
           <button class="chip" data-demand-locked-category-filter="女裝">女裝</button>
           <button class="chip" data-demand-locked-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-locked-category-filter="零食">零食</button>
+          <button class="chip" data-demand-locked-category-filter="美妝與保養品">美妝與保養品</button>
         </div>
         <div id="demandLockedList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
@@ -1677,6 +1696,7 @@
           <button class="chip" data-demand-pending-category-filter="女裝">女裝</button>
           <button class="chip" data-demand-pending-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-pending-category-filter="零食">零食</button>
+          <button class="chip" data-demand-pending-category-filter="美妝與保養品">美妝與保養品</button>
         </div>
         <div id="demandPendingList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
@@ -1703,6 +1723,7 @@
           <button class="chip" data-demand-all-category-filter="女裝">女裝</button>
           <button class="chip" data-demand-all-category-filter="飾品">飾品</button>
           <button class="chip" data-demand-all-category-filter="零食">零食</button>
+          <button class="chip" data-demand-all-category-filter="美妝與保養品">美妝與保養品</button>
         </div>
         <div id="demandAllList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
       </div>
@@ -1830,7 +1851,7 @@
           <div class="field">
             <label for="pfCategory">分類</label>
             <select id="pfCategory" style="width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg);">
-              <option value="男裝">男裝</option><option value="女裝">女裝</option><option value="飾品">飾品</option><option value="零食">零食</option>
+              <option value="男裝">男裝</option><option value="女裝">女裝</option><option value="飾品">飾品</option><option value="零食">零食</option><option value="美妝與保養品">美妝與保養品</option>
             </select>
           </div>
         </div>
@@ -2667,7 +2688,7 @@ async function updateChatBadge() {
   if (state.profile?.is_admin) {
     // 管理員視角：統計「有未讀訊息的客戶人數」，不是訊息總數——同一位客戶連續傳5則只算1人
     const { data } = await sb.from('messages').select('user_id').eq('sender', 'customer').eq('is_read', false);
-    const distinctUsers = new Set((data || []).map(r => r.user_id));
+    const distinctUsers = new Set((data || []).map(r => r.user_id).filter(id => id !== state.user.id));
     badge.style.display = distinctUsers.size > 0 ? 'flex' : 'none';
     badge.textContent = distinctUsers.size;
     return;
@@ -2793,6 +2814,7 @@ let customerChatState = { messages: [], hasMore: true, loading: false };
 
 async function renderMessagesPage() {
   if (!state.user) { toast('請先登入才能聯絡我們'); location.hash = ''; return; }
+  document.getElementById('messagesPageAdminToggle').style.display = state.profile?.is_admin ? 'block' : 'none';
   const box = document.getElementById('messagesPageMessages');
   const { data: adminProf } = await sb.rpc('get_admin_public_profile');
   const adminAvatar = adminProf?.[0]?.avatar_url || DEFAULT_AVATAR_SVG;
@@ -3753,12 +3775,20 @@ function renderItemProgress(it) {
   `;
 }
 
-// 訂單收合時的單行摘要：列出這張訂單底下各狀態各有幾件
+// 訂單收合時的商品列表：縮圖+名稱+款式+數量，不再只是一行文字統計，收合狀態下也看得出買了什麼
 function summarizeOrderProgress(items) {
-  const counts = {};
-  items.forEach(it => { const label = ITEM_STATE_LABEL[it.state] || it.state; counts[label] = (counts[label] || 0) + 1; });
-  const parts = Object.entries(counts).map(([label, n]) => `${label}×${n}`);
-  return `<p class="cart-note">共${items.length}項商品：${parts.join('、')}</p>`;
+  const rows = items.map(it => {
+    const desc = variantDesc(it);
+    return `
+      <div class="order-summary-item">
+        ${it.products?.image_url ? `<img src="${it.products.image_url}" class="order-summary-item-img" alt="">` : '<div class="order-summary-item-img order-summary-item-noimg"></div>'}
+        <div class="order-summary-item-info">
+          <div class="order-summary-item-name">${escapeHtml(it.product_name)}${desc ? `（${escapeHtml(desc)}）` : ''} × ${it.quantity}</div>
+          <span class="order-status ${ITEM_STATE_COLOR[it.state] || ''}" style="margin-top:3px; display:inline-block;">${ITEM_STATE_LABEL[it.state] || it.state}</span>
+        </div>
+      </div>`;
+  }).join('');
+  return `<div class="order-summary-list">${rows}</div>`;
 }
 
 function renderOrderItemsGrouped(orders, isHistory = false) {
@@ -5431,6 +5461,7 @@ async function loadAdminChatPreview() {
 
   const grouped = new Map();
   (messages || []).forEach(m => {
+    if (m.user_id === state.user.id) return;
     if (!grouped.has(m.user_id)) grouped.set(m.user_id, { last: m, unread: 0 });
     if (m.sender === 'customer' && !m.is_read) grouped.get(m.user_id).unread++;
   });
@@ -5497,7 +5528,8 @@ async function renderAdminMessagesPage() {
   const { data: messages, error } = await sb.from('messages').select('user_id,sender,is_read,content,image_path,created_at').order('created_at',{ascending:false});
   if (error) { list.innerHTML = '<p>讀取訊息失敗</p>'; return; }
   const grouped = new Map();
-  (messages || []).forEach(m => { if (!grouped.has(m.user_id)) grouped.set(m.user_id,{last:m,unread:0}); if (m.sender === 'customer' && !m.is_read) grouped.get(m.user_id).unread++; });
+  // 管理員自己下單給自己時產生的「客戶身分訊息」，不列進客服收件匣，避免自己出現在自己的客戶名單裡
+  (messages || []).forEach(m => { if (m.user_id === state.user.id) return; if (!grouped.has(m.user_id)) grouped.set(m.user_id,{last:m,unread:0}); if (m.sender === 'customer' && !m.is_read) grouped.get(m.user_id).unread++; });
   const query = document.getElementById('adminChatSearch').value.trim();
   let profiles = [];
   if (query) {
@@ -5507,7 +5539,7 @@ async function renderAdminMessagesPage() {
     const { data } = await sb.from('profiles').select('id,display_name,uid,created_at').in('id',[...grouped.keys()]); profiles = data || [];
   }
   const profileMap = new Map(profiles.map(p => [p.id,p]));
-  const ids = query ? [...new Set([...grouped.keys(),...profiles.map(p=>p.id)])] : [...grouped.keys()];
+  const ids = (query ? [...new Set([...grouped.keys(),...profiles.map(p=>p.id)])] : [...grouped.keys()]).filter(id => id !== state.user.id);
   ids.sort((a,b) => new Date(grouped.get(b)?.last.created_at || 0)-new Date(grouped.get(a)?.last.created_at || 0));
   list.innerHTML = ids.length ? ids.map(id => {
     const p=profileMap.get(id), g=grouped.get(id); const name=p?.display_name || '未命名會員';
