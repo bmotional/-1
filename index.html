@@ -326,6 +326,11 @@
     text-align: center; padding: 60px 20px; color: var(--ink-soft);
     border: 1px dashed var(--line); border-radius: var(--radius);
   }
+  .wishlist-prompt {
+    text-align: center; padding: 32px 20px; margin-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .wishlist-prompt p { font-size: 14px; color: var(--ink-soft); margin-bottom: 12px; }
 
   /* ============ Wishlist section ============ */
   .wishlist-section {
@@ -543,8 +548,24 @@
   .chat-inbox-row { padding:11px 8px; border-bottom:1px solid var(--line); cursor:pointer; }
   .chat-inbox-row:hover,.chat-inbox-row.active { background:var(--bg); }
   .chat-inbox-meta { display:flex; justify-content:space-between; gap:8px; font-size:12px; }
-  .chat-inbox-preview { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:12px; color:var(--ink-soft); }
+  .chat-inbox-preview { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:12px; color:var(--ink-soft); margin:3px 0; }
+  .chat-inbox-bottom { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .chat-inbox-date { font-size:11px; color:var(--ink-soft); }
   .chat-unread { color:var(--danger); font-size:12px; font-weight:700; }
+  .admin-chat-preview-date { font-size:11px; color:var(--ink-soft); flex-shrink:0; }
+  .chat-avatar-spacer { width:28px; height:28px; flex-shrink:0; }
+  .chat-lightbox-overlay {
+    display:none; position:fixed; inset:0; background:rgba(20,18,15,0.85); z-index:200;
+    align-items:center; justify-content:center; padding:24px; cursor:zoom-out;
+  }
+  .chat-lightbox-overlay.open { display:flex; }
+  .chat-lightbox-overlay img { max-width:100%; max-height:100%; border-radius:6px; object-fit:contain; }
+  .chat-loading-more { text-align:center; padding:10px; font-size:12px; color:var(--ink-soft); }
+  .chat-loading-more .spinner {
+    display:inline-block; width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--brass);
+    border-radius:50%; animation:chat-spin .7s linear infinite; margin-right:6px; vertical-align:middle;
+  }
+  @keyframes chat-spin { to { transform: rotate(360deg); } }
   .chat-image-input { width:38px; height:42px; overflow:hidden; position:relative; border:1px solid var(--line); display:grid; place-items:center; }
   .chat-image-input input { position:absolute; inset:0; opacity:0; cursor:pointer; }
   .chat-file-preview { display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--line); background:var(--bg); }
@@ -583,10 +604,10 @@
 
   .notif-row { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; }
   .notif-row.unread {
-    background: #F0C94A; border-left: 4px solid var(--brass-dark);
+    background: #F6E8C4; border-left: 4px solid var(--brass);
   }
   .notif-row.unread .notif-time,
-  .notif-row.unread .notif-rich-amounts { color: #5C4A1E; }
+  .notif-row.unread .notif-rich-amounts { color: #7A6538; }
   .notif-rich-msg { font-size: 13px; color: var(--ink-soft); line-height: 1.5; font-weight: 700; }
   .notif-row.unread .notif-rich-msg { color: var(--ink); }
   .notif-time { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
@@ -616,6 +637,7 @@
     background: var(--bg-raised); border-radius: var(--radius); max-width: 400px; width: 100%;
     padding: 32px; position: relative; box-shadow: 0 12px 40px rgba(42,40,35,0.2);
   }
+  #authOverlay .modal { max-width: 440px; }
   .modal-close {
     position: absolute; top: 14px; right: 14px; background: none; border: none;
     font-size: 20px; color: var(--ink-soft); width: 32px; height: 32px;
@@ -824,6 +846,10 @@
   </div>
   <div class="empty-state" id="emptyState" style="display:none">
     目前沒有符合篩選條件的商品，換個分類看看，或到<a href="#wishlist-public" style="color:var(--brass-dark); text-decoration:underline;">許願專區</a>提出你想要的品牌。
+  </div>
+  <div class="wishlist-prompt">
+    <p>沒有你要的商品嗎？</p>
+    <a href="#wishlist-public" class="btn btn-outline btn-sm">許願專區</a>
   </div>
 </section>
 
@@ -1385,9 +1411,15 @@
     </div>
 
     <div id="authLoggedInView" style="display:none">
-      <h3>會員中心</h3>
-      <p class="sub" id="loggedInEmail"></p>
-      <p class="sub" id="loggedInUid" style="font-size:11px;"></p>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:6px;">
+        <h3 style="margin:0;">會員中心</h3>
+        <div style="text-align:center; flex-shrink:0;">
+          <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:56px; height:56px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin-bottom:6px;">
+          <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="font-size:11px; padding:5px 10px;">上傳新頭貼</button>
+        </div>
+      </div>
+      <p class="sub" style="margin-bottom:4px;">使用者名稱：<span id="loggedInName"></span></p>
+      <p class="sub" style="margin-bottom:16px;">會員編號：<span id="loggedInUid"></span></p>
       <div class="account-menu-links">
         <button type="button" class="account-menu-link" id="menuFavBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
@@ -1650,6 +1682,11 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ============ 聊天圖片大圖預覽 ============ -->
+<div class="chat-lightbox-overlay" id="chatLightboxOverlay">
+  <img id="chatLightboxImg" src="" alt="訊息圖片">
+</div>
+
 <!-- ============ 強烈警告確認彈窗（不可逆棄單動作用） ============ -->
 <div class="modal-overlay" id="warningModalOverlay">
   <div class="modal">
@@ -1722,12 +1759,10 @@
 <div class="modal-overlay big-modal" id="notifOverlay">
   <div class="modal">
     <button class="modal-close" id="notifClose" aria-label="關閉">×</button>
-    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
-      <h3 style="margin:0;">通知</h3>
-      <div style="display:flex; gap:8px; flex-shrink:0;">
-        <button type="button" id="notifMarkAllBtn" class="btn btn-outline btn-sm">一鍵已讀</button>
-        <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm">展開完整畫面</button>
-      </div>
+    <h3 style="margin:0 0 16px; padding-right:36px;">通知</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px;">
+      <button type="button" id="notifMarkAllBtn" class="btn btn-outline btn-sm">一鍵已讀</button>
+      <button type="button" id="notifExpandBtn" class="btn btn-outline btn-sm">展開完整畫面</button>
     </div>
     <div id="notifList" style="height:min(420px, 50vh); overflow-y:auto; padding-right:4px;"></div>
   </div>
@@ -2166,7 +2201,9 @@ function refreshAuthView() {
     loginV.style.display = 'none';
     signupV.style.display = 'none';
     loggedInV.style.display = 'block';
-    document.getElementById('loggedInEmail').textContent = `帳號：${state.profile?.account || ''}${state.profile?.contact_email ? '　聯絡信箱：' + state.profile.contact_email : ''}`;
+    document.getElementById('loggedInName').textContent = state.profile?.display_name || '（未設定）';
+    document.getElementById('loggedInUid').textContent = state.profile?.uid || '—';
+    document.getElementById('menuAvatarPreview').src = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
   } else {
     loggedInV.style.display = 'none';
     loginV.style.display = 'block';
@@ -2434,10 +2471,10 @@ async function mergeGuestCartIntoAccount() {
 function renderCart() {
   const body = document.getElementById('cartBody');
   const badge = document.getElementById('cartBadge');
-  const totalCount = state.cart.reduce((s, c) => s + c.quantity, 0);
+  const itemCount = state.cart.length;
 
-  badge.style.display = totalCount > 0 ? 'flex' : 'none';
-  badge.textContent = totalCount;
+  badge.style.display = itemCount > 0 ? 'flex' : 'none';
+  badge.textContent = itemCount;
 
   if (state.cart.length === 0) {
     body.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">購物車是空的。</p>';
@@ -2532,9 +2569,14 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
 
   if (error) {
     console.error('create_preorder failed:', error);
-    toast(error.message.includes('NT$') || error.message.includes('購物車')
-      ? error.message
-      : `送出失敗：${error.message || '未知錯誤'}`);
+    const isBusinessRuleMsg = error.message.includes('NT$') || error.message.includes('購物車');
+    if (isBusinessRuleMsg) {
+      toast(error.message);
+    } else if (state.profile?.is_admin) {
+      toast(`送出失敗：${error.message || '未知錯誤'}`);
+    } else {
+      toast('送出失敗，請稍後再試，或聯絡我們協助處理');
+    }
     checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
     return;
   }
@@ -2558,11 +2600,68 @@ document.getElementById('chatBtn').addEventListener('click', () => {
 
 async function updateChatBadge() {
   if (!state.user) { document.getElementById('chatBadge').style.display = 'none'; return; }
-  const { count } = await sb.from('messages').select('id', { count: 'exact', head: true }).eq('user_id', state.user.id).eq('sender', 'admin').eq('is_read', false);
   const badge = document.getElementById('chatBadge');
+  if (state.profile?.is_admin) {
+    // 管理員視角：統計「有未讀訊息的客戶人數」，不是訊息總數——同一位客戶連續傳5則只算1人
+    const { data } = await sb.from('messages').select('user_id').eq('sender', 'customer').eq('is_read', false);
+    const distinctUsers = new Set((data || []).map(r => r.user_id));
+    badge.style.display = distinctUsers.size > 0 ? 'flex' : 'none';
+    badge.textContent = distinctUsers.size;
+    return;
+  }
+  const { count } = await sb.from('messages').select('id', { count: 'exact', head: true }).eq('user_id', state.user.id).eq('sender', 'admin').eq('is_read', false);
   badge.style.display = count > 0 ? 'flex' : 'none';
   badge.textContent = count;
 }
+
+// 聊天室共用的時間格式：上午/下午 H:MM，不顯示秒數
+function formatChatTime(dateStr) {
+  const d = new Date(dateStr);
+  const h = d.getHours();
+  const period = h < 12 ? '上午' : '下午';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${period} ${h12}:${mm}`;
+}
+
+// 訊息分組：同一人連續、時間相近(3分鐘內)的訊息只在最後一則顯示頭貼跟時間
+function groupMessagesForDisplay(messages) {
+  return messages.map((m, i) => {
+    const next = messages[i + 1];
+    const showMeta = !next || next.sender !== m.sender ||
+      (new Date(next.created_at) - new Date(m.created_at)) > 3 * 60 * 1000;
+    return { ...m, _showMeta: showMeta };
+  });
+}
+
+// 共用的訊息氣泡渲染：分組後的訊息陣列(需已附加簽名圖片網址 _image)
+function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixFn) {
+  const grouped = groupMessagesForDisplay(messages);
+  return grouped.map(m => {
+    const isMine = isMineFn(m);
+    const avatar = isMine ? myAvatar : otherAvatar;
+    const avatarHtml = m._showMeta ? `<img class="chat-avatar" src="${avatar}" alt="">` : `<div class="chat-avatar-spacer"></div>`;
+    return `<div class="chat-bubble-row ${isMine ? 'mine' : ''}">
+      ${!isMine ? avatarHtml : ''}
+      <div>
+        ${productCardHtml(m)}
+        <div class="chat-bubble">
+          ${m._image ? `<img class="chat-image" src="${m._image}" alt="訊息圖片" data-lightbox-src="${m._image}">` : ''}
+          ${m.content ? escapeHtml(m.content) : ''}
+        </div>
+        ${m._showMeta ? `<div class="chat-bubble-time">${formatChatTime(m.created_at)}${suffixFn ? suffixFn(m) : ''}</div>` : ''}
+      </div>
+      ${isMine ? avatarHtml : ''}
+    </div>`;
+  }).join('');
+}
+
+// 點圖片看完整大圖
+document.addEventListener('click', (e) => {
+  const img = e.target.closest('[data-lightbox-src]');
+  if (img) { document.getElementById('chatLightboxImg').src = img.dataset.lightboxSrc; document.getElementById('chatLightboxOverlay').classList.add('open'); }
+});
+document.getElementById('chatLightboxOverlay').addEventListener('click', () => document.getElementById('chatLightboxOverlay').classList.remove('open'));
 
 // 完整聊天室：安全文字輸出、圖片私有連結、商品詢問草稿。
 function escapeHtml(value) { const d = document.createElement('div'); d.textContent = value || ''; return d.innerHTML; }
@@ -2579,27 +2678,65 @@ function productCardHtml(m, draft=false) {
     <div style="margin-top:5px;color:var(--ink-soft)">${draft ? '點此回到商品頁；送出後店家才會收到。' : '點此查看商品'}</div>
   </div>`;
 }
+const CHAT_PAGE_SIZE = 15;
+let customerChatState = { messages: [], hasMore: true, loading: false };
+
 async function renderMessagesPage() {
   if (!state.user) { toast('請先登入才能聯絡我們'); location.hash = ''; return; }
   const box = document.getElementById('messagesPageMessages');
-  const { data, error } = await sb.from('messages').select('*').eq('user_id', state.user.id).order('created_at');
-  if (error) { box.innerHTML = '<p>讀取訊息失敗</p>'; return; }
   const { data: adminProf } = await sb.rpc('get_admin_public_profile');
   const adminAvatar = adminProf?.[0]?.avatar_url || DEFAULT_AVATAR_SVG;
   const myAvatar = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
-  const rows = await Promise.all((data || []).map(async m => {
-    const image = await signedChatImage(m.image_path);
-    const isMine = m.sender === 'customer';
-    const avatar = isMine ? myAvatar : adminAvatar;
-    return `<div class="chat-bubble-row ${isMine ? 'mine' : ''}">${!isMine ? `<img class="chat-avatar" src="${avatar}" alt="">` : ''}<div>${productCardHtml(m)}<div class="chat-bubble">${image ? `<img class="chat-image" src="${image}" alt="訊息圖片">` : ''}${m.content ? escapeHtml(m.content) : ''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}</div></div>${isMine ? `<img class="chat-avatar" src="${avatar}" alt="">` : ''}</div>`;
-  }));
-  const draft = state.pendingProductInquiry ? productCardHtml(state.pendingProductInquiry, true) : '';
-  box.innerHTML = rows.join('') || '<p style="color:var(--ink-soft);font-size:13px">有任何問題都可以傳訊給我們。</p>';
-  if (draft) box.insertAdjacentHTML('beforeend', `<div class="chat-bubble-row mine"><div>${draft}</div></div>`);
-  box.querySelectorAll('[data-product-link]').forEach(el => el.addEventListener('click', () => { if (el.dataset.productLink) location.hash = `#product=${el.dataset.productLink}`; }));
+
+  const { data, error } = await sb.from('messages').select('*').eq('user_id', state.user.id)
+    .order('created_at', { ascending: false }).limit(CHAT_PAGE_SIZE);
+  if (error) { box.innerHTML = '<p>讀取訊息失敗</p>'; return; }
+  const page = (data || []).reverse();
+  customerChatState = { messages: page, hasMore: page.length === CHAT_PAGE_SIZE, loading: false };
+
+  await drawCustomerChat(box, adminAvatar, myAvatar);
   box.scrollTop = box.scrollHeight;
+
   await sb.from('messages').update({ is_read: true }).eq('user_id', state.user.id).eq('sender', 'admin').eq('is_read', false);
   updateChatBadge();
+
+  if (!box.dataset.scrollBound) {
+    box.dataset.scrollBound = '1';
+    box.addEventListener('scroll', () => {
+      if (box.scrollTop < 60 && customerChatState.hasMore && !customerChatState.loading) {
+        loadOlderCustomerMessages(box, adminAvatar, myAvatar);
+      }
+    });
+  }
+}
+
+async function drawCustomerChat(box, adminAvatar, myAvatar) {
+  const withImages = await Promise.all(customerChatState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
+  const draft = state.pendingProductInquiry ? productCardHtml(state.pendingProductInquiry, true) : '';
+  let html = buildChatBubblesHtml(withImages, myAvatar, adminAvatar, m => m.sender === 'customer');
+  box.innerHTML = html || '<p style="color:var(--ink-soft);font-size:13px">有任何問題都可以傳訊給我們。</p>';
+  if (draft) box.insertAdjacentHTML('beforeend', `<div class="chat-bubble-row mine"><div>${draft}</div></div>`);
+  box.querySelectorAll('[data-product-link]').forEach(el => el.addEventListener('click', () => { if (el.dataset.productLink) location.hash = `#product=${el.dataset.productLink}`; }));
+}
+
+async function loadOlderCustomerMessages(box, adminAvatar, myAvatar) {
+  if (customerChatState.messages.length === 0) return;
+  customerChatState.loading = true;
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'chat-loading-more';
+  loadingEl.innerHTML = '<span class="spinner"></span>載入更早的訊息...';
+  box.prepend(loadingEl);
+  const oldestTs = customerChatState.messages[0].created_at;
+  const { data } = await sb.from('messages').select('*').eq('user_id', state.user.id)
+    .lt('created_at', oldestTs).order('created_at', { ascending: false }).limit(CHAT_PAGE_SIZE);
+  const older = (data || []).reverse();
+  customerChatState.hasMore = older.length === CHAT_PAGE_SIZE;
+  customerChatState.messages = [...older, ...customerChatState.messages];
+  const prevScrollHeight = box.scrollHeight;
+  const prevScrollTop = box.scrollTop;
+  await drawCustomerChat(box, adminAvatar, myAvatar);
+  box.scrollTop = box.scrollHeight - prevScrollHeight + prevScrollTop;
+  customerChatState.loading = false;
 }
 async function uploadChatImage(file) {
   if (!file) return null;
@@ -3370,6 +3507,8 @@ document.getElementById('epUserinfoCancel').addEventListener('click', async () =
 let avatarCropper = null;
 const avatarCropOverlay = document.getElementById('avatarCropOverlay');
 
+document.getElementById('menuAvatarUploadBtn').addEventListener('click', () => document.getElementById('epAvatarInput').click());
+
 document.getElementById('epAvatarInput').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -3423,6 +3562,7 @@ document.getElementById('avatarCropConfirmBtn').addEventListener('click', () => 
 
     await loadProfile();
     document.getElementById('epAvatarPreview').src = avatarUrl;
+    document.getElementById('menuAvatarPreview').src = avatarUrl;
     document.getElementById('epAvatarMsg').textContent = '頭貼已更新！';
     document.getElementById('epAvatarMsg').className = 'form-msg ok';
     closeAvatarCropModal();
@@ -3437,6 +3577,7 @@ document.getElementById('epAvatarRemoveBtn').addEventListener('click', async () 
   if (error) { msg.textContent = '移除失敗：' + error.message; msg.className = 'form-msg err'; return; }
   await loadProfile();
   document.getElementById('epAvatarPreview').src = DEFAULT_AVATAR_SVG;
+  document.getElementById('menuAvatarPreview').src = DEFAULT_AVATAR_SVG;
   msg.textContent = '已恢復預設頭貼'; msg.className = 'form-msg ok';
 });
 
@@ -5192,20 +5333,21 @@ async function loadAdminChatPreview() {
     return;
   }
 
-  const { data: profs } = await sb.from('profiles').select('id, display_name').in('id', ids);
-  const nameMap = new Map((profs || []).map(p => [p.id, p.display_name]));
+  const { data: profs } = await sb.from('profiles').select('id, display_name, uid').in('id', ids);
+  const nameMap = new Map((profs || []).map(p => [p.id, p]));
 
   box.innerHTML = ids.map(id => {
     const g = grouped.get(id);
-    const name = nameMap.get(id) || '（未命名會員）';
+    const p = nameMap.get(id);
+    const name = p?.display_name || '（未命名會員）';
     return `
       <div class="admin-chat-preview-row" data-preview-user="${id}" data-preview-name="${escapeHtml(name)}">
         <div class="admin-chat-preview-top">
-          <strong>${escapeHtml(name)}</strong>
-          <span>${new Date(g.last.created_at).toLocaleDateString('zh-Hant-TW')}</span>
+          <strong>${escapeHtml(name)}${p?.uid ? `（${p.uid}）` : ''}</strong>
         </div>
         <div class="admin-chat-preview-bottom">
           <span class="admin-chat-preview-text">${escapeHtml(previewText(g.last))}</span>
+          <span class="admin-chat-preview-date">${new Date(g.last.created_at).toLocaleDateString('zh-Hant-TW')}</span>
           ${g.unread > 0 ? `<span class="chat-unread">${g.unread}</span>` : ''}
         </div>
       </div>
@@ -5248,15 +5390,25 @@ async function renderAdminMessagesPage() {
   const query = document.getElementById('adminChatSearch').value.trim();
   let profiles = [];
   if (query) {
-    const { data } = await sb.from('profiles').select('id,display_name,created_at').ilike('display_name', `%${query.replace(/[%_]/g,'')}%`).order('created_at',{ascending:false}).limit(30);
+    const { data } = await sb.from('profiles').select('id,display_name,uid,created_at').ilike('display_name', `%${query.replace(/[%_]/g,'')}%`).order('created_at',{ascending:false}).limit(30);
     profiles = data || [];
   } else if (grouped.size) {
-    const { data } = await sb.from('profiles').select('id,display_name,created_at').in('id',[...grouped.keys()]); profiles = data || [];
+    const { data } = await sb.from('profiles').select('id,display_name,uid,created_at').in('id',[...grouped.keys()]); profiles = data || [];
   }
   const profileMap = new Map(profiles.map(p => [p.id,p]));
   const ids = query ? [...new Set([...grouped.keys(),...profiles.map(p=>p.id)])] : [...grouped.keys()];
   ids.sort((a,b) => new Date(grouped.get(b)?.last.created_at || 0)-new Date(grouped.get(a)?.last.created_at || 0));
-  list.innerHTML = ids.length ? ids.map(id => { const p=profileMap.get(id), g=grouped.get(id); const name=p?.display_name || '未命名會員'; return `<div class="chat-inbox-row ${state.adminChatActiveUser===id?'active':''}" data-admin-user="${id}"><div class="chat-inbox-meta"><strong>${escapeHtml(name)}</strong><span>${g ? new Date(g.last.created_at).toLocaleDateString('zh-Hant-TW') : ''}</span></div><div class="chat-inbox-preview">${escapeHtml(g ? previewText(g.last) : '尚未開始對話')}</div>${g?.unread ? `<div class="chat-unread">${g.unread} 則未讀</div>` : ''}</div>`; }).join('') : '<p style="font-size:13px;color:var(--ink-soft)">搜尋會員名稱或等待客戶傳來訊息。</p>';
+  list.innerHTML = ids.length ? ids.map(id => {
+    const p=profileMap.get(id), g=grouped.get(id); const name=p?.display_name || '未命名會員';
+    return `<div class="chat-inbox-row ${state.adminChatActiveUser===id?'active':''}" data-admin-user="${id}">
+      <div class="chat-inbox-meta"><strong>${escapeHtml(name)}${p?.uid ? `（${p.uid}）` : ''}</strong></div>
+      <div class="chat-inbox-preview">${escapeHtml(g ? previewText(g.last) : '尚未開始對話')}</div>
+      <div class="chat-inbox-bottom">
+        ${g?.unread ? `<div class="chat-unread">${g.unread} 則未讀</div>` : '<span></span>'}
+        <span class="chat-inbox-date">${g ? new Date(g.last.created_at).toLocaleDateString('zh-Hant-TW') : ''}</span>
+      </div>
+    </div>`;
+  }).join('') : '<p style="font-size:13px;color:var(--ink-soft)">搜尋會員名稱或等待客戶傳來訊息。</p>';
   list.querySelectorAll('[data-admin-user]').forEach(el => el.addEventListener('click', () => openAdminMessagesThread(el.dataset.adminUser, profileMap.get(el.dataset.adminUser))));
   if (state.adminChatActiveUser) await renderAdminMessagesThread();
 }
@@ -5267,22 +5419,67 @@ async function openAdminMessagesThread(userId, profile) {
   await sb.from('messages').update({is_read:true}).eq('user_id',userId).eq('sender','customer').eq('is_read',false);
   await renderAdminMessagesPage();
 }
+let adminChatMsgState = { userId: null, messages: [], hasMore: true, loading: false };
+
 async function renderAdminMessagesThread() {
-  const uid=state.adminChatActiveUser; if (!uid) return;
-  const {data} = await sb.from('messages').select('*').eq('user_id',uid).order('created_at');
+  const uid = state.adminChatActiveUser; if (!uid) return;
+  const box = document.getElementById('adminChatMessages');
+  const isFreshOpen = adminChatMsgState.userId !== uid;
+  if (isFreshOpen) adminChatMsgState = { userId: uid, messages: [], hasMore: true, loading: false };
+
   const { data: custProf } = await sb.from('profiles').select('avatar_url').eq('id', uid).maybeSingle();
   const customerAvatar = custProf?.avatar_url || DEFAULT_AVATAR_SVG;
   const myAvatar = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
-  const box=document.getElementById('adminChatMessages');
-  const rows=await Promise.all((data||[]).map(async m=>{
-    const image=await signedChatImage(m.image_path);
-    const isMine = m.sender === 'admin';
-    const avatar = isMine ? myAvatar : customerAvatar;
-    return `<div class="chat-bubble-row ${isMine?'mine':''}">${!isMine?`<img class="chat-avatar" src="${avatar}" alt="">`:''}<div>${productCardHtml(m)}<div class="chat-bubble">${image?`<img class="chat-image" src="${image}" alt="訊息圖片">`:''}${m.content?escapeHtml(m.content):''}</div><div class="chat-bubble-time">${new Date(m.created_at).toLocaleString('zh-Hant-TW')}${m.sender==='admin'&&m.is_read?' · 客戶已讀':''}</div></div>${isMine?`<img class="chat-avatar" src="${avatar}" alt="">`:''}</div>`;
-  }));
-  box.innerHTML=rows.join('')||'<p style="color:var(--ink-soft);font-size:13px">尚未有訊息。你可以主動向這位會員問候。</p>';
-  box.querySelectorAll('[data-product-link]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.productLink)location.hash=`#product=${el.dataset.productLink}`;}));
-  const name=state.adminChatProfile?.display_name || '會員'; document.getElementById('adminChatThreadTitle').textContent=`與 ${name} 的對話`; box.scrollTop=box.scrollHeight;
+
+  // 只有剛切換對話、或還沒往上翻過歷史紀錄時，才用「最新N則」覆蓋，避免蓋掉已經往上翻開的紀錄
+  if (isFreshOpen || adminChatMsgState.messages.length <= CHAT_PAGE_SIZE) {
+    const { data } = await sb.from('messages').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(CHAT_PAGE_SIZE);
+    const page = (data || []).reverse();
+    adminChatMsgState.messages = page;
+    adminChatMsgState.hasMore = page.length === CHAT_PAGE_SIZE;
+  }
+
+  await drawAdminChat(box, customerAvatar, myAvatar);
+  const name = state.adminChatProfile?.display_name || '會員';
+  document.getElementById('adminChatThreadTitle').textContent = `與 ${name} 的對話`;
+  box.scrollTop = box.scrollHeight;
+
+  if (!box.dataset.scrollBound) {
+    box.dataset.scrollBound = '1';
+    box.addEventListener('scroll', () => {
+      if (box.scrollTop < 60 && adminChatMsgState.hasMore && !adminChatMsgState.loading) {
+        loadOlderAdminMessages(box, customerAvatar, myAvatar);
+      }
+    });
+  }
+}
+
+async function drawAdminChat(box, customerAvatar, myAvatar) {
+  const withImages = await Promise.all(adminChatMsgState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
+  const html = buildChatBubblesHtml(withImages, myAvatar, customerAvatar, m => m.sender === 'admin', m => (m.sender === 'admin' && m.is_read) ? ' · 客戶已讀' : '');
+  box.innerHTML = html || '<p style="color:var(--ink-soft);font-size:13px">尚未有訊息。你可以主動向這位會員問候。</p>';
+  box.querySelectorAll('[data-product-link]').forEach(el => el.addEventListener('click', () => { if (el.dataset.productLink) location.hash = `#product=${el.dataset.productLink}`; }));
+}
+
+async function loadOlderAdminMessages(box, customerAvatar, myAvatar) {
+  if (adminChatMsgState.messages.length === 0) return;
+  adminChatMsgState.loading = true;
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'chat-loading-more';
+  loadingEl.innerHTML = '<span class="spinner"></span>載入更早的訊息...';
+  box.prepend(loadingEl);
+  const oldestTs = adminChatMsgState.messages[0].created_at;
+  const uid = adminChatMsgState.userId;
+  const { data } = await sb.from('messages').select('*').eq('user_id', uid)
+    .lt('created_at', oldestTs).order('created_at', { ascending: false }).limit(CHAT_PAGE_SIZE);
+  const older = (data || []).reverse();
+  adminChatMsgState.hasMore = older.length === CHAT_PAGE_SIZE;
+  adminChatMsgState.messages = [...older, ...adminChatMsgState.messages];
+  const prevScrollHeight = box.scrollHeight;
+  const prevScrollTop = box.scrollTop;
+  await drawAdminChat(box, customerAvatar, myAvatar);
+  box.scrollTop = box.scrollHeight - prevScrollHeight + prevScrollTop;
+  adminChatMsgState.loading = false;
 }
 document.getElementById('adminMessagesForm').addEventListener('submit',async e=>{e.preventDefault(); if(!state.adminChatActiveUser)return; const input=document.getElementById('adminChatInput'),file=document.getElementById('adminChatImage').files[0],content=input.value.trim(),image_path=await uploadChatImage(file); if(!content&&!image_path)return; const {error}=await sb.from('messages').insert({user_id:state.adminChatActiveUser,sender:'admin',content:content||null,image_path}); if(error){toast('訊息送出失敗');return;} input.value='';clearAdminImagePreview();renderAdminMessagesPage();});
 
