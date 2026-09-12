@@ -174,6 +174,13 @@
   }
   .filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
   .filter-label { font-size: 12px; color: var(--ink-soft); letter-spacing: 0.05em; margin-right: 4px; }
+  .filter-bar-top { display: flex; align-items: center; gap: 10px; width: 100%; }
+  #filterToggleBtn { display: none; flex-shrink: 0; align-items: center; gap: 4px; }
+  #collapsibleFilters { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; width: 100%; }
+  #filterActiveCount {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px;
+    background: var(--brass); color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 0 4px; margin-left: 4px;
+  }
   .chip {
     padding: 7px 16px; border-radius: 999px; border: 1px solid var(--line);
     background: var(--bg-raised); font-size: 13px; color: var(--ink-soft);
@@ -732,6 +739,9 @@
     }
     .filter-group { gap: 8px; row-gap: 10px; }
     .section-title { margin-top: 18px; }
+    #filterToggleBtn { display: inline-flex; }
+    #collapsibleFilters { display: none; flex-direction: column; align-items: flex-start; gap: 16px; }
+    #collapsibleFilters.expanded { display: flex; margin-top: 16px; }
   }
   @media (max-width: 480px) {
     .wrap { padding: 0 16px; }
@@ -812,29 +822,34 @@
 
 <!-- ============ Filter bar ============ -->
 <div class="wrap filter-bar">
-  <div class="filter-group" id="countryFilters">
-    <span class="filter-label">產地</span>
-    <button class="chip active" data-filter-country="all">全部</button>
-    <button class="chip" data-filter-country="japan">日本</button>
-    <button class="chip" data-filter-country="korea">韓國</button>
-    <button class="chip" data-filter-country="vietnam">越南</button>
+  <div class="filter-bar-top">
+    <button type="button" class="btn btn-outline btn-sm" id="filterToggleBtn">篩選<span id="filterActiveCount" style="display:none;"></span></button>
+    <div class="filter-group" id="searchFilterGroup" style="flex:1; min-width:0;">
+      <input type="text" id="productSearchInput" placeholder="搜尋商品名稱或品牌..." style="width:100%; max-width:320px; padding:8px 14px; border:1px solid var(--line); border-radius:999px; background:var(--bg-raised); font-size:13px;">
+    </div>
   </div>
-  <div class="filter-group" id="statusFilters">
-    <span class="filter-label">狀態</span>
-    <button class="chip active" data-filter-status="all">全部</button>
-    <button class="chip" data-filter-status="available">現貨</button>
-    <button class="chip" data-filter-status="preorder">預購中</button>
-    <button class="chip" data-filter-status="coming_soon">即將上架</button>
-  </div>
-  <div class="filter-group" id="sortFilters">
-    <span class="filter-label">排序</span>
-    <button class="chip active" data-sort-key="newest">最新 <span class="sort-arrow">▼</span></button>
-    <button class="chip" data-sort-key="popular">熱門 <span class="sort-arrow">▼</span></button>
-    <button class="chip" data-sort-key="price">價格 <span class="sort-arrow">▼</span></button>
-    <button class="chip" data-sort-key="repurchase">回購率 <span class="sort-arrow">▼</span></button>
-  </div>
-  <div class="filter-group" id="searchFilterGroup" style="flex:1; min-width:180px;">
-    <input type="text" id="productSearchInput" placeholder="搜尋商品名稱或品牌..." style="width:100%; max-width:320px; padding:8px 14px; border:1px solid var(--line); border-radius:999px; background:var(--bg-raised); font-size:13px;">
+  <div id="collapsibleFilters">
+    <div class="filter-group" id="countryFilters">
+      <span class="filter-label">產地</span>
+      <button class="chip active" data-filter-country="all">全部</button>
+      <button class="chip" data-filter-country="japan">日本</button>
+      <button class="chip" data-filter-country="korea">韓國</button>
+      <button class="chip" data-filter-country="vietnam">越南</button>
+    </div>
+    <div class="filter-group" id="statusFilters">
+      <span class="filter-label">狀態</span>
+      <button class="chip active" data-filter-status="all">全部</button>
+      <button class="chip" data-filter-status="available">現貨</button>
+      <button class="chip" data-filter-status="preorder">預購中</button>
+      <button class="chip" data-filter-status="coming_soon">即將上架</button>
+    </div>
+    <div class="filter-group" id="sortFilters">
+      <span class="filter-label">排序</span>
+      <button class="chip active" data-sort-key="newest">最新 <span class="sort-arrow">▼</span></button>
+      <button class="chip" data-sort-key="popular">熱門 <span class="sort-arrow">▼</span></button>
+      <button class="chip" data-sort-key="price">價格 <span class="sort-arrow">▼</span></button>
+      <button class="chip" data-sort-key="repurchase">回購率 <span class="sort-arrow">▼</span></button>
+    </div>
   </div>
 </div>
 
@@ -2108,6 +2123,7 @@ document.querySelectorAll('[data-filter-country]').forEach(btn => {
     btn.classList.add('active');
     state.filterCountry = btn.dataset.filterCountry;
     renderProducts();
+    updateFilterActiveCount();
   });
 });
 document.querySelectorAll('[data-filter-status]').forEach(btn => {
@@ -2116,6 +2132,7 @@ document.querySelectorAll('[data-filter-status]').forEach(btn => {
     btn.classList.add('active');
     state.filterStatus = btn.dataset.filterStatus;
     renderProducts();
+    updateFilterActiveCount();
   });
 });
 document.querySelectorAll('[data-sort-key]').forEach(btn => {
@@ -2131,8 +2148,24 @@ document.querySelectorAll('[data-sort-key]').forEach(btn => {
     btn.classList.add('active');
     btn.querySelector('.sort-arrow').textContent = state.sortDir === 'desc' ? '▼' : '▲';
     renderProducts();
+    updateFilterActiveCount();
   });
 });
+
+// 手機版篩選收合：產地/狀態/排序預設收起來，搜尋框維持外露，收合按鈕上顯示目前套用了幾個篩選條件
+document.getElementById('filterToggleBtn').addEventListener('click', () => {
+  document.getElementById('collapsibleFilters').classList.toggle('expanded');
+});
+function updateFilterActiveCount() {
+  let n = 0;
+  if (state.filterCountry !== 'all') n++;
+  if (state.filterStatus !== 'all') n++;
+  if (state.sortKey !== 'newest' || state.sortDir !== 'desc') n++;
+  const badge = document.getElementById('filterActiveCount');
+  badge.style.display = n > 0 ? 'inline-flex' : 'none';
+  badge.textContent = n;
+}
+updateFilterActiveCount();
 
 let productSearchTimer;
 document.getElementById('productSearchInput').addEventListener('input', (e) => {
