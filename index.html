@@ -1468,7 +1468,9 @@
     <div class="cart-total grand"><span>商品總額</span><span id="cartGrandTotal">NT$0</span></div>
     <p id="cartShippingHint" class="cart-note" style="color:var(--brass-dark); font-weight:600;"></p>
     <p class="cart-note">此為預購委任代購，實際收款以訂金比例為準，出國採購後將另行通知尾款。</p>
-    <button class="btn btn-primary" style="width:100%" id="checkoutBtn">送出預購需求</button>
+    <button class="btn btn-primary" style="width:100%" id="checkoutBtn" disabled title="尚未開放，敬請期待">線上刷卡付訂金（尚未開放）</button>
+    <button class="btn btn-outline" style="width:100%; margin-top:8px;" id="meetupCheckoutBtn">提出面交申請</button>
+    <p class="cart-note" style="margin-top:6px;">面交申請會直接送出訂單並傳訊息給我們，約好時間地點、確認收款後才會正式進入採購流程。</p>
   </div>
 </aside>
 
@@ -2583,7 +2585,14 @@ function renderCart() {
   });
 }
 
-document.getElementById('checkoutBtn').addEventListener('click', async () => {
+// 管道1（線上刷卡付訂金）尚未串接綠界，先暫停互動，等審核通過再回頭接上
+document.getElementById('checkoutBtn').addEventListener('click', () => {
+  toast('線上刷卡尚未開放，請先使用「提出面交申請」');
+});
+
+// 管道2（面交申請）：直接成立訂單（維持待確認付款狀態），同時自動傳訊息通知我們，
+// 約好時間地點、確認收到款項後，我們會人工把訂單狀態改成已付款
+document.getElementById('meetupCheckoutBtn').addEventListener('click', async () => {
   if (!state.user) { toast('請先登入'); openAuth(); return; }
   if (state.cart.length === 0) { toast('購物車是空的'); return; }
 
@@ -2592,9 +2601,10 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
     if (!confirm(`購物車內以下商品採購後即不接受退款：\n${nonRefundableNames.join('、')}\n\n確定要送出這筆預購需求嗎？`)) return;
   }
 
-  const checkoutBtn = document.getElementById('checkoutBtn');
-  checkoutBtn.disabled = true;
-  checkoutBtn.textContent = '送出中...';
+  const meetupBtn = document.getElementById('meetupCheckoutBtn');
+  meetupBtn.disabled = true;
+  meetupBtn.textContent = '送出中...';
+  const itemCount = state.cart.length;
 
   // 價格、總額、520元門檻全部交給資料庫函式即時核算，不再相信瀏覽器端算好的數字，
   // 也不再由前端直接寫入 orders / order_items（一般帳號已經沒有這兩張表的直接寫入權限）。
@@ -2610,15 +2620,21 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
     } else {
       toast('送出失敗，請稍後再試，或聯絡我們協助處理');
     }
-    checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
+    meetupBtn.disabled = false; meetupBtn.textContent = '提出面交申請';
     return;
   }
 
   const result = data?.[0];
   await loadCart();
 
-  toast(result && result.new_total_ntd >= 1500 ? '已送出預購！訂單滿NT$1500，享一次免運優惠' : '已送出預購');
-  checkoutBtn.disabled = false; checkoutBtn.textContent = '送出預購需求';
+  // 訂單成立後，自動附上訂單參考傳一則訊息通知我們，方便直接在聊天室看到訂單資訊、快速處理
+  if (result) {
+    const content = `我想申請面交付款\n訂單編號：${result.new_order_no}\n共${itemCount}項商品\n總金額：${ntd(result.new_total_ntd)}　訂金：${ntd(result.new_deposit_ntd)}`;
+    await sb.from('messages').insert({ user_id: state.user.id, sender: 'customer', content, order_id: result.new_order_id });
+  }
+
+  toast('已送出面交申請，我們收到後會跟你討論時間地點～');
+  meetupBtn.disabled = false; meetupBtn.textContent = '提出面交申請';
   closeCart();
 });
 
@@ -2668,7 +2684,7 @@ function groupMessagesForDisplay(messages) {
 }
 
 // 共用的訊息氣泡渲染：分組後的訊息陣列(需已附加簽名圖片網址 _image)
-function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixFn) {
+function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixFn, isAdminView = false) {
   const grouped = groupMessagesForDisplay(messages);
   return grouped.map(m => {
     const isMine = isMineFn(m);
@@ -2678,6 +2694,7 @@ function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixF
       ${!isMine ? avatarHtml : ''}
       <div>
         ${productCardHtml(m)}
+        ${orderCardHtml(m, isAdminView)}
         <div class="chat-bubble">
           ${m._image ? `<img class="chat-image" src="${m._image}" alt="訊息圖片" data-lightbox-src="${m._image}">` : ''}
           ${m.content ? escapeHtml(m.content) : ''}
@@ -2709,6 +2726,17 @@ function productCardHtml(m, draft=false) {
     <strong>${draft ? '尚未送出的商品詢問' : '商品詢問'}</strong><br>${escapeHtml(m.product_name || '商品')}
     ${m.product_image_url ? `<img src="${m.product_image_url}" alt="商品圖片">` : ''}
     <div style="margin-top:5px;color:var(--ink-soft)">${draft ? '點此回到商品頁；送出後店家才會收到。' : '點此查看商品'}</div>
+  </div>`;
+}
+// 面交申請訊息會附帶訂單參考，管理員這邊直接給快捷按鈕，不用另外去訂單管理找
+function orderCardHtml(m, isAdminView) {
+  if (!m.order_id) return '';
+  return `<div class="chat-preview" data-order-ref="${m.order_id}">
+    <strong>面交訂單申請</strong>
+    ${isAdminView ? `<div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-outline btn-sm" data-order-quick-view="${m.order_id}">查看訂單</button>
+      <button type="button" class="btn btn-primary btn-sm" data-order-quick-confirm="${m.order_id}">確認已付款</button>
+    </div>` : '<div style="margin-top:5px;color:var(--ink-soft);font-size:12px;">我們確認收款後會更新訂單狀態</div>'}
   </div>`;
 }
 const CHAT_PAGE_SIZE = 15;
@@ -5489,9 +5517,20 @@ async function renderAdminMessagesThread() {
 
 async function drawAdminChat(box, customerAvatar, myAvatar) {
   const withImages = await Promise.all(adminChatMsgState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
-  const html = buildChatBubblesHtml(withImages, myAvatar, customerAvatar, m => m.sender === 'admin', m => (m.sender === 'admin' && m.is_read) ? ' · 客戶已讀' : '');
+  const html = buildChatBubblesHtml(withImages, myAvatar, customerAvatar, m => m.sender === 'admin', m => (m.sender === 'admin' && m.is_read) ? ' · 客戶已讀' : '', true);
   box.innerHTML = html || '<p style="color:var(--ink-soft);font-size:13px">尚未有訊息。你可以主動向這位會員問候。</p>';
   box.querySelectorAll('[data-product-link]').forEach(el => el.addEventListener('click', () => { if (el.dataset.productLink) location.hash = `#product=${el.dataset.productLink}`; }));
+  box.querySelectorAll('[data-order-quick-view]').forEach(btn => {
+    btn.addEventListener('click', () => { location.hash = '#admin-orders'; });
+  });
+  box.querySelectorAll('[data-order-quick-confirm]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('確認已經收到這筆訂單的訂金款項嗎？確認後訂單會轉為「已付款，等待鎖單」狀態。')) return;
+      const { error } = await sb.rpc('admin_confirm_payment_order', { p_order_id: btn.dataset.orderQuickConfirm });
+      if (error) { toast('操作失敗：' + error.message); return; }
+      toast('已確認付款');
+    });
+  });
 }
 
 async function loadOlderAdminMessages(box, customerAvatar, myAvatar) {
