@@ -541,6 +541,7 @@
   .demand-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); padding: 3px 0 3px 14px; }
 
   .chat-bubble-row { display: flex; margin-bottom: 10px; gap: 8px; align-items: flex-end; }
+  .chat-bubble-row-card { margin-top: 14px; }
   .chat-bubble-row > div { min-width: 0; max-width: 85%; }
   .chat-bubble-row.mine { justify-content: flex-end; }
   .chat-bubble-row.mine > div { margin-left: auto; }
@@ -1460,15 +1461,11 @@
     </div>
 
     <div id="authLoggedInView" style="display:none">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:18px;">
-        <h3 style="margin:0;">會員中心</h3>
-        <div style="text-align:center; flex-shrink:0; width:88px; margin-top:12px; margin-right:-10px;">
-          <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:64px; height:64px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin:0 auto;">
-        </div>
-      </div>
-      <p class="sub" style="margin-bottom:2px;">使用者名稱：<span id="loggedInName"></span></p>
-      <p class="sub" style="margin-bottom:10px;">會員編號：<span id="loggedInUid"></span></p>
+      <h3 style="margin:0 0 18px;">會員中心</h3>
+      <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:64px; height:64px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin-bottom:10px;">
       <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="text-align:center; margin-bottom:14px;">上傳新頭貼</button>
+      <p class="sub" style="margin-bottom:2px;">使用者名稱：<span id="loggedInName"></span></p>
+      <p class="sub" style="margin-bottom:16px;">會員編號：<span id="loggedInUid"></span></p>
       <div class="account-menu-links">
         <button type="button" class="account-menu-link" id="menuFavBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
@@ -2715,9 +2712,13 @@ function formatChatTime(dateStr) {
 function groupMessagesForDisplay(messages) {
   return messages.map((m, i) => {
     const next = messages[i + 1];
-    const showMeta = !next || next.sender !== m.sender ||
+    // 面交訂單卡片、商品詢問卡片這類「特殊卡片」訊息，一律當成獨立的新段落處理：
+    // 卡片本身一定顯示頭貼跟時間，前一則訊息也一定要顯示自己的頭貼跟時間，不會被卡片「借走」
+    const isSpecialCard = !!(m.order_id || m.product_id);
+    const nextIsSpecialCard = !!(next && (next.order_id || next.product_id));
+    const showMeta = isSpecialCard || nextIsSpecialCard || !next || next.sender !== m.sender ||
       (new Date(next.created_at) - new Date(m.created_at)) > 3 * 60 * 1000;
-    return { ...m, _showMeta: showMeta };
+    return { ...m, _showMeta: showMeta, _isSpecialCard: isSpecialCard };
   });
 }
 
@@ -2728,7 +2729,7 @@ function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixF
     const isMine = isMineFn(m);
     const avatar = isMine ? myAvatar : otherAvatar;
     const avatarHtml = m._showMeta ? `<img class="chat-avatar" src="${avatar}" alt="">` : `<div class="chat-avatar-spacer"></div>`;
-    return `<div class="chat-bubble-row ${isMine ? 'mine' : ''}">
+    return `<div class="chat-bubble-row ${isMine ? 'mine' : ''} ${m._isSpecialCard ? 'chat-bubble-row-card' : ''}">
       ${!isMine ? avatarHtml : ''}
       <div>
         ${productCardHtml(m)}
