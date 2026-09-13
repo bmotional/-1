@@ -551,9 +551,9 @@
   .chat-bubble-row.mine .chat-bubble { background: var(--ink); color: var(--bg); border-bottom-right-radius: 3px; }
   .chat-bubble-row:not(.mine) .chat-bubble { background: var(--bg-raised); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
   .chat-bubble-time { font-size: 10px; color: var(--ink-soft); margin-top: 3px; }
-  .chat-shell { max-width: 1080px; margin: 0 auto; border:1px solid var(--line); background:var(--bg-raised); display:grid; grid-template-columns:320px 1fr; height: 600px; }
+  .chat-shell { max-width: 1080px; margin: 0 auto; border:1px solid var(--line); background:var(--bg-raised); display:grid; grid-template-columns:320px 1fr; height: 600px; overflow: hidden; }
   .chat-inbox { border-right:1px solid var(--line); padding:14px; overflow:auto; }
-  .chat-thread { min-width:0; display:flex; flex-direction:column; }
+  .chat-thread { min-width:0; min-height:0; display:flex; flex-direction:column; }
   .chat-thread-head { padding:14px 18px; border-bottom:1px solid var(--line); font-weight:600; }
   .chat-log { flex:1; overflow-y:auto; overflow-x:hidden; padding:18px; min-height: 0; }
   .chat-compose { padding:12px; border-top:1px solid var(--line); display:flex; gap:8px; align-items:flex-end; }
@@ -1459,11 +1459,11 @@
     </div>
 
     <div id="authLoggedInView" style="display:none">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:18px;">
         <h3 style="margin:0;">會員中心</h3>
-        <div style="text-align:center; flex-shrink:0; width:96px; margin-top:10px; margin-right:-8px;">
+        <div style="text-align:center; flex-shrink:0; width:112px; margin-top:12px; margin-right:-10px;">
           <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:64px; height:64px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin:0 auto 8px;">
-          <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="font-size:11px; padding:6px 4px; width:100%; white-space:nowrap;">上傳新頭貼</button>
+          <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="font-size:12px; padding:6px 8px; width:100%; white-space:nowrap;">上傳新頭貼</button>
         </div>
       </div>
       <p class="sub" style="margin-bottom:2px;">使用者名稱：<span id="loggedInName"></span></p>
