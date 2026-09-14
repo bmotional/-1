@@ -988,7 +988,10 @@
       <div id="adminChatUserList"></div>
     </aside>
     <section class="chat-thread">
-      <div class="chat-thread-head" id="adminChatThreadTitle">選擇一位會員開始對話</div>
+      <div class="chat-thread-head" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <span id="adminChatThreadTitle">選擇一位會員開始對話</span>
+        <button type="button" class="btn btn-outline btn-sm" id="adminResetPasswordBtn" style="display:none; flex-shrink:0;">重設此會員密碼</button>
+      </div>
       <div class="chat-log" id="adminChatMessages"></div>
       <div class="chat-file-preview" id="adminChatImagePreview" hidden></div>
       <form class="chat-compose" id="adminMessagesForm">
@@ -1355,6 +1358,15 @@
         <div class="field" style="flex:1; margin-bottom:0;">
           <label for="epContactEmail">聯絡信箱（選填，非登入用信箱）</label>
           <input type="email" id="epContactEmail" disabled>
+          <div id="epEmailVerifyRow" style="display:none; margin-top:8px; align-items:center; gap:10px;">
+            <span id="epEmailVerifyBadge" class="order-card-status"></span>
+            <button type="button" class="btn btn-outline btn-sm" id="epSendVerifyBtn">發送驗證信</button>
+          </div>
+          <div id="epEmailCodeRow" style="display:none; margin-top:10px; gap:8px; align-items:center;">
+            <input type="text" id="epEmailCodeInput" placeholder="輸入6位數驗證碼" style="max-width:160px; padding:8px 10px; border:1px solid var(--line); border-radius:6px;">
+            <button type="button" class="btn btn-primary btn-sm" id="epConfirmVerifyBtn">確認</button>
+          </div>
+          <div class="form-msg" id="epEmailVerifyMsg"></div>
         </div>
         <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
       </div>
@@ -1422,6 +1434,9 @@
           <label for="loginPassword">密碼</label>
           <input type="password" id="loginPassword" required>
         </div>
+        <div style="text-align:right; margin-bottom:14px;">
+          <button type="button" id="toForgotPassword" style="font-size:12px; color:var(--ink-soft); text-decoration:underline; background:none; border:none; padding:0;">忘記密碼？</button>
+        </div>
         <div id="loginTurnstile" style="margin-bottom:14px;"></div>
         <button type="submit" class="btn btn-primary" style="width:100%">登入</button>
         <div class="form-msg" id="loginMsg"></div>
@@ -1450,6 +1465,10 @@
           <input type="password" id="signupPassword" required minlength="6">
         </div>
         <div class="field">
+          <label for="signupPasswordConfirm">確認密碼</label>
+          <input type="password" id="signupPasswordConfirm" required minlength="6">
+        </div>
+        <div class="field">
           <label for="signupEmail">電子信箱（選填，僅供聯絡使用，登入請一律使用帳號）</label>
           <input type="email" id="signupEmail">
         </div>
@@ -1458,6 +1477,47 @@
         <div class="form-msg" id="signupMsg"></div>
       </form>
       <div class="auth-switch">已經有帳號？<button id="toLogin">前往登入</button></div>
+    </div>
+
+    <div id="authForgotView" style="display:none">
+      <h3>忘記密碼</h3>
+
+      <div id="forgotStep1">
+        <p class="sub">請輸入你的登入帳號，我們會寄送驗證碼到你留的聯絡信箱</p>
+        <div class="field">
+          <label for="forgotAccount">帳號</label>
+          <input type="text" id="forgotAccount" required>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:100%" id="forgotSendCodeBtn">發送驗證碼</button>
+        <div class="form-msg" id="forgotStep1Msg"></div>
+      </div>
+
+      <div id="forgotStep2" style="display:none">
+        <p class="sub" id="forgotMaskedEmailNote"></p>
+        <div class="field">
+          <label for="forgotCode">驗證碼（6位數，30分鐘內有效）</label>
+          <input type="text" id="forgotCode" required maxlength="6">
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" id="forgotResendBtn" style="margin-bottom:10px;">重新發送驗證碼</button>
+        <button type="button" class="btn btn-primary" style="width:100%" id="forgotVerifyCodeBtn">確認驗證碼</button>
+        <div class="form-msg" id="forgotStep2Msg"></div>
+      </div>
+
+      <div id="forgotStep3" style="display:none">
+        <p class="sub">驗證成功，請設定新密碼</p>
+        <div class="field">
+          <label for="forgotNewPassword">新密碼（至少6碼）</label>
+          <input type="password" id="forgotNewPassword" required minlength="6">
+        </div>
+        <div class="field">
+          <label for="forgotNewPasswordConfirm">確認新密碼</label>
+          <input type="password" id="forgotNewPasswordConfirm" required minlength="6">
+        </div>
+        <button type="button" class="btn btn-primary" style="width:100%" id="forgotConfirmBtn">確認</button>
+        <div class="form-msg" id="forgotStep3Msg"></div>
+      </div>
+
+      <div class="auth-switch"><button id="forgotBackToLogin">← 返回登入</button></div>
     </div>
 
     <div id="authLoggedInView" style="display:none">
@@ -1498,6 +1558,11 @@
     <div class="cart-total"><span>預估訂金合計</span><span id="cartDepositTotal">NT$0</span></div>
     <div class="cart-total grand"><span>商品總額</span><span id="cartGrandTotal">NT$0</span></div>
     <p id="cartShippingHint" class="cart-note" style="color:var(--brass-dark); font-weight:600;"></p>
+    <div class="field" style="margin-bottom:10px;">
+      <label for="cartContactEmail" style="color:var(--brass-dark); font-weight:600;">聯絡信箱（必填）</label>
+      <input type="email" id="cartContactEmail" placeholder="送出訂單前請填寫" style="width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:6px;">
+      <p class="cart-note" style="margin-top:4px;">此信箱用於忘記密碼找回，以及後續訂單狀態通知，請務必填寫正確。</p>
+    </div>
     <p class="cart-note">此為預購委任代購，實際收款以訂金比例為準，出國採購後將另行通知尾款。</p>
     <button class="btn btn-primary" style="width:100%" id="checkoutBtn" disabled title="尚未開放，敬請期待">線上刷卡付訂金（尚未開放）</button>
     <button class="btn btn-outline" style="width:100%; margin-top:8px;" id="meetupCheckoutBtn">提出面交申請</button>
@@ -2266,6 +2331,8 @@ function refreshAuthView() {
   const loginV = document.getElementById('authLoginView');
   const signupV = document.getElementById('authSignupView');
   const loggedInV = document.getElementById('authLoggedInView');
+  const forgotV = document.getElementById('authForgotView');
+  forgotV.style.display = 'none';
   if (state.user) {
     loginV.style.display = 'none';
     signupV.style.display = 'none';
@@ -2280,6 +2347,111 @@ function refreshAuthView() {
   }
 }
 
+function showForgotPasswordView() {
+  document.getElementById('authLoginView').style.display = 'none';
+  document.getElementById('authSignupView').style.display = 'none';
+  document.getElementById('authForgotView').style.display = 'block';
+  document.getElementById('forgotStep1').style.display = 'block';
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('forgotStep3').style.display = 'none';
+  document.getElementById('forgotAccount').value = '';
+  document.getElementById('forgotCode').value = '';
+  document.getElementById('forgotStep1Msg').textContent = '';
+  document.getElementById('forgotStep2Msg').textContent = '';
+  document.getElementById('forgotStep3Msg').textContent = '';
+}
+document.getElementById('toForgotPassword').addEventListener('click', showForgotPasswordView);
+document.getElementById('forgotBackToLogin').addEventListener('click', () => {
+  document.getElementById('authForgotView').style.display = 'none';
+  document.getElementById('authLoginView').style.display = 'block';
+});
+
+let forgotFlowAccount = null;
+
+async function sendForgotCode(msgEl) {
+  const { data, error } = await sb.functions.invoke('send-verification-code', { body: { purpose: 'password_reset', account: forgotFlowAccount } });
+  if (error || data?.error) {
+    msgEl.textContent = data?.error || '發送失敗，請稍後再試'; msgEl.className = 'form-msg err';
+    return false;
+  }
+  return true;
+}
+
+document.getElementById('forgotSendCodeBtn').addEventListener('click', async () => {
+  const account = document.getElementById('forgotAccount').value.trim();
+  const msg = document.getElementById('forgotStep1Msg');
+  if (!account) { msg.textContent = '請輸入帳號'; msg.className = 'form-msg err'; return; }
+  const btn = document.getElementById('forgotSendCodeBtn');
+  btn.disabled = true; btn.textContent = '處理中...';
+  forgotFlowAccount = account;
+
+  const { data: masked } = await sb.rpc('get_masked_reset_email', { p_account: account });
+  const ok = await sendForgotCode(msg);
+  btn.disabled = false; btn.textContent = '發送驗證碼';
+  if (!ok) return;
+
+  document.getElementById('forgotMaskedEmailNote').textContent = masked
+    ? `驗證碼已寄至 ${masked}，請查收（含垃圾信件匣）`
+    : '若此帳號留有聯絡信箱，驗證碼將會寄出，請查收';
+  document.getElementById('forgotStep1').style.display = 'none';
+  document.getElementById('forgotStep2').style.display = 'block';
+});
+
+document.getElementById('forgotResendBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('forgotStep2Msg');
+  const btn = document.getElementById('forgotResendBtn');
+  btn.disabled = true;
+  const ok = await sendForgotCode(msg);
+  btn.disabled = false;
+  msg.textContent = ok ? '已重新發送驗證碼' : msg.textContent;
+  msg.className = ok ? 'form-msg ok' : 'form-msg err';
+});
+
+document.getElementById('forgotVerifyCodeBtn').addEventListener('click', async () => {
+  const code = document.getElementById('forgotCode').value.trim();
+  const msg = document.getElementById('forgotStep2Msg');
+  if (!code) { msg.textContent = '請輸入驗證碼'; msg.className = 'form-msg err'; return; }
+  const { data: valid, error } = await sb.rpc('check_reset_code', { p_account: forgotFlowAccount, p_code: code });
+  if (error || !valid) { msg.textContent = '驗證碼錯誤或已過期'; msg.className = 'form-msg err'; return; }
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('forgotStep3').style.display = 'block';
+  document.getElementById('forgotStep3').dataset.code = code;
+});
+
+document.getElementById('forgotConfirmBtn').addEventListener('click', async () => {
+  const newPassword = document.getElementById('forgotNewPassword').value;
+  const newPasswordConfirm = document.getElementById('forgotNewPasswordConfirm').value;
+  const code = document.getElementById('forgotStep3').dataset.code;
+  const msg = document.getElementById('forgotStep3Msg');
+  if (newPassword.length < 6) { msg.textContent = '密碼至少需要6碼'; msg.className = 'form-msg err'; return; }
+  if (newPassword !== newPasswordConfirm) { msg.textContent = '兩次輸入的密碼不一致'; msg.className = 'form-msg err'; return; }
+
+  const btn = document.getElementById('forgotConfirmBtn');
+  btn.disabled = true; btn.textContent = '處理中...';
+
+  // 伺服器端會重新驗證一次驗證碼，不會相信任何前端先前的檢查結果，
+  // 密碼真正更新成功後才會標記驗證碼失效；失敗的話密碼完全不會被更動
+  const { data, error } = await sb.functions.invoke('reset-password', {
+    body: { account: forgotFlowAccount, code, new_password: newPassword },
+  });
+  if (error || data?.error) {
+    btn.disabled = false; btn.textContent = '確認';
+    msg.textContent = data?.error || '更新失敗，請重新操作一次'; msg.className = 'form-msg err';
+    return;
+  }
+
+  // 密碼確定更新成功之後，才用新密碼登入，登入失敗也不會回頭去動密碼
+  const authEmail = `${forgotFlowAccount.toLowerCase()}@internal.local`;
+  const { error: loginErr } = await sb.auth.signInWithPassword({ email: authEmail, password: newPassword });
+  btn.disabled = false; btn.textContent = '確認';
+  if (loginErr) {
+    msg.textContent = '密碼已更新成功，但自動登入失敗，請手動登入'; msg.className = 'form-msg ok';
+    return;
+  }
+  toast('密碼已更新，歡迎回來！');
+  closeAuth();
+});
+
 // 帳號 + 密碼(信箱選填) 註冊
 document.getElementById('signupForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -2287,6 +2459,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   const instagram = document.getElementById('signupInstagram').value.trim();
   const account = document.getElementById('signupAccount').value.trim();
   const password = document.getElementById('signupPassword').value;
+  const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
   const emailInput = document.getElementById('signupEmail').value.trim();
   const msg = document.getElementById('signupMsg');
 
@@ -2296,6 +2469,10 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
   }
   if (!validateAccountFormat(account)) {
     msg.textContent = '帳號至少需要6個字元，可用英文字母、數字與符號'; msg.className = 'form-msg err';
+    return;
+  }
+  if (password !== passwordConfirm) {
+    msg.textContent = '兩次輸入的密碼不一致，請重新確認'; msg.className = 'form-msg err';
     return;
   }
   if (!signupCaptchaToken) {
@@ -2420,7 +2597,11 @@ sb.auth.onAuthStateChange((event, session) => {
    ============================================================ */
 const cartDrawer = document.getElementById('cartDrawer');
 const drawerOverlay = document.getElementById('drawerOverlay');
-function openCart() { cartDrawer.classList.add('open'); drawerOverlay.classList.add('open'); }
+function openCart() {
+  cartDrawer.classList.add('open'); drawerOverlay.classList.add('open');
+  const emailField = document.getElementById('cartContactEmail');
+  if (!emailField.value) emailField.value = state.profile?.contact_email || '';
+}
 function closeCart() { cartDrawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
 document.getElementById('cartBtn').addEventListener('click', openCart);
 document.getElementById('cartClose').addEventListener('click', closeCart);
@@ -2630,6 +2811,14 @@ document.getElementById('meetupCheckoutBtn').addEventListener('click', async () 
   if (!state.user) { toast('請先登入'); openAuth(); return; }
   if (state.cart.length === 0) { toast('購物車是空的'); return; }
 
+  const emailField = document.getElementById('cartContactEmail');
+  const emailValue = emailField.value.trim();
+  if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+    toast('請填寫正確的聯絡信箱後再送出');
+    emailField.focus();
+    return;
+  }
+
   const nonRefundableNames = state.cart.filter(item => item.products?.is_refundable === false).map(item => item.products.name);
   if (nonRefundableNames.length > 0) {
     if (!confirm(`購物車內以下商品採購後即不接受退款：\n${nonRefundableNames.join('、')}\n\n確定要送出這筆預購需求嗎？`)) return;
@@ -2638,6 +2827,13 @@ document.getElementById('meetupCheckoutBtn').addEventListener('click', async () 
   const meetupBtn = document.getElementById('meetupCheckoutBtn');
   meetupBtn.disabled = true;
   meetupBtn.textContent = '送出中...';
+
+  // 結帳前先把信箱同步回個人資料，跟編輯個人資料頁共用同一個欄位，不會各存各的
+  if (emailValue !== (state.profile?.contact_email || '')) {
+    const { error: emailSyncErr } = await sb.from('profiles').update({ contact_email: emailValue }).eq('id', state.user.id);
+    if (emailSyncErr) { toast('信箱更新失敗，請稍後再試'); meetupBtn.disabled = false; meetupBtn.textContent = '提出面交申請'; return; }
+    await loadProfile();
+  }
 
   // 價格、總額、520元門檻全部交給資料庫函式即時核算，不再相信瀏覽器端算好的數字，
   // 也不再由前端直接寫入 orders / order_items（一般帳號已經沒有這兩張表的直接寫入權限）。
@@ -3463,7 +3659,7 @@ async function loadProfile() {
   if (!state.user) { state.profile = null; updateAdminUI(); return; }
   const { data, error } = await sb
     .from('profiles')
-    .select('is_admin, display_name, uid, account, instagram, avatar_url, contact_email, phone')
+    .select('is_admin, display_name, uid, account, instagram, avatar_url, contact_email, phone, contact_email_verified, contact_email_bounced')
     .eq('id', state.user.id)
     .single();
   if (error) { console.error('讀取會員資料失敗', error); state.profile = null; }
@@ -3515,6 +3711,53 @@ const DEFAULT_AVATAR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   '</svg>'
 );
 
+function renderEmailVerifyStatus() {
+  const row = document.getElementById('epEmailVerifyRow');
+  const codeRow = document.getElementById('epEmailCodeRow');
+  const badge = document.getElementById('epEmailVerifyBadge');
+  const sendBtn = document.getElementById('epSendVerifyBtn');
+  const hasEmail = !!state.profile?.contact_email;
+  codeRow.style.display = 'none';
+  document.getElementById('epEmailVerifyMsg').textContent = '';
+  if (!hasEmail) { row.style.display = 'none'; return; }
+  row.style.display = 'flex';
+  if (state.profile.contact_email_verified) {
+    badge.textContent = '已驗證'; badge.className = 'order-card-status paid';
+    sendBtn.style.display = 'none';
+  } else if (state.profile.contact_email_bounced) {
+    badge.textContent = '信件無法送達'; badge.className = 'order-card-status pending';
+    sendBtn.style.display = 'inline-block'; sendBtn.textContent = '重新發送驗證信';
+  } else {
+    badge.textContent = '未驗證'; badge.className = 'order-card-status pending';
+    sendBtn.style.display = 'inline-block'; sendBtn.textContent = '發送驗證信';
+  }
+}
+
+document.getElementById('epSendVerifyBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('epSendVerifyBtn');
+  const msg = document.getElementById('epEmailVerifyMsg');
+  btn.disabled = true;
+  const { data, error } = await sb.functions.invoke('send-verification-code', { body: { purpose: 'email_verify' } });
+  btn.disabled = false;
+  if (error || data?.error) {
+    msg.textContent = data?.error || '發送失敗，請稍後再試'; msg.className = 'form-msg err';
+    return;
+  }
+  msg.textContent = '驗證信已寄出，請至信箱查收'; msg.className = 'form-msg ok';
+  document.getElementById('epEmailCodeRow').style.display = 'flex';
+});
+
+document.getElementById('epConfirmVerifyBtn').addEventListener('click', async () => {
+  const code = document.getElementById('epEmailCodeInput').value.trim();
+  const msg = document.getElementById('epEmailVerifyMsg');
+  if (!code) { msg.textContent = '請輸入驗證碼'; msg.className = 'form-msg err'; return; }
+  const { error } = await sb.rpc('verify_email_code', { p_code: code });
+  if (error) { msg.textContent = error.message; msg.className = 'form-msg err'; return; }
+  await loadProfile();
+  renderEmailVerifyStatus();
+  msg.textContent = '信箱驗證成功！'; msg.className = 'form-msg ok';
+});
+
 function populateEditProfileFields() {
   document.getElementById('epAvatarPreview').src = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
   document.getElementById('epAccount').value = state.profile?.account || '';
@@ -3523,6 +3766,7 @@ function populateEditProfileFields() {
   document.getElementById('epInstagram').value = state.profile?.instagram || '';
   document.getElementById('epContactEmail').value = state.profile?.contact_email || '';
   document.getElementById('epPhone').value = state.profile?.phone || '';
+  renderEmailVerifyStatus();
   document.getElementById('epAccountMsg').textContent = '';
   document.getElementById('epUserinfoMsg').textContent = '';
   document.getElementById('epAvatarMsg').textContent = '';
@@ -4317,7 +4561,7 @@ document.querySelectorAll('[data-admin-tab]').forEach(btn => {
 const ADMIN_BATCH_ACTION = {
   // 哪些狀態支援勾選批次操作，以及對應要呼叫的動作
   paid_pending: { label: '批次鎖單', run: (ids) => sb.rpc('admin_lock_items', { item_ids: ids }) },
-  locked_sourcing: { label: '批次發送抵台通知', run: (ids) => sb.rpc('admin_notify_arrived_batch', { item_ids: ids }) },
+  locked_sourcing: { label: '批次發送抵台通知', run: (ids) => sb.rpc('admin_notify_arrived_batch', { item_ids: ids }), sendArrivalEmail: true },
 };
 
 function adminItemMatchesFilters(it) {
@@ -4540,6 +4784,11 @@ function renderAdminOrdersBatchBar() {
     const { error } = await action.run(ids);
     if (error) { toast('批次操作失敗：' + error.message); return; }
     toast(`已完成批次操作（${ids.length} 項）`);
+    if (action.sendArrivalEmail) {
+      sb.functions.invoke('send-arrival-email', { body: { item_ids: ids } }).then(({ data, error: emailErr }) => {
+        if (emailErr || data?.error) { console.error('到貨通知信寄送失敗', emailErr || data?.error); }
+      });
+    }
     state.adminOrderSelectedItems.clear(); state.adminOrderBatchState = null;
     loadAdminOrders();
   };
@@ -5588,6 +5837,7 @@ async function renderAdminMessagesThread() {
   await drawAdminChat(box, customerAvatar, myAvatar);
   const name = state.adminChatProfile?.display_name || '會員';
   document.getElementById('adminChatThreadTitle').textContent = `與 ${name} 的對話`;
+  document.getElementById('adminResetPasswordBtn').style.display = 'inline-block';
   box.scrollTop = box.scrollHeight;
 
   if (!box.dataset.scrollBound) {
@@ -5599,6 +5849,22 @@ async function renderAdminMessagesThread() {
     });
   }
 }
+
+document.getElementById('adminResetPasswordBtn').addEventListener('click', async () => {
+  const uid = state.adminChatActiveUser;
+  if (!uid) return;
+  const name = state.adminChatProfile?.display_name || '這位會員';
+  if (!confirm(`請先確認已經透過對話核對過身分（帳號、訂單編號、金額等多項資訊都要對得上）。\n\n確定要重設 ${name} 的密碼嗎？`)) return;
+  const newPassword = prompt('請輸入要設定的新密碼（至少6碼），設定後請透過聊天室告知對方新密碼：');
+  if (!newPassword) return;
+  if (newPassword.length < 6) { toast('密碼至少需要6碼'); return; }
+
+  const { data, error } = await sb.functions.invoke('admin-reset-password', {
+    body: { target_user_id: uid, new_password: newPassword },
+  });
+  if (error || data?.error) { toast('重設失敗：' + (data?.error || error.message)); return; }
+  toast('密碼已重設，請透過聊天室告知對方新密碼');
+});
 
 async function drawAdminChat(box, customerAvatar, myAvatar) {
   const withImages = await Promise.all(adminChatMsgState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
