@@ -1017,6 +1017,18 @@
   <div id="adminWishlistPageSlot"></div>
 </div>
 
+<!-- ============ 帳號救援請求 全頁畫面 ============ -->
+<div id="adminRescuePageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminRescuePageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">帳號救援請求</h2>
+  <p class="sub" style="max-width:640px; margin-bottom:16px;">客戶透過「帳號救援」表單送出的求助紀錄，請核對信箱/帳號等多項資訊確認是本人後，再協助重設密碼並人工回信通知。</p>
+  <div class="filter-group" id="rescueFilterGroup" style="margin-bottom:16px;">
+    <button class="chip active" data-rescue-filter="unresolved">待處理</button>
+    <button class="chip" data-rescue-filter="all">全部</button>
+  </div>
+  <div id="adminRescueList" style="max-width:680px;"></div>
+</div>
+
 <!-- ============ 商品管理 全頁畫面 ============ -->
 <div id="adminProductsPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="adminProductsPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
@@ -1434,7 +1446,8 @@
           <label for="loginPassword">密碼</label>
           <input type="password" id="loginPassword" required>
         </div>
-        <div style="text-align:right; margin-bottom:14px;">
+        <div style="text-align:right; margin-bottom:14px; display:flex; justify-content:flex-end; gap:14px;">
+          <button type="button" id="toAccountRescue" style="font-size:12px; color:var(--ink-soft); text-decoration:underline; background:none; border:none; padding:0;">帳號救援</button>
           <button type="button" id="toForgotPassword" style="font-size:12px; color:var(--ink-soft); text-decoration:underline; background:none; border:none; padding:0;">忘記密碼？</button>
         </div>
         <div id="loginTurnstile" style="margin-bottom:14px;"></div>
@@ -1518,6 +1531,33 @@
       </div>
 
       <div class="auth-switch"><button id="forgotBackToLogin">← 返回登入</button></div>
+    </div>
+
+    <div id="authRescueView" style="display:none">
+      <h3>帳號救援</h3>
+      <p class="sub">目前信箱自動驗證系統尚未完全啟用，請填寫以下資訊，我們會盡快人工協助你處理，並透過你留的信箱聯絡你。</p>
+      <div class="field">
+        <label>你的問題是？</label>
+        <div style="display:flex; gap:16px; margin-top:6px;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="radio" name="rescueIssueType" value="forgot_password" checked style="width:auto;"> 忘記密碼</label>
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="radio" name="rescueIssueType" value="forgot_account" style="width:auto;"> 忘記帳號</label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rescueAccount">你記得的帳號（若不記得可留空）</label>
+        <input type="text" id="rescueAccount">
+      </div>
+      <div class="field">
+        <label for="rescueEmail">當初註冊留的信箱（必填，我們會用這個聯絡你）</label>
+        <input type="email" id="rescueEmail" required>
+      </div>
+      <div class="field">
+        <label for="rescueMessage">補充說明（選填，例如記得買過什麼商品）</label>
+        <textarea id="rescueMessage" style="min-height:56px;"></textarea>
+      </div>
+      <button type="button" class="btn btn-primary" style="width:100%" id="rescueSubmitBtn">送出</button>
+      <div class="form-msg" id="rescueMsg"></div>
+      <div class="auth-switch"><button id="rescueBackToLogin">← 返回登入</button></div>
     </div>
 
     <div id="authLoggedInView" style="display:none">
@@ -1635,6 +1675,7 @@
       <button class="admin-tab" data-admin-tab="demandLocked">採購總計</button>
       <button class="admin-tab" data-admin-tab="demandPending">待鎖需求</button>
       <button class="admin-tab" data-admin-tab="demandAll">全店需求總覽</button>
+      <a href="#admin-rescue" class="admin-tab" id="adminRescueTabLink" style="text-decoration:none; display:inline-block;">帳號救援</a>
     </div>
 
     <div id="adminOrdersTab">
@@ -1797,6 +1838,24 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ============ 強制修改密碼(人工救援後的臨時密碼登入用，無法關閉) ============ -->
+<div class="modal-overlay" id="forcePasswordOverlay">
+  <div class="modal">
+    <h3>請設定新密碼</h3>
+    <p class="sub">你目前使用的是客服協助設定的臨時密碼，請立即設定一組只有你自己知道的新密碼，設定完成前無法使用網站其他功能。</p>
+    <div class="field">
+      <label for="forcePwNew">新密碼（至少6碼）</label>
+      <input type="password" id="forcePwNew" required minlength="6">
+    </div>
+    <div class="field">
+      <label for="forcePwConfirm">確認新密碼</label>
+      <input type="password" id="forcePwConfirm" required minlength="6">
+    </div>
+    <button type="button" class="btn btn-primary" style="width:100%" id="forcePwConfirmBtn">確認</button>
+    <div class="form-msg" id="forcePwMsg"></div>
+  </div>
+</div>
 
 <!-- ============ 聊天圖片大圖預覽 ============ -->
 <div class="chat-lightbox-overlay" id="chatLightboxOverlay">
@@ -2333,6 +2392,7 @@ function refreshAuthView() {
   const loggedInV = document.getElementById('authLoggedInView');
   const forgotV = document.getElementById('authForgotView');
   forgotV.style.display = 'none';
+  document.getElementById('authRescueView').style.display = 'none';
   if (state.user) {
     loginV.style.display = 'none';
     signupV.style.display = 'none';
@@ -2364,6 +2424,38 @@ document.getElementById('toForgotPassword').addEventListener('click', showForgot
 document.getElementById('forgotBackToLogin').addEventListener('click', () => {
   document.getElementById('authForgotView').style.display = 'none';
   document.getElementById('authLoginView').style.display = 'block';
+});
+
+function showAccountRescueView() {
+  document.getElementById('authLoginView').style.display = 'none';
+  document.getElementById('authSignupView').style.display = 'none';
+  document.getElementById('authRescueView').style.display = 'block';
+  document.getElementById('rescueAccount').value = '';
+  document.getElementById('rescueEmail').value = '';
+  document.getElementById('rescueMessage').value = '';
+  document.getElementById('rescueMsg').textContent = '';
+}
+document.getElementById('toAccountRescue').addEventListener('click', showAccountRescueView);
+document.getElementById('rescueBackToLogin').addEventListener('click', () => {
+  document.getElementById('authRescueView').style.display = 'none';
+  document.getElementById('authLoginView').style.display = 'block';
+});
+document.getElementById('rescueSubmitBtn').addEventListener('click', async () => {
+  const issueType = document.querySelector('input[name="rescueIssueType"]:checked').value;
+  const account = document.getElementById('rescueAccount').value.trim();
+  const email = document.getElementById('rescueEmail').value.trim();
+  const message = document.getElementById('rescueMessage').value.trim();
+  const msg = document.getElementById('rescueMsg');
+  if (!email) { msg.textContent = '請填寫信箱'; msg.className = 'form-msg err'; return; }
+
+  const btn = document.getElementById('rescueSubmitBtn');
+  btn.disabled = true; btn.textContent = '送出中...';
+  const { error } = await sb.rpc('submit_rescue_request', {
+    p_issue_type: issueType, p_claimed_account: account, p_claimed_email: email, p_message: message,
+  });
+  btn.disabled = false; btn.textContent = '送出';
+  if (error) { msg.textContent = error.message; msg.className = 'form-msg err'; return; }
+  msg.textContent = '已收到你的請求，我們會盡快透過信箱聯絡你！'; msg.className = 'form-msg ok';
 });
 
 let forgotFlowAccount = null;
@@ -3250,10 +3342,13 @@ function renderRoute() {
   const isRefundPolicy = hash === '#refund-policy';
   const isWishSubmit = hash === '#wishlist-submit';
   const isWishPublic = hash === '#wishlist-public';
+  const isAdminRescue = hash === '#admin-rescue';
   const adminPage = ADMIN_PANEL_PAGES[hash];
 
   const anyAdminPageOpen = !!adminPage;
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isRefundOrders || isPreorderGuide || isRefundPolicy || isWishSubmit || isWishPublic) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isRefundOrders || isPreorderGuide || isRefundPolicy || isWishSubmit || isWishPublic || isAdminRescue) ? 'none' : 'block';
+  document.getElementById('adminRescuePageView').style.display = isAdminRescue ? 'block' : 'none';
+  if (isAdminRescue) { if (!state.profile?.is_admin) { toast('僅管理者可使用此頁面'); location.hash = ''; } else { loadAdminRescueRequests(); } }
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
@@ -3659,16 +3754,54 @@ async function loadProfile() {
   if (!state.user) { state.profile = null; updateAdminUI(); return; }
   const { data, error } = await sb
     .from('profiles')
-    .select('is_admin, display_name, uid, account, instagram, avatar_url, contact_email, phone, contact_email_verified, contact_email_bounced')
+    .select('is_admin, display_name, uid, account, instagram, avatar_url, contact_email, phone, contact_email_verified, contact_email_bounced, password_reset_required')
     .eq('id', state.user.id)
     .single();
   if (error) { console.error('讀取會員資料失敗', error); state.profile = null; }
   else { state.profile = data; }
   updateAdminUI();
   updateAcctIcon();
+  checkForcePasswordChange();
   const uidEl = document.getElementById('loggedInUid');
   if (uidEl) uidEl.textContent = state.profile?.uid ? `會員編號：${state.profile.uid}` : '';
 }
+
+function checkForcePasswordChange() {
+  const overlay = document.getElementById('forcePasswordOverlay');
+  if (state.profile?.password_reset_required) {
+    overlay.classList.add('open');
+  } else {
+    overlay.classList.remove('open');
+  }
+}
+
+document.getElementById('forcePwConfirmBtn').addEventListener('click', async () => {
+  const newPw = document.getElementById('forcePwNew').value;
+  const confirmPw = document.getElementById('forcePwConfirm').value;
+  const msg = document.getElementById('forcePwMsg');
+  if (newPw.length < 6) { msg.textContent = '密碼至少需要6碼'; msg.className = 'form-msg err'; return; }
+  if (newPw !== confirmPw) { msg.textContent = '兩次輸入的密碼不一致'; msg.className = 'form-msg err'; return; }
+
+  const btn = document.getElementById('forcePwConfirmBtn');
+  btn.disabled = true; btn.textContent = '處理中...';
+  const { error: pwErr } = await sb.auth.updateUser({ password: newPw });
+  if (pwErr) {
+    btn.disabled = false; btn.textContent = '確認';
+    msg.textContent = '更新失敗：' + pwErr.message; msg.className = 'form-msg err';
+    return;
+  }
+  const { error: flagErr } = await sb.from('profiles').update({ password_reset_required: false }).eq('id', state.user.id);
+  btn.disabled = false; btn.textContent = '確認';
+  if (flagErr) {
+    msg.textContent = '密碼已更新，但狀態同步失敗，請重新整理頁面'; msg.className = 'form-msg err';
+    return;
+  }
+  await loadProfile();
+  document.getElementById('forcePasswordOverlay').classList.remove('open');
+  document.getElementById('forcePwNew').value = '';
+  document.getElementById('forcePwConfirm').value = '';
+  toast('密碼已更新完成！');
+});
 function updateAcctIcon() {
   const svg = document.getElementById('acctIconSvg');
   const img = document.getElementById('acctAvatarImg');
@@ -4837,6 +4970,68 @@ document.getElementById('processOverdueBtn').addEventListener('click', async () 
   if (error) { toast('批次處理失敗：' + error.message); return; }
   toast(`已批次完成 ${affected} 筆訂單`); loadAdminOrders();
 });
+
+document.getElementById('adminRescueTabLink').addEventListener('click', () => {
+  document.getElementById('adminOverlay').classList.remove('open');
+});
+document.getElementById('adminRescuePageBackBtn').addEventListener('click', () => { location.hash = ''; });
+document.querySelectorAll('[data-rescue-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-rescue-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.rescueFilter = btn.dataset.rescueFilter;
+    loadAdminRescueRequests();
+  });
+});
+
+async function loadAdminRescueRequests() {
+  const list = document.getElementById('adminRescueList');
+  let query = sb.from('account_rescue_requests').select('*').order('created_at', { ascending: false });
+  if ((state.rescueFilter || 'unresolved') === 'unresolved') query = query.eq('resolved', false);
+  const { data, error } = await query;
+  if (error) { list.innerHTML = '<p>讀取失敗</p>'; console.error(error); return; }
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前沒有救援請求。</p>'; return; }
+
+  list.innerHTML = data.map(r => `
+    <div class="order-row" id="rescue-${r.id}">
+      <div class="order-row-top">
+        <span class="order-id">${new Date(r.created_at).toLocaleString('zh-Hant-TW')}</span>
+        <span class="order-status ${r.resolved ? 'order-status-fulfilled' : 'order-status-pending'}">${r.resolved ? '已處理' : '待處理'}</span>
+      </div>
+      <p style="font-size:13px; margin-bottom:4px;"><strong>問題類型：</strong>${r.issue_type === 'forgot_password' ? '忘記密碼' : '忘記帳號'}</p>
+      <p style="font-size:13px; margin-bottom:4px;"><strong>客戶提供的帳號：</strong>${escapeHtml(r.claimed_account || '（未填寫）')}</p>
+      <p style="font-size:13px; margin-bottom:4px;"><strong>聯絡信箱：</strong>${escapeHtml(r.claimed_email)}</p>
+      ${r.message ? `<p style="font-size:13px; margin-bottom:8px;"><strong>補充說明：</strong>${escapeHtml(r.message)}</p>` : ''}
+      <div class="order-admin-actions" style="flex-wrap:wrap; margin-top:8px;">
+        ${!r.resolved ? `<button class="btn btn-outline btn-sm" data-rescue-resolve="${r.id}">標記已處理</button>` : ''}
+        ${r.claimed_account ? `<button class="btn btn-outline btn-sm" data-rescue-reset="${r.id}" data-rescue-account="${escapeHtml(r.claimed_account)}">核對後重設密碼</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-rescue-resolve]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { error: err } = await sb.from('account_rescue_requests').update({ resolved: true, resolved_at: new Date().toISOString() }).eq('id', btn.dataset.rescueResolve);
+      if (err) { toast('操作失敗：' + err.message); return; }
+      loadAdminRescueRequests();
+    });
+  });
+  list.querySelectorAll('[data-rescue-reset]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const account = btn.dataset.rescueAccount;
+      if (!confirm(`請先確認信箱、帳號等資訊都核對無誤。\n\n確定要重設帳號「${account}」的密碼嗎？`)) return;
+      const { data: profile, error: findErr } = await sb.from('profiles').select('id').ilike('account', account).maybeSingle();
+      if (findErr || !profile) { toast('找不到這個帳號，請確認帳號是否正確'); return; }
+      const newPassword = prompt('請輸入要設定的臨時密碼（至少6碼），設定後請人工寄信告知對方：');
+      if (!newPassword || newPassword.length < 6) { toast('密碼至少需要6碼'); return; }
+      const { data, error: rpcErr } = await sb.functions.invoke('admin-reset-password', {
+        body: { target_user_id: profile.id, new_password: newPassword },
+      });
+      if (rpcErr || data?.error) { toast('重設失敗：' + (data?.error || rpcErr.message)); return; }
+      toast('密碼已重設，請人工寄信告知對方新密碼，對方登入後會被強制要求改成自己的密碼');
+    });
+  });
+}
 
 async function loadAdminWishlist() {
   const { data, error } = await sb
