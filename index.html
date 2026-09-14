@@ -409,7 +409,7 @@
   .ep-section-title { font-family: var(--font-display); font-size: 16px; margin: 0 0 12px; }
   .ep-section-header .ep-section-title { margin-bottom: 0; }
   .ep-field-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
-  .ep-field-row .ep-pencil { margin-top: 22px; }
+  .ep-field-row .ep-pencil { margin-top: 28px; }
   .ep-pencil {
     background: none; border: none; font-size: 15px; color: var(--ink-soft);
     cursor: pointer; padding: 8px; flex-shrink: 0; line-height: 1;
@@ -544,7 +544,8 @@
   .chat-bubble-row { display: flex; margin-bottom: 10px; gap: 8px; align-items: flex-end; }
   .chat-date-divider { display: flex; align-items: center; text-align: center; margin: 18px 0 14px; color: var(--ink-soft); font-size: 12px; }
   .chat-date-divider::before, .chat-date-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-  .chat-date-divider span { padding: 0 12px; white-space: nowrap; }
+  .chat-date-divider-label { padding: 0 12px; white-space: nowrap; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .chat-date-divider-sub { font-size: 10px; color: var(--ink-soft); opacity: 0.75; }
   .chat-bubble-row-card { margin-top: 14px; }
   .chat-bubble-row > div { min-width: 0; max-width: 85%; }
   .chat-bubble-row.mine { justify-content: flex-end; }
@@ -1272,7 +1273,7 @@
 <!-- ============ 瀏覽大家的許願 ============ -->
 <div id="wishlistPublicPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="wishlistPublicBackBtn" style="margin-bottom:20px;">← 返回</button>
-  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px; margin-bottom:6px;">
+  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:6px;">
     <h2 class="section-title" style="margin-bottom:0;">許願專區</h2>
     <a href="#wishlist-submit" class="btn btn-primary btn-sm">+ 提出我的許願</a>
   </div>
@@ -1346,16 +1347,22 @@
       <div id="epPasswordFormOpen" style="display:none;">
         <div class="field">
           <label for="epOldPassword">目前密碼</label>
-          <input type="password" id="epOldPassword" autocomplete="current-password">
+          <input type="text" id="epOldPassword" autocomplete="current-password">
         </div>
         <div class="field">
           <label for="epNewPassword">新密碼（至少6碼）</label>
-          <input type="password" id="epNewPassword" minlength="6" autocomplete="new-password">
+          <div style="position:relative;">
+            <input type="password" id="epNewPassword" minlength="6" autocomplete="new-password" style="padding-right:44px;">
+            <button type="button" id="epNewPasswordToggle" aria-label="顯示/隱藏密碼" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--ink-soft); cursor:pointer; padding:6px; line-height:1;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
         <div class="field">
           <label for="epNewPasswordConfirm">確認新密碼</label>
           <input type="password" id="epNewPasswordConfirm" minlength="6" autocomplete="new-password">
         </div>
+        <div id="epPasswordTurnstile" style="margin-bottom:14px;"></div>
         <div class="ep-actions">
           <button type="button" class="btn btn-outline btn-sm" id="epPasswordCancelBtn">取消</button>
           <button type="button" class="btn btn-primary btn-sm" id="epPasswordSaveBtn">確認修改</button>
@@ -2361,8 +2368,8 @@ document.getElementById('productSearchInput').addEventListener('input', (e) => {
    ============================================================ */
 const authOverlay = document.getElementById('authOverlay');
 const TURNSTILE_SITE_KEY = '0x4AAAAAAEmB_pKQiDMFxZC3';
-let loginTurnstileWidgetId = null, signupTurnstileWidgetId = null;
-let loginCaptchaToken = null, signupCaptchaToken = null;
+let loginTurnstileWidgetId = null, signupTurnstileWidgetId = null, epPasswordTurnstileWidgetId = null;
+let loginCaptchaToken = null, signupCaptchaToken = null, epPasswordCaptchaToken = null;
 
 let turnstileLoadPending = false;
 function renderTurnstileWidgets() {
@@ -2384,6 +2391,20 @@ function renderTurnstileWidgets() {
       callback: (token) => { signupCaptchaToken = token; document.getElementById('signupMsg').textContent = ''; },
       'error-callback': () => { signupCaptchaToken = null; },
       'expired-callback': () => { signupCaptchaToken = null; document.getElementById('signupMsg').textContent = '驗證已過期，請重新勾選驗證框'; document.getElementById('signupMsg').className = 'form-msg err'; },
+    });
+  }
+}
+
+// 「修改密碼」需要重新登入一次核對目前密碼，這個動作也會經過Supabase的登入驗證，
+// 因此一樣需要通過人機驗證，這裡另外渲染一個獨立的驗證框(修改密碼頁面跟登入/註冊彈窗不是同一個畫面)
+function renderPasswordTurnstileWidget() {
+  if (typeof turnstile === 'undefined') { setTimeout(renderPasswordTurnstileWidget, 300); return; }
+  if (epPasswordTurnstileWidgetId === null) {
+    epPasswordTurnstileWidgetId = turnstile.render('#epPasswordTurnstile', {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => { epPasswordCaptchaToken = token; },
+      'error-callback': () => { epPasswordCaptchaToken = null; },
+      'expired-callback': () => { epPasswordCaptchaToken = null; },
     });
   }
 }
@@ -2440,7 +2461,14 @@ function showForgotPasswordView() {
   document.getElementById('forgotStep2Msg').textContent = '';
   document.getElementById('forgotStep3Msg').textContent = '';
 }
-document.getElementById('toForgotPassword').addEventListener('click', showForgotPasswordView);
+document.getElementById('toForgotPassword').addEventListener('click', () => {
+  if (!EMAIL_SENDING_ENABLED) {
+    toast('信箱自動驗證尚未開通，請改用「帳號救援」讓我們協助你');
+    showAccountRescueView();
+    return;
+  }
+  showForgotPasswordView();
+});
 document.getElementById('forgotBackToLogin').addEventListener('click', () => {
   document.getElementById('authForgotView').style.display = 'none';
   document.getElementById('authLoginView').style.display = 'block';
@@ -3016,6 +3044,10 @@ function formatDateLabel(dateStr) {
   if (diffDays === 1) return '昨天';
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
+function formatFullDate(dateStr) {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+}
 
 // 聊天室共用的時間格式：今天的訊息只顯示「上午/下午 H:MM」，非今天的會加上日期標籤，不顯示秒數
 function formatChatTime(dateStr) {
@@ -3054,7 +3086,8 @@ function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixF
     const dateLabel = formatDateLabel(m.created_at);
     let dividerHtml = '';
     if (dateLabel !== lastDateLabel) {
-      dividerHtml = `<div class="chat-date-divider"><span>${dateLabel}</span></div>`;
+      const subLabel = (dateLabel === '今天' || dateLabel === '昨天') ? `<span class="chat-date-divider-sub">${formatFullDate(m.created_at)}</span>` : '';
+      dividerHtml = `<div class="chat-date-divider"><span class="chat-date-divider-label">${dateLabel}${subLabel}</span></div>`;
       lastDateLabel = dateLabel;
     }
     return `${dividerHtml}<div class="chat-bubble-row ${isMine ? 'mine' : ''} ${m._isSpecialCard ? 'chat-bubble-row-card' : ''}">
@@ -3884,6 +3917,9 @@ const DEFAULT_AVATAR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   '</svg>'
 );
 
+// 自動寄信功能尚未開通(要等 Resend 網域驗證完成)，這裡先統一關閉，等日後設定好只要把這裡改成 true 即可全部復原
+const EMAIL_SENDING_ENABLED = false;
+
 function renderEmailVerifyStatus() {
   const row = document.getElementById('epEmailVerifyRow');
   const codeRow = document.getElementById('epEmailCodeRow');
@@ -3891,7 +3927,8 @@ function renderEmailVerifyStatus() {
   const sendBtn = document.getElementById('epSendVerifyBtn');
   const hasEmail = !!state.profile?.contact_email;
   codeRow.style.display = 'none';
-  document.getElementById('epEmailVerifyMsg').textContent = '';
+  document.getElementById('epEmailVerifyMsg').textContent = EMAIL_SENDING_ENABLED ? '' : '信箱自動驗證尚未開通，若需要協助請至登入頁的「帳號救援」';
+  document.getElementById('epEmailVerifyMsg').className = 'form-msg';
   if (!hasEmail) { row.style.display = 'none'; return; }
   row.style.display = 'flex';
   if (state.profile.contact_email_verified) {
@@ -3903,6 +3940,11 @@ function renderEmailVerifyStatus() {
   } else {
     badge.textContent = '未驗證'; badge.className = 'order-card-status pending';
     sendBtn.style.display = 'inline-block'; sendBtn.textContent = '發送驗證信';
+  }
+  if (!EMAIL_SENDING_ENABLED) {
+    sendBtn.disabled = true;
+    sendBtn.title = '信箱自動驗證尚未開通，敬請期待';
+    sendBtn.textContent += '（尚未開通）';
   }
 }
 
@@ -3978,6 +4020,11 @@ document.querySelectorAll('[data-ep-edit-field]').forEach(btn => {
 document.getElementById('epOpenPasswordFormBtn').addEventListener('click', () => {
   document.getElementById('epPasswordFormClosed').style.display = 'none';
   document.getElementById('epPasswordFormOpen').style.display = 'block';
+  renderPasswordTurnstileWidget();
+});
+document.getElementById('epNewPasswordToggle').addEventListener('click', () => {
+  const input = document.getElementById('epNewPassword');
+  input.type = input.type === 'password' ? 'text' : 'password';
 });
 document.getElementById('epPasswordCancelBtn').addEventListener('click', () => {
   document.getElementById('epOldPassword').value = '';
@@ -3995,16 +4042,21 @@ document.getElementById('epPasswordSaveBtn').addEventListener('click', async () 
   if (!oldPw) { msg.textContent = '請輸入目前密碼'; msg.className = 'form-msg err'; return; }
   if (newPw.length < 6) { msg.textContent = '新密碼至少需要6碼'; msg.className = 'form-msg err'; return; }
   if (newPw !== newPwConfirm) { msg.textContent = '兩次輸入的新密碼不一致'; msg.className = 'form-msg err'; return; }
+  if (!epPasswordCaptchaToken) { msg.textContent = '請先完成下方的驗證'; msg.className = 'form-msg err'; return; }
 
   const btn = document.getElementById('epPasswordSaveBtn');
   btn.disabled = true; btn.textContent = '處理中...';
 
-  // 用目前密碼重新登入一次，驗證確實是本人在操作，驗證不過絕對不會去改密碼
+  // 用目前密碼重新登入一次，驗證確實是本人在操作，驗證不過絕對不會去改密碼；
+  // 這個登入動作跟一般登入一樣需要人機驗證token，之前漏帶這個token，導致密碼明明打對也一律被判定失敗
   const authEmail = `${state.profile.account.toLowerCase()}@internal.local`;
-  const { error: verifyErr } = await sb.auth.signInWithPassword({ email: authEmail, password: oldPw });
+  const { error: verifyErr } = await sb.auth.signInWithPassword({ email: authEmail, password: oldPw, options: { captchaToken: epPasswordCaptchaToken } });
+  if (typeof turnstile !== 'undefined' && epPasswordTurnstileWidgetId !== null) turnstile.reset(epPasswordTurnstileWidgetId);
+  epPasswordCaptchaToken = null;
   if (verifyErr) {
     btn.disabled = false; btn.textContent = '確認修改';
-    msg.textContent = '目前密碼不正確'; msg.className = 'form-msg err';
+    msg.textContent = verifyErr.message.toLowerCase().includes('captcha') ? '驗證已過期，請重新完成驗證後再試一次' : '目前密碼不正確';
+    msg.className = 'form-msg err';
     return;
   }
 
