@@ -408,7 +408,8 @@
   .ep-section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
   .ep-section-title { font-family: var(--font-display); font-size: 16px; margin: 0 0 12px; }
   .ep-section-header .ep-section-title { margin-bottom: 0; }
-  .ep-field-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; }
+  .ep-field-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+  .ep-field-row .ep-pencil { margin-top: 22px; }
   .ep-pencil {
     background: none; border: none; font-size: 15px; color: var(--ink-soft);
     cursor: pointer; padding: 8px; flex-shrink: 0; line-height: 1;
@@ -541,10 +542,13 @@
   .demand-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); padding: 3px 0 3px 14px; }
 
   .chat-bubble-row { display: flex; margin-bottom: 10px; gap: 8px; align-items: flex-end; }
+  .chat-date-divider { display: flex; align-items: center; text-align: center; margin: 18px 0 14px; color: var(--ink-soft); font-size: 12px; }
+  .chat-date-divider::before, .chat-date-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .chat-date-divider span { padding: 0 12px; white-space: nowrap; }
   .chat-bubble-row-card { margin-top: 14px; }
   .chat-bubble-row > div { min-width: 0; max-width: 85%; }
   .chat-bubble-row.mine { justify-content: flex-end; }
-  .chat-bubble-row.mine > div { margin-left: auto; }
+  .chat-bubble-row.mine > .chat-bubble-content { margin-left: auto; }
   .chat-avatar { width: 28px; height: 28px; border-radius: 999px; object-fit: cover; flex-shrink: 0; background: var(--bg-raised); border: 1px solid var(--line); }
   .chat-bubble {
     max-width: 100%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5;
@@ -567,6 +571,8 @@
   .order-card-status { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
   .order-card-status.pending { background: #FBEFC9; color: #5C4A1E; }
   .order-card-status.paid { background: var(--sencha); color: #fff; }
+  #epEmailVerifyBadge { font-size: 13px; padding: 5px 14px; }
+  #epEmailVerifyBadge.pending { background: var(--danger); color: #fff; }
   .order-card-item { display: flex; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--line); }
   .order-card-item:first-of-type { border-top: none; }
   .order-card-item-img { width: 36px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #E4DCC9; }
@@ -1319,75 +1325,87 @@
       </div>
     </div>
 
-    <!-- 帳號相關 -->
-    <div class="ep-section" id="epAccountPane">
-      <div class="ep-section-header">
-        <h3 class="ep-section-title">帳號相關</h3>
-        <button type="button" class="ep-section-edit" data-ep-edit="account">編輯</button>
-      </div>
+    <!-- 帳號資訊(唯讀，登入帳號不可自行修改) -->
+    <div class="ep-section">
+      <h3 class="ep-section-title">帳號資訊</h3>
       <div class="ep-field-row">
         <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epAccount">登入帳號（必填，至少6碼，可用英數字與符號）</label>
+          <label for="epAccount">登入帳號</label>
           <input type="text" id="epAccount" disabled>
         </div>
-        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
       </div>
-      <div class="ep-field-row">
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="epPassword">新密碼（選填，若要更改請至少輸入6碼；不改請留空）</label>
-          <input type="password" id="epPassword" disabled placeholder="不修改請留空">
+      <p style="font-size:12px; color:var(--ink-soft); margin-top:-8px;">登入帳號無法自行修改，如需變更請聯絡客服協助處理</p>
+    </div>
+
+    <!-- 修改密碼：需要輸入目前密碼＋兩次新密碼才會生效 -->
+    <div class="ep-section">
+      <h3 class="ep-section-title">修改密碼</h3>
+      <div id="epPasswordFormClosed">
+        <button type="button" class="btn btn-outline btn-sm" id="epOpenPasswordFormBtn">修改密碼</button>
+      </div>
+      <div id="epPasswordFormOpen" style="display:none;">
+        <div class="field">
+          <label for="epOldPassword">目前密碼</label>
+          <input type="password" id="epOldPassword" autocomplete="current-password">
         </div>
-        <button type="button" class="ep-pencil" data-ep-edit="account" aria-label="編輯">✎</button>
+        <div class="field">
+          <label for="epNewPassword">新密碼（至少6碼）</label>
+          <input type="password" id="epNewPassword" minlength="6" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="epNewPasswordConfirm">確認新密碼</label>
+          <input type="password" id="epNewPasswordConfirm" minlength="6" autocomplete="new-password">
+        </div>
+        <div class="ep-actions">
+          <button type="button" class="btn btn-outline btn-sm" id="epPasswordCancelBtn">取消</button>
+          <button type="button" class="btn btn-primary btn-sm" id="epPasswordSaveBtn">確認修改</button>
+        </div>
       </div>
-      <div class="form-msg" id="epAccountMsg"></div>
-      <div class="ep-actions" id="epAccountActions" style="display:none;">
-        <button type="button" class="btn btn-outline btn-sm" id="epAccountCancel">取消</button>
-        <button type="button" class="btn btn-primary btn-sm" id="epAccountSave">儲存</button>
-      </div>
+      <div class="form-msg" id="epPasswordMsg"></div>
     </div>
 
     <!-- 用戶資料 -->
     <div class="ep-section" id="epUserinfoPane">
       <div class="ep-section-header">
         <h3 class="ep-section-title">用戶資料</h3>
-        <button type="button" class="ep-section-edit" data-ep-edit="userinfo">編輯</button>
+        <button type="button" class="ep-section-edit" data-ep-edit-all="userinfo">編輯全部</button>
       </div>
       <div class="ep-field-row">
         <div class="field" style="flex:1; margin-bottom:0;">
           <label for="epDisplayName">顯示名稱（必填，2～20字元）</label>
           <input type="text" id="epDisplayName" disabled maxlength="20">
         </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+        <button type="button" class="ep-pencil" data-ep-edit-field="epDisplayName" aria-label="編輯">✎</button>
       </div>
       <div class="ep-field-row">
         <div class="field" style="flex:1; margin-bottom:0;">
           <label for="epInstagram">Instagram（選填）</label>
           <input type="text" id="epInstagram" disabled placeholder="@yourname">
         </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+        <button type="button" class="ep-pencil" data-ep-edit-field="epInstagram" aria-label="編輯">✎</button>
       </div>
       <div class="ep-field-row">
         <div class="field" style="flex:1; margin-bottom:0;">
           <label for="epContactEmail">聯絡信箱（選填，非登入用信箱）</label>
           <input type="email" id="epContactEmail" disabled>
-          <div id="epEmailVerifyRow" style="display:none; margin-top:8px; align-items:center; gap:10px;">
-            <span id="epEmailVerifyBadge" class="order-card-status"></span>
-            <button type="button" class="btn btn-outline btn-sm" id="epSendVerifyBtn">發送驗證信</button>
-          </div>
-          <div id="epEmailCodeRow" style="display:none; margin-top:10px; gap:8px; align-items:center;">
-            <input type="text" id="epEmailCodeInput" placeholder="輸入6位數驗證碼" style="max-width:160px; padding:8px 10px; border:1px solid var(--line); border-radius:6px;">
-            <button type="button" class="btn btn-primary btn-sm" id="epConfirmVerifyBtn">確認</button>
-          </div>
-          <div class="form-msg" id="epEmailVerifyMsg"></div>
         </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+        <button type="button" class="ep-pencil" data-ep-edit-field="epContactEmail" aria-label="編輯">✎</button>
       </div>
+      <div id="epEmailVerifyRow" style="display:none; margin:-4px 0 16px; align-items:center; gap:10px;">
+        <span id="epEmailVerifyBadge" class="order-card-status"></span>
+        <button type="button" class="btn btn-outline btn-sm" id="epSendVerifyBtn">發送驗證信</button>
+      </div>
+      <div id="epEmailCodeRow" style="display:none; margin:-4px 0 16px; gap:8px; align-items:center;">
+        <input type="text" id="epEmailCodeInput" placeholder="輸入6位數驗證碼" style="max-width:160px; padding:8px 10px; border:1px solid var(--line); border-radius:6px;">
+        <button type="button" class="btn btn-primary btn-sm" id="epConfirmVerifyBtn">確認</button>
+      </div>
+      <div class="form-msg" id="epEmailVerifyMsg"></div>
       <div class="ep-field-row">
         <div class="field" style="flex:1; margin-bottom:0;">
           <label for="epPhone">手機號碼（選填）</label>
           <input type="tel" id="epPhone" disabled>
         </div>
-        <button type="button" class="ep-pencil" data-ep-edit="userinfo" aria-label="編輯">✎</button>
+        <button type="button" class="ep-pencil" data-ep-edit-field="epPhone" aria-label="編輯">✎</button>
       </div>
       <div class="form-msg" id="epUserinfoMsg"></div>
       <div class="ep-actions" id="epUserinfoActions" style="display:none;">
@@ -1561,9 +1579,11 @@
     </div>
 
     <div id="authLoggedInView" style="display:none">
-      <h3 style="margin:0 0 18px;">會員中心</h3>
-      <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:64px; height:64px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin-bottom:10px;">
-      <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="text-align:center; margin-bottom:14px;">上傳新頭貼</button>
+      <h3 style="margin:0 0 18px; text-align:center;">會員中心</h3>
+      <div style="text-align:center;">
+        <img id="menuAvatarPreview" src="" alt="大頭貼" style="width:64px; height:64px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); display:block; margin:0 auto 10px;">
+        <button type="button" class="btn btn-outline btn-sm" id="menuAvatarUploadBtn" style="margin-bottom:14px;">上傳新頭貼</button>
+      </div>
       <p class="sub" style="margin-bottom:2px;">使用者名稱：<span id="loggedInName"></span></p>
       <p class="sub" style="margin-bottom:16px;">會員編號：<span id="loggedInUid"></span></p>
       <div class="account-menu-links">
@@ -2986,14 +3006,27 @@ async function updateChatBadge() {
   badge.textContent = count;
 }
 
-// 聊天室共用的時間格式：上午/下午 H:MM，不顯示秒數
+// 相對日期標籤：今天／昨天／幾月幾日
+function formatDateLabel(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const startOfDay = (dt) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+// 聊天室共用的時間格式：今天的訊息只顯示「上午/下午 H:MM」，非今天的會加上日期標籤，不顯示秒數
 function formatChatTime(dateStr) {
   const d = new Date(dateStr);
   const h = d.getHours();
   const period = h < 12 ? '上午' : '下午';
   const h12 = h % 12 === 0 ? 12 : h % 12;
   const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${period} ${h12}:${mm}`;
+  const timeStr = `${period} ${h12}:${mm}`;
+  const dateLabel = formatDateLabel(dateStr);
+  return dateLabel === '今天' ? timeStr : `${dateLabel} ${timeStr}`;
 }
 
 // 訊息分組：同一人連續、時間相近(3分鐘內)的訊息只在最後一則顯示頭貼跟時間
@@ -3013,13 +3046,20 @@ function groupMessagesForDisplay(messages) {
 // 共用的訊息氣泡渲染：分組後的訊息陣列(需已附加簽名圖片網址 _image)
 function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixFn, isAdminView = false) {
   const grouped = groupMessagesForDisplay(messages);
+  let lastDateLabel = null;
   return grouped.map(m => {
     const isMine = isMineFn(m);
     const avatar = isMine ? myAvatar : otherAvatar;
     const avatarHtml = m._showMeta ? `<img class="chat-avatar" src="${avatar}" alt="">` : `<div class="chat-avatar-spacer"></div>`;
-    return `<div class="chat-bubble-row ${isMine ? 'mine' : ''} ${m._isSpecialCard ? 'chat-bubble-row-card' : ''}">
+    const dateLabel = formatDateLabel(m.created_at);
+    let dividerHtml = '';
+    if (dateLabel !== lastDateLabel) {
+      dividerHtml = `<div class="chat-date-divider"><span>${dateLabel}</span></div>`;
+      lastDateLabel = dateLabel;
+    }
+    return `${dividerHtml}<div class="chat-bubble-row ${isMine ? 'mine' : ''} ${m._isSpecialCard ? 'chat-bubble-row-card' : ''}">
       ${!isMine ? avatarHtml : ''}
-      <div>
+      <div class="chat-bubble-content">
         ${productCardHtml(m)}
         ${orderCardHtml(m, isAdminView)}
         <div class="chat-bubble">
@@ -3894,16 +3934,16 @@ document.getElementById('epConfirmVerifyBtn').addEventListener('click', async ()
 function populateEditProfileFields() {
   document.getElementById('epAvatarPreview').src = state.profile?.avatar_url || DEFAULT_AVATAR_SVG;
   document.getElementById('epAccount').value = state.profile?.account || '';
-  document.getElementById('epPassword').value = '';
   document.getElementById('epDisplayName').value = state.profile?.display_name || '';
   document.getElementById('epInstagram').value = state.profile?.instagram || '';
   document.getElementById('epContactEmail').value = state.profile?.contact_email || '';
   document.getElementById('epPhone').value = state.profile?.phone || '';
   renderEmailVerifyStatus();
-  document.getElementById('epAccountMsg').textContent = '';
   document.getElementById('epUserinfoMsg').textContent = '';
   document.getElementById('epAvatarMsg').textContent = '';
-  exitEpEditMode('account');
+  document.getElementById('epPasswordFormOpen').style.display = 'none';
+  document.getElementById('epPasswordFormClosed').style.display = 'block';
+  document.getElementById('epPasswordMsg').textContent = '';
   exitEpEditMode('userinfo');
 }
 function epCap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -3922,60 +3962,62 @@ function exitEpEditMode(section) {
 // 進入分頁後的欄位載入由 renderRoute() 呼叫 populateEditProfileFields() 處理。
 document.getElementById('editProfileBtn').addEventListener('click', () => { closeAuth(); location.hash = '#edit-profile'; });
 
-// 鉛筆icon跟區塊右上角的「編輯」共用同一組進入編輯模式的邏輯
-document.querySelectorAll('[data-ep-edit]').forEach(btn => {
-  btn.addEventListener('click', () => enterEpEditMode(btn.dataset.epEdit));
+// 區塊右上角「編輯全部」：整個區塊的欄位一次解鎖
+document.querySelectorAll('[data-ep-edit-all]').forEach(btn => {
+  btn.addEventListener('click', () => enterEpEditMode(btn.dataset.epEditAll));
+});
+// 每個欄位自己的鉛筆：只解鎖這一個欄位，其餘維持鎖定，但存檔／取消仍共用同一組按鈕
+document.querySelectorAll('[data-ep-edit-field]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById(btn.dataset.epEditField).disabled = false;
+    document.getElementById('epUserinfoActions').style.display = 'flex';
+  });
 });
 
-/* ---------- 帳號相關：儲存／取消 ---------- */
-async function saveEpAccount() {
-  const msg = document.getElementById('epAccountMsg');
-  const newAccount = document.getElementById('epAccount').value.trim();
-  const newPassword = document.getElementById('epPassword').value;
+/* ---------- 修改密碼：需要先驗證目前密碼，兩次新密碼一致才會送出 ---------- */
+document.getElementById('epOpenPasswordFormBtn').addEventListener('click', () => {
+  document.getElementById('epPasswordFormClosed').style.display = 'none';
+  document.getElementById('epPasswordFormOpen').style.display = 'block';
+});
+document.getElementById('epPasswordCancelBtn').addEventListener('click', () => {
+  document.getElementById('epOldPassword').value = '';
+  document.getElementById('epNewPassword').value = '';
+  document.getElementById('epNewPasswordConfirm').value = '';
+  document.getElementById('epPasswordMsg').textContent = '';
+  document.getElementById('epPasswordFormOpen').style.display = 'none';
+  document.getElementById('epPasswordFormClosed').style.display = 'block';
+});
+document.getElementById('epPasswordSaveBtn').addEventListener('click', async () => {
+  const oldPw = document.getElementById('epOldPassword').value;
+  const newPw = document.getElementById('epNewPassword').value;
+  const newPwConfirm = document.getElementById('epNewPasswordConfirm').value;
+  const msg = document.getElementById('epPasswordMsg');
+  if (!oldPw) { msg.textContent = '請輸入目前密碼'; msg.className = 'form-msg err'; return; }
+  if (newPw.length < 6) { msg.textContent = '新密碼至少需要6碼'; msg.className = 'form-msg err'; return; }
+  if (newPw !== newPwConfirm) { msg.textContent = '兩次輸入的新密碼不一致'; msg.className = 'form-msg err'; return; }
 
-  if (!validateAccountFormat(newAccount)) {
-    msg.textContent = '帳號至少需要6個字元，可用英文字母、數字與符號'; msg.className = 'form-msg err';
+  const btn = document.getElementById('epPasswordSaveBtn');
+  btn.disabled = true; btn.textContent = '處理中...';
+
+  // 用目前密碼重新登入一次，驗證確實是本人在操作，驗證不過絕對不會去改密碼
+  const authEmail = `${state.profile.account.toLowerCase()}@internal.local`;
+  const { error: verifyErr } = await sb.auth.signInWithPassword({ email: authEmail, password: oldPw });
+  if (verifyErr) {
+    btn.disabled = false; btn.textContent = '確認修改';
+    msg.textContent = '目前密碼不正確'; msg.className = 'form-msg err';
     return;
   }
-  if (newPassword && newPassword.length < 6) {
-    msg.textContent = '新密碼至少需要6個字元'; msg.className = 'form-msg err';
-    return;
-  }
-  msg.textContent = '儲存中...'; msg.className = 'form-msg';
 
-  if (newAccount !== (state.profile?.account || '')) {
-    const { data: available, error: checkErr } = await sb.rpc('is_account_available', { check_account: newAccount });
-    if (checkErr) { msg.textContent = '檢查帳號時發生問題：' + checkErr.message; msg.className = 'form-msg err'; return; }
-    if (!available) { msg.textContent = '這個帳號已經被使用了，請換一個'; msg.className = 'form-msg err'; return; }
-    // 登入信箱是「帳號@internal.local」直接算出來的，帳號改了，登入信箱也要跟著同步，
-    // 不然改完帳號後反而會用新帳號登入不了
-    const { error: emailSyncErr } = await sb.auth.updateUser({ email: `${newAccount.toLowerCase()}@internal.local` });
-    if (emailSyncErr) { msg.textContent = '帳號更新失敗：' + emailSyncErr.message; msg.className = 'form-msg err'; return; }
-    const { error: accErr } = await sb.from('profiles').update({ account: newAccount }).eq('id', state.user.id);
-    if (accErr) { msg.textContent = '帳號更新失敗：' + accErr.message; msg.className = 'form-msg err'; return; }
-  }
+  const { error: updateErr } = await sb.auth.updateUser({ password: newPw });
+  btn.disabled = false; btn.textContent = '確認修改';
+  if (updateErr) { msg.textContent = '密碼更新失敗：' + updateErr.message; msg.className = 'form-msg err'; return; }
 
-  if (newPassword) {
-    const { error: pwErr } = await sb.auth.updateUser({ password: newPassword });
-    if (pwErr) { msg.textContent = '密碼更新失敗：' + pwErr.message; msg.className = 'form-msg err'; return; }
-  }
-
-  await loadProfile();
-  document.getElementById('epPassword').value = '';
-  document.getElementById('epAccount').value = state.profile?.account || '';
-  msg.textContent = '已儲存！'; msg.className = 'form-msg ok';
-  exitEpEditMode('account');
-  refreshAuthView();
-}
-document.getElementById('epAccountSave').addEventListener('click', saveEpAccount);
-document.getElementById('epAccountCancel').addEventListener('click', async () => {
-  const changed = document.getElementById('epAccount').value.trim() !== (state.profile?.account || '')
-    || document.getElementById('epPassword').value !== '';
-  if (changed && confirm('是否儲存變更？')) { await saveEpAccount(); return; }
-  document.getElementById('epAccount').value = state.profile?.account || '';
-  document.getElementById('epPassword').value = '';
-  document.getElementById('epAccountMsg').textContent = '';
-  exitEpEditMode('account');
+  document.getElementById('epOldPassword').value = '';
+  document.getElementById('epNewPassword').value = '';
+  document.getElementById('epNewPasswordConfirm').value = '';
+  document.getElementById('epPasswordFormOpen').style.display = 'none';
+  document.getElementById('epPasswordFormClosed').style.display = 'block';
+  msg.textContent = '密碼已更新！'; msg.className = 'form-msg ok';
 });
 
 /* ---------- 用戶資料：儲存／取消 ---------- */
