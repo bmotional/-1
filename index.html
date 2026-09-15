@@ -1415,10 +1415,14 @@
       <p style="font-size:12px; color:var(--ink-soft); margin-top:-8px;">登入帳號無法自行修改，如需變更請聯絡客服協助處理</p>
     </div>
 
-    <!-- 尚未設定帳號密碼登入方式(LINE登入的會員)：設定後永久鎖定，不能再改 -->
+    <!-- 尚未設定帳號密碼登入方式(LINE登入的會員)：只有帳號設定後永久鎖定，密碼之後隨時可以再改 -->
     <div class="ep-section" id="epSetAccountSection" style="display:none;">
       <h3 class="ep-section-title">設定帳號密碼登入方式</h3>
-      <p class="sub">你目前是用LINE登入，尚未設定帳號密碼。設定完成後就會永久鎖定、無法再修改，請謹慎填寫。</p>
+      <p class="sub" style="margin-bottom:14px;">你目前是用LINE登入，這裡可以額外設定帳號密碼，作為LINE以外的備援登入方式。</p>
+      <div style="background:#FBEFC9; border:1px solid var(--brass); border-radius:var(--radius); padding:12px 14px; margin-bottom:16px; display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:18px; line-height:1;">⚠️</span>
+        <p style="margin:0; font-size:13px; color:#5C4A1E; font-weight:600;">帳號一經設定即永久鎖定、無法再修改，請務必確認拼寫正確後再送出。密碼則不受影響，之後隨時可以在「修改密碼」重新設定。</p>
+      </div>
       <div class="field">
         <label for="epNewAccount">帳號（至少6碼，可用英文字母、數字、底線、句點、連字號）</label>
         <input type="text" id="epNewAccount">
@@ -1428,14 +1432,14 @@
         <input type="text" id="epNewAccountConfirm">
       </div>
       <div class="field">
-        <label for="epSetPassword">密碼（至少6碼）</label>
+        <label for="epSetPassword">密碼（至少6碼，之後可隨時修改）</label>
         <input type="password" id="epSetPassword" minlength="6">
       </div>
       <div class="field">
         <label for="epSetPasswordConfirm">再輸入一次密碼確認</label>
         <input type="password" id="epSetPasswordConfirm" minlength="6">
       </div>
-      <button type="button" class="btn btn-primary" style="width:100%" id="epSetAccountSaveBtn">設定完成（無法再修改）</button>
+      <button type="button" class="btn btn-primary" style="width:100%" id="epSetAccountSaveBtn">設定完成（帳號將無法再修改）</button>
       <div class="form-msg" id="epSetAccountMsg"></div>
     </div>
 
@@ -2685,7 +2689,13 @@ function renderPasswordTurnstileWidget() {
 }
 
 function openAuth() { authOverlay.classList.add('open'); refreshAuthView(); renderTurnstileWidgets(); }
-function closeAuth() { authOverlay.classList.remove('open'); }
+function closeAuth() {
+  authOverlay.classList.remove('open');
+  // 不管在哪個畫面按關閉，都要把「尚未確認的LINE註冊」徹底作廢：
+  // 帳號只能在客戶真的勾選同意條款+按下確認時才會建立，按X或取消一律視為放棄這次註冊，
+  // 下次要嘛重新走一次完整的LINE登入流程，不會留下任何殘留狀態讓它「悄悄完成」。
+  linePendingToken = null;
+}
 
 document.getElementById('acctBtn').addEventListener('click', openAuth);
 document.getElementById('footerAcctLink').addEventListener('click', (e) => { e.preventDefault(); openAuth(); });
