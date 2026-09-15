@@ -2546,7 +2546,8 @@ function lineRedirectUri() { return location.origin + location.pathname; }
 document.getElementById('lineLoginBtn').addEventListener('click', () => {
   try {
     const oauthState = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
-    sessionStorage.setItem('line_oauth_state', oauthState);
+    localStorage.setItem('line_oauth_state', oauthState);
+    localStorage.setItem('line_oauth_state_time', String(Date.now()));
     const params = new URLSearchParams({
       response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
       state: oauthState, scope: 'profile openid',
@@ -2577,9 +2578,17 @@ async function handleLineLoginCallback() {
   const cleanUrl = location.pathname + location.hash;
   history.replaceState(null, '', cleanUrl);
 
-  const savedState = sessionStorage.getItem('line_oauth_state');
-  sessionStorage.removeItem('line_oauth_state');
-  if (!returnedState || returnedState !== savedState) { toast('LINE登入驗證失敗，請重新嘗試'); return; }
+  // 用 localStorage(跟瀏覽器綁定)取代 sessionStorage(跟分頁綁定)：
+  // 手機上LINE App透過系統的Universal Link跳轉回來，實際開啟的分頁不一定是原本發起登入的那一個，
+  // sessionStorage在這種情況下讀不到，會誤判成驗證失敗
+  const savedState = localStorage.getItem('line_oauth_state');
+  const savedStateTime = Number(localStorage.getItem('line_oauth_state_time') || 0);
+  localStorage.removeItem('line_oauth_state');
+  localStorage.removeItem('line_oauth_state_time');
+  // 保留10分鐘的有效期，避免舊的驗證資料被重複利用
+  if (!returnedState || returnedState !== savedState || Date.now() - savedStateTime > 10 * 60_000) {
+    toast('LINE登入驗證失敗，請重新嘗試'); return;
+  }
 
   openAuth();
   toast('LINE登入處理中...');
