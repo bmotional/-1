@@ -1560,8 +1560,7 @@
 
       <div class="oauth-row">
         <button class="oauth-btn" id="fbLoginBtn" disabled>使用 Facebook 繼續</button>
-        <button class="oauth-btn" id="lineLoginBtn" disabled>使用 LINE 繼續</button>
-        <p style="font-size:11px; color:var(--ink-soft); margin:-4px 0 0; text-align:center;">尚未開啟快速登入</p>
+        <p style="font-size:11px; color:var(--ink-soft); margin:-4px 0 0; text-align:center;">Facebook 登入尚未開放</p>
       </div>
       <div class="divider">或使用帳號登入</div>
 
@@ -2545,13 +2544,18 @@ const LINE_CHANNEL_ID = '2011606780';
 function lineRedirectUri() { return location.origin + location.pathname; }
 
 document.getElementById('lineLoginBtn').addEventListener('click', () => {
-  const oauthState = crypto.randomUUID();
-  sessionStorage.setItem('line_oauth_state', oauthState);
-  const params = new URLSearchParams({
-    response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
-    state: oauthState, scope: 'profile openid',
-  });
-  location.href = `https://access.line.me/oauth2/v2.1/authorize?${params}`;
+  try {
+    const oauthState = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+    sessionStorage.setItem('line_oauth_state', oauthState);
+    const params = new URLSearchParams({
+      response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
+      state: oauthState, scope: 'profile openid',
+    });
+    location.href = `https://access.line.me/oauth2/v2.1/authorize?${params}`;
+  } catch (e) {
+    console.error('LINE login redirect failed', e);
+    toast('無法啟動LINE登入，請稍後再試：' + e.message);
+  }
 });
 
 async function completeLineSession(email, hashedToken) {
@@ -2948,12 +2952,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 document.getElementById('fbLoginBtn').addEventListener('click', async () => {
   const { error } = await sb.auth.signInWithOAuth({ provider: 'facebook' });
   if (error) toast('Facebook 登入尚未設定，請先在 Supabase 後台啟用');
-});
-document.getElementById('lineLoginBtn').addEventListener('click', async () => {
-  // Supabase 目前的內建 OAuth 供應商列表若尚未涵蓋 LINE，
-  // 需改用「自訂 OAuth (OIDC)」的方式串接 LINE Login，屆時再回來調整這段。
-  const { error } = await sb.auth.signInWithOAuth({ provider: 'line' });
-  if (error) toast('LINE 登入尚未設定，請先確認 Supabase 是否支援並完成設定');
 });
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
