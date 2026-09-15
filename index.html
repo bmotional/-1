@@ -809,6 +809,9 @@
         <svg id="acctIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
         <img id="acctAvatarImg" alt="" style="display:none; width:36px; height:36px; border-radius:999px; object-fit:cover;">
       </button>
+      <a href="https://line.me/R/ti/p/@REPLACE_WITH_YOUR_LINE_ID" target="_blank" rel="noopener" class="icon-btn" id="lineBtn" aria-label="加LINE好友" title="加LINE好友，掌握最新出貨通知">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#06C755"><path d="M12 2C6.48 2 2 5.69 2 10.25c0 4.1 3.61 7.53 8.48 8.15.33.07.78.22.9.5.1.26.07.66.03.92l-.15.9c-.04.26-.2 1.02.9.56 1.1-.47 5.94-3.5 8.1-6 .81-.9 1.24-1.83 1.24-2.9C21.5 5.69 17.52 2 12 2z"/></svg>
+      </a>
       <button class="icon-btn" id="chatBtn" aria-label="聯絡我們" title="聯絡我們">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
         <span class="cart-badge" id="chatBadge" style="display:none">0</span>
@@ -1279,7 +1282,15 @@
 <div id="wishlistSubmitPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="wishlistSubmitBackBtn" style="margin-bottom:20px;">← 返回</button>
   <h2 class="section-title">提出我的許願</h2>
-  <p class="sub" style="max-width:560px; margin-bottom:22px;">留下你想要的品牌與商品，我們審核後會公開在許願專區讓大家一起支持！</p>
+  <p class="sub" style="max-width:560px; margin-bottom:16px;">留下你想要的品牌與商品，選擇要公開讓大家一起支持，還是私下傳給我們一對一報價。</p>
+
+  <div class="field" style="max-width:560px;">
+    <label>這是？</label>
+    <div style="display:flex; gap:16px; margin-top:6px;">
+      <label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="radio" name="wishType" value="public" checked style="width:auto;"> 公開上架許願（讓大家按讚支持）</label>
+      <label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="radio" name="wishType" value="personal" style="width:auto;"> 個人詢問（私下一對一報價）</label>
+    </div>
+  </div>
 
   <form id="wishSubmitForm" style="max-width:560px;">
     <div class="field">
@@ -1963,6 +1974,48 @@
   </div>
 </div>
 
+<!-- ============ 個人詢問許願：轉為正式訂單 ============ -->
+<div class="modal-overlay" id="wishConvertOverlay">
+  <div class="modal">
+    <button class="modal-close" id="wishConvertClose" aria-label="關閉">×</button>
+    <h3>轉為正式訂單</h3>
+    <p class="sub">可直接輸入臨時品名與價格，不需要先建立商品，訂單建立後會直接進入「待確認付款」狀態。</p>
+    <div class="field">
+      <label for="wishConvertName">商品名稱</label>
+      <input type="text" id="wishConvertName">
+    </div>
+    <div class="form-grid-2">
+      <div class="field">
+        <label for="wishConvertQty">數量</label>
+        <input type="number" id="wishConvertQty" value="1" min="1">
+      </div>
+      <div class="field">
+        <label for="wishConvertPrice">單價（NT$）</label>
+        <input type="number" id="wishConvertPrice" min="1">
+      </div>
+    </div>
+    <div class="field">
+      <label for="wishConvertDeposit">訂金金額（NT$）</label>
+      <input type="number" id="wishConvertDeposit" min="0">
+    </div>
+    <p class="sub" id="wishConvertBalanceNote" style="margin-top:-8px;">總額 NT$0　／　尾款 NT$0</p>
+    <button type="button" class="btn btn-primary" style="width:100%" id="wishConvertSaveBtn">建立訂單</button>
+    <div class="form-msg" id="wishConvertMsg"></div>
+  </div>
+</div>
+
+<!-- ============ 商品圖片：設定款式標籤 ============ -->
+<div class="modal-overlay" id="imageTagOverlay">
+  <div class="modal">
+    <button class="modal-close" id="imageTagClose" aria-label="關閉">×</button>
+    <h3>設定圖片標籤</h3>
+    <p class="sub">勾選哪些款式要用這張圖片當作參考圖。同一個款式只能對應一張圖片，勾選後會自動從原本對應的圖片移除。</p>
+    <div id="imageTagCheckboxList" style="max-height:300px; overflow-y:auto; margin-bottom:16px;"></div>
+    <button type="button" class="btn btn-primary" style="width:100%" id="imageTagSaveBtn">儲存</button>
+    <div class="form-msg" id="imageTagMsg"></div>
+  </div>
+</div>
+
 <!-- ============ 聊天圖片大圖預覽 ============ -->
 <div class="chat-lightbox-overlay" id="chatLightboxOverlay">
   <img id="chatLightboxImg" src="" alt="訊息圖片">
@@ -2020,7 +2073,8 @@
           <input type="number" id="detailQtyInput" class="qty-input" value="1" min="1" max="99">
           <button type="button" class="qty-btn" id="detailQtyPlus">+</button>
         </div>
-        <button class="btn btn-primary" id="detailAddToCartBtn" style="width:100%; margin-top:10px;">加入購物車</button>
+        <div id="detailConfirmText" style="font-size:12px; color:var(--ink-soft); margin-top:10px;"></div>
+        <button class="btn btn-primary" id="detailAddToCartBtn" style="width:100%; margin-top:6px;">加入購物車</button>
         <button class="btn btn-outline" id="detailShareBtn" style="width:100%; margin-top:8px;">🔗 分享這件商品</button>
       </div>
     </div>
@@ -3155,8 +3209,8 @@ function groupMessagesForDisplay(messages) {
     const next = messages[i + 1];
     // 面交訂單卡片、商品詢問卡片這類「特殊卡片」訊息，一律當成獨立的新段落處理：
     // 卡片本身一定顯示頭貼跟時間，前一則訊息也一定要顯示自己的頭貼跟時間，不會被卡片「借走」
-    const isSpecialCard = !!(m.order_id || m.product_id);
-    const nextIsSpecialCard = !!(next && (next.order_id || next.product_id));
+    const isSpecialCard = !!(m.order_id || m.product_id || m.wishlist_id);
+    const nextIsSpecialCard = !!(next && (next.order_id || next.product_id || next.wishlist_id));
     const showMeta = isSpecialCard || nextIsSpecialCard || !next || next.sender !== m.sender ||
       (new Date(next.created_at) - new Date(m.created_at)) > 3 * 60 * 1000;
     return { ...m, _showMeta: showMeta, _isSpecialCard: isSpecialCard };
@@ -3183,6 +3237,7 @@ function buildChatBubblesHtml(messages, myAvatar, otherAvatar, isMineFn, suffixF
       <div class="chat-bubble-content">
         ${productCardHtml(m)}
         ${orderCardHtml(m, isAdminView)}
+        ${wishCardHtml(m, isAdminView)}
         <div class="chat-bubble">
           ${m._image ? `<img class="chat-image" src="${m._image}" alt="訊息圖片" data-lightbox-src="${m._image}">` : ''}
           ${m.content ? escapeHtml(m.content) : ''}
@@ -3262,6 +3317,40 @@ async function attachOrderPreviews(messages) {
   (items || []).forEach(it => { if (!itemsMap.has(it.order_id)) itemsMap.set(it.order_id, []); itemsMap.get(it.order_id).push(it); });
   return messages.map(m => m.order_id ? { ...m, _orderInfo: orderMap.get(m.order_id), _orderItems: itemsMap.get(m.order_id) || [] } : m);
 }
+
+// 個人詢問許願的卡片：管理員這邊多一顆「轉為正式訂單」的快捷按鈕
+function wishCardHtml(m, isAdminView) {
+  if (!m.wishlist_id) return '';
+  const w = m._wishInfo;
+  if (!w) return '';
+  const specs = [w.country, w.category, w.size, w.color].filter(Boolean).join('　');
+  return `<div class="chat-preview order-preview-card" data-wish-ref="${m.wishlist_id}">
+    <div class="order-card-top">
+      <strong>個人詢問許願</strong>
+      <span class="order-card-status ${w.converted_order_id ? 'paid' : 'pending'}">${w.converted_order_id ? '已轉訂單' : '待處理'}</span>
+    </div>
+    <div class="order-card-item">
+      ${w.image_url ? `<img src="${w.image_url}" class="order-card-item-img" alt="">` : '<div class="order-card-item-img order-card-item-noimg"></div>'}
+      <div class="order-card-item-info">
+        <div class="order-card-item-name">${escapeHtml(w.brand_name)}</div>
+        ${specs ? `<div class="order-card-item-price">${escapeHtml(specs)}</div>` : ''}
+      </div>
+    </div>
+    ${w.description ? `<div class="order-card-total" style="font-weight:400; font-size:12px;">${escapeHtml(w.description)}</div>` : ''}
+    ${isAdminView ? `<div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-primary btn-sm" data-wish-convert="${m.wishlist_id}" ${w.converted_order_id ? 'disabled' : ''}>${w.converted_order_id ? '已轉為訂單' : '轉為正式訂單'}</button>
+    </div>` : ''}
+  </div>`;
+}
+
+// 補上個人詢問許願訊息需要的詳細資料，渲染前先呼叫這個
+async function attachWishPreviews(messages) {
+  const wishIds = [...new Set(messages.filter(m => m.wishlist_id).map(m => m.wishlist_id))];
+  if (wishIds.length === 0) return messages;
+  const { data: wishes } = await sb.from('wishlist_requests').select('id, brand_name, country, category, size, color, description, image_url, converted_order_id').in('id', wishIds);
+  const wishMap = new Map((wishes || []).map(w => [w.id, w]));
+  return messages.map(m => m.wishlist_id ? { ...m, _wishInfo: wishMap.get(m.wishlist_id) } : m);
+}
 const CHAT_PAGE_SIZE = 15;
 let customerChatState = { messages: [], hasMore: true, loading: false };
 
@@ -3297,7 +3386,7 @@ async function renderMessagesPage() {
 
 async function drawCustomerChat(box, adminAvatar, myAvatar) {
   const withImages = await Promise.all(customerChatState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
-  const withOrders = await attachOrderPreviews(withImages);
+  const withOrders = await attachWishPreviews(await attachOrderPreviews(withImages));
   const draft = state.pendingProductInquiry ? productCardHtml(state.pendingProductInquiry, true) : '';
   let html = buildChatBubblesHtml(withOrders, myAvatar, adminAvatar, m => m.sender === 'customer');
   box.innerHTML = html || '<p style="color:var(--ink-soft);font-size:13px">有任何問題都可以傳訊給我們。</p>';
@@ -3665,7 +3754,7 @@ productDetailOverlay.addEventListener('click', (e) => {
 // 共用的款式選擇區塊渲染：slot.type 是這組款式的顯示名稱(可能是「顏色」「尺寸」或自訂名稱)。
 // 只有真的叫「顏色」才用色塊 UI，其餘一律用文字選項卡片。selectionKey 固定用 color/size，
 // 對應資料庫實際存在的 variant_color/variant_size 欄位，跟畫面上顯示的自訂名稱是兩件事。
-function renderVariantSlot(slot, sectionId, rowId, labelId, selectionObj, selectionKey) {
+function renderVariantSlot(slot, sectionId, rowId, labelId, selectionObj, selectionKey, galleryContainerId, imageTagsMap, coverUrl) {
   const section = document.getElementById(sectionId);
   const row = document.getElementById(rowId);
   const label = document.getElementById(labelId);
@@ -3683,6 +3772,11 @@ function renderVariantSlot(slot, sectionId, rowId, labelId, selectionObj, select
       row.querySelectorAll('.swatch, .size-chip').forEach(s => s.classList.remove('selected'));
       el.classList.add('selected');
       selectionObj[selectionKey] = el.dataset.value;
+      // 選了這個款式，如果有對應的參考圖就跳過去；沒有的話回到封面圖，不維持在不相關的舊圖上
+      if (galleryContainerId) {
+        const taggedUrl = imageTagsMap?.get(el.dataset.value);
+        jumpGalleryToUrl(galleryContainerId, taggedUrl || coverUrl);
+      }
     });
   });
   if (slot.rows.length === 1 && slot.rows[0].is_available) {
@@ -3697,34 +3791,47 @@ async function renderProductGallery(product, containerId) {
   const container = document.getElementById(containerId);
   const { data: rows } = await sb.from('product_images').select('image_url').eq('product_id', product.id).order('position');
   const images = (rows && rows.length) ? rows.map(r => r.image_url) : (product.image_url ? [product.image_url] : []);
-  if (images.length === 0) { container.innerHTML = ''; return; }
+  if (images.length === 0) { container.innerHTML = ''; container._galleryState = null; return; }
 
-  let idx = 0;
+  const state = { images, idx: 0 };
+  container._galleryState = state;
   function draw() {
     container.innerHTML = `
       <div class="gallery-wrap">
-        <img src="${images[idx]}" class="gallery-main-img" alt="">
+        <img src="${images[state.idx]}" class="gallery-main-img" alt="">
         ${images.length > 1 ? `
           <button type="button" class="gallery-arrow gallery-arrow-left" aria-label="上一張">‹</button>
           <button type="button" class="gallery-arrow gallery-arrow-right" aria-label="下一張">›</button>
-          <div class="gallery-dots">${images.map((_, i) => `<span class="gallery-dot ${i === idx ? 'active' : ''}"></span>`).join('')}</div>
+          <div class="gallery-dots">${images.map((_, i) => `<span class="gallery-dot ${i === state.idx ? 'active' : ''}"></span>`).join('')}</div>
         ` : ''}
       </div>
     `;
     if (images.length > 1) {
-      container.querySelector('.gallery-arrow-left').addEventListener('click', () => { idx = (idx - 1 + images.length) % images.length; draw(); });
-      container.querySelector('.gallery-arrow-right').addEventListener('click', () => { idx = (idx + 1) % images.length; draw(); });
+      container.querySelector('.gallery-arrow-left').addEventListener('click', () => { state.idx = (state.idx - 1 + images.length) % images.length; draw(); });
+      container.querySelector('.gallery-arrow-right').addEventListener('click', () => { state.idx = (state.idx + 1) % images.length; draw(); });
     }
   }
+  state.draw = draw;
   draw();
 }
 
-function openProductDetail(productId) {
+// 客戶選了某個款式時呼叫：如果這個款式有對應的參考圖，就跳到那張；沒有的話維持目前畫面不動
+function jumpGalleryToUrl(containerId, url) {
+  const container = document.getElementById(containerId);
+  const gs = container?._galleryState;
+  if (!gs || !url) return;
+  const idx = gs.images.indexOf(url);
+  if (idx === -1) return;
+  gs.idx = idx;
+  gs.draw();
+}
+
+async function openProductDetail(productId, presetSelection, presetQty) {
   const p = state.products.find(x => String(x.id) === String(productId));
   if (!p) return;
   state.detailSelection = { productId: p.id, color: null, size: null };
 
-  renderProductGallery(p, 'detailImage');
+  await renderProductGallery(p, 'detailImage');
   document.getElementById('detailCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
   document.getElementById('detailBrand').textContent = p.brand || '';
   document.getElementById('detailName').textContent = p.name;
@@ -3749,24 +3856,46 @@ function openProductDetail(productId) {
   document.getElementById('detailHeartLabel').textContent = isFav ? '已收藏' : '加入收藏';
   heartBtn.onclick = () => { toggleFavorite(p.id, heartBtn); heartBtn.classList.toggle('active'); document.getElementById('detailHeartLabel').textContent = heartBtn.classList.contains('active') ? '已收藏' : '加入收藏'; };
 
+  // 這件商品的款式→參考圖對應表，用來在選規格時即時切換圖片
+  const { data: tagRows } = await sb.from('product_image_tags').select('image_url, variant_value').eq('product_id', p.id);
+  const imageTagsMap = new Map((tagRows || []).map(t => [t.variant_value, t.image_url]));
+  const coverUrl = document.getElementById('detailImage')._galleryState?.images?.[0];
+
   const variantGroups = state.variantsByProduct[p.id] || [];
   state.detailSelection = {};
-  document.getElementById('detailQtyInput').value = 1;
+  document.getElementById('detailQtyInput').value = presetQty || 1;
   document.getElementById('detailRefundNote').style.display = p.is_refundable === false ? 'block' : 'none';
-  renderVariantSlot(variantGroups[0], 'detailColorSection', 'detailColorRow', 'detailColorLabel', state.detailSelection, 'color');
-  renderVariantSlot(variantGroups[1], 'detailSizeSection', 'detailSizeRow', 'detailSizeLabel', state.detailSelection, 'size');
-  renderVariantSlot(variantGroups[2], 'detailExtraSection', 'detailExtraRow', 'detailExtraLabel', state.detailSelection, 'extra');
+  renderVariantSlot(variantGroups[0], 'detailColorSection', 'detailColorRow', 'detailColorLabel', state.detailSelection, 'color', 'detailImage', imageTagsMap, coverUrl);
+  renderVariantSlot(variantGroups[1], 'detailSizeSection', 'detailSizeRow', 'detailSizeLabel', state.detailSelection, 'size', 'detailImage', imageTagsMap, coverUrl);
+  renderVariantSlot(variantGroups[2], 'detailExtraSection', 'detailExtraRow', 'detailExtraLabel', state.detailSelection, 'extra', 'detailImage', imageTagsMap, coverUrl);
+
+  // 帶入從全頁那邊已經選好的款式(如果有的話)，直接點一次對應的選項，重用同一套選取邏輯(含跳圖)
+  if (presetSelection) {
+    ['color', 'size', 'extra'].forEach(key => {
+      if (!presetSelection[key]) return;
+      const rowId = { color: 'detailColorRow', size: 'detailSizeRow', extra: 'detailExtraRow' }[key];
+      const el = document.querySelector(`#${rowId} [data-value="${CSS.escape(presetSelection[key])}"]`);
+      if (el && el.dataset.available !== 'false') el.click();
+    });
+  }
+
+  function updateConfirmText() {
+    const desc = [state.detailSelection.color, state.detailSelection.size, state.detailSelection.extra].filter(Boolean).join(' / ');
+    document.getElementById('detailConfirmText').textContent = `確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`;
+  }
+  updateConfirmText();
+  document.querySelectorAll('#detailColorRow .swatch, #detailColorRow .size-chip, #detailSizeRow .swatch, #detailSizeRow .size-chip, #detailExtraRow .swatch, #detailExtraRow .size-chip').forEach(el => {
+    el.addEventListener('click', updateConfirmText);
+  });
 
   const addBtn = document.getElementById('detailAddToCartBtn');
   const canAdd = p.status === 'available' || p.status === 'preorder';
   addBtn.disabled = !canAdd;
-  addBtn.textContent = canAdd ? '加入購物車' : (STATUS_LABEL[p.status] || '無法購買');
+  addBtn.textContent = canAdd ? '確認加入購物車' : (STATUS_LABEL[p.status] || '無法購買');
   addBtn.onclick = () => {
     if (variantGroups[0] && variantGroups[0].rows.length > 0 && !state.detailSelection.color) { toast('請先選擇' + variantGroups[0].type); return; }
     if (variantGroups[1] && variantGroups[1].rows.length > 0 && !state.detailSelection.size) { toast('請先選擇' + variantGroups[1].type); return; }
     if (variantGroups[2] && variantGroups[2].rows.length > 0 && !state.detailSelection.extra) { toast('請先選擇' + variantGroups[2].type); return; }
-    const desc = [state.detailSelection.color, state.detailSelection.size, state.detailSelection.extra].filter(Boolean).join(' / ');
-    if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
     addToCart(p.id, { variant_color: state.detailSelection.color, variant_size: state.detailSelection.size, variant_extra: state.detailSelection.extra }, document.getElementById('detailQtyInput').value);
     productDetailOverlay.classList.remove('open');
   };
@@ -3840,14 +3969,14 @@ async function loadRelatedProducts(p) {
   section.style.display = 'block';
 }
 
-function renderProductPage(productId) {
+async function renderProductPage(productId) {
   const p = state.products.find(x => String(x.id) === String(productId));
   if (!p) { document.getElementById('productPageView').innerHTML = '<p>找不到這件商品，可能已下架。</p>'; return; }
   pageSelection = { color: null, size: null };
   document.getElementById('pageQtyInput').value = 1;
   document.getElementById('pageRefundNote').style.display = p.is_refundable === false ? 'block' : 'none';
 
-  renderProductGallery(p, 'pageDetailImage');
+  await renderProductGallery(p, 'pageDetailImage');
   document.getElementById('pageCountry').textContent = COUNTRY_LABEL[p.country] || p.country;
   document.getElementById('pageBrand').textContent = p.brand || '';
   document.getElementById('pageName').textContent = p.name;
@@ -3893,9 +4022,12 @@ function renderProductPage(productId) {
   };
 
   const pageVariantGroups = state.variantsByProduct[p.id] || [];
-  renderVariantSlot(pageVariantGroups[0], 'pageColorSection', 'pageColorRow', 'pageColorLabel', pageSelection, 'color');
-  renderVariantSlot(pageVariantGroups[1], 'pageSizeSection', 'pageSizeRow', 'pageSizeLabel', pageSelection, 'size');
-  renderVariantSlot(pageVariantGroups[2], 'pageExtraSection', 'pageExtraRow', 'pageExtraLabel', pageSelection, 'extra');
+  const { data: pageTagRows } = await sb.from('product_image_tags').select('image_url, variant_value').eq('product_id', p.id);
+  const pageImageTagsMap = new Map((pageTagRows || []).map(t => [t.variant_value, t.image_url]));
+  const pageCoverUrl = document.getElementById('pageDetailImage')._galleryState?.images?.[0];
+  renderVariantSlot(pageVariantGroups[0], 'pageColorSection', 'pageColorRow', 'pageColorLabel', pageSelection, 'color', 'pageDetailImage', pageImageTagsMap, pageCoverUrl);
+  renderVariantSlot(pageVariantGroups[1], 'pageSizeSection', 'pageSizeRow', 'pageSizeLabel', pageSelection, 'size', 'pageDetailImage', pageImageTagsMap, pageCoverUrl);
+  renderVariantSlot(pageVariantGroups[2], 'pageExtraSection', 'pageExtraRow', 'pageExtraLabel', pageSelection, 'extra', 'pageDetailImage', pageImageTagsMap, pageCoverUrl);
 
   const addBtn = document.getElementById('pageAddToCartBtn');
   const canAdd = p.status === 'available' || p.status === 'preorder';
@@ -3905,9 +4037,8 @@ function renderProductPage(productId) {
     if (pageVariantGroups[0] && pageVariantGroups[0].rows.length > 0 && !pageSelection.color) { toast('請先選擇' + pageVariantGroups[0].type); return; }
     if (pageVariantGroups[1] && pageVariantGroups[1].rows.length > 0 && !pageSelection.size) { toast('請先選擇' + pageVariantGroups[1].type); return; }
     if (pageVariantGroups[2] && pageVariantGroups[2].rows.length > 0 && !pageSelection.extra) { toast('請先選擇' + pageVariantGroups[2].type); return; }
-    const desc = [pageSelection.color, pageSelection.size, pageSelection.extra].filter(Boolean).join(' / ');
-    if (!confirm(`確定要將「${p.name}${desc ? '（' + desc + '）' : ''}」加入購物車嗎？`)) return;
-    addToCart(p.id, { variant_color: pageSelection.color, variant_size: pageSelection.size, variant_extra: pageSelection.extra }, document.getElementById('pageQtyInput').value);
+    // 統一走跟卡片格一樣的彈窗做最後確認，把這裡已經選好的款式跟數量帶過去，客戶不用重選
+    openProductDetail(p.id, { ...pageSelection }, document.getElementById('pageQtyInput').value);
   };
 }
 
@@ -5405,6 +5536,7 @@ function renderProductImageGallery() {
     box.innerHTML = '<div class="pig-empty">尚無圖片，點下方按鈕新增（最多25張）</div>';
     return;
   }
+  const canTag = !!document.getElementById('productEditId').value;
   box.innerHTML = images.map((url, i) => `
     <div class="pig-item">
       <img src="${url}" alt="">
@@ -5415,8 +5547,13 @@ function renderProductImageGallery() {
         ${i < images.length - 1 ? `<button type="button" data-pig-right="${i}" title="往後移">▶</button>` : ''}
         <button type="button" data-pig-remove="${i}" title="刪除">×</button>
       </div>
+      ${canTag ? `<button type="button" class="btn btn-outline btn-sm" data-pig-tag="${i}" style="width:100%; margin-top:6px; font-size:11px; padding:5px;">設定標籤</button>` : ''}
     </div>
   `).join('');
+
+  box.querySelectorAll('[data-pig-tag]').forEach(btn => btn.addEventListener('click', () => {
+    openImageTagModal(images[Number(btn.dataset.pigTag)]);
+  }));
 
   box.querySelectorAll('[data-pig-cover]').forEach(btn => btn.addEventListener('click', () => {
     const i = Number(btn.dataset.pigCover);
@@ -5455,6 +5592,122 @@ function defaultVariantGroupsForCategory(category) {
   }
   return [];
 }
+
+let wishConvertCurrentId = null, wishConvertUserId = null;
+async function openWishConvertModal(wishId) {
+  wishConvertCurrentId = wishId;
+  const msg = document.getElementById('wishConvertMsg');
+  msg.textContent = '';
+  const { data: wish, error } = await sb.from('wishlist_requests').select('user_id, brand_name').eq('id', wishId).maybeSingle();
+  if (error || !wish) { toast('讀取許願資料失敗'); return; }
+  wishConvertUserId = wish.user_id;
+  document.getElementById('wishConvertName').value = wish.brand_name || '';
+  document.getElementById('wishConvertQty').value = 1;
+  document.getElementById('wishConvertPrice').value = '';
+  document.getElementById('wishConvertDeposit').value = '';
+  updateWishConvertBalanceNote();
+  document.getElementById('wishConvertOverlay').classList.add('open');
+}
+document.getElementById('wishConvertClose').addEventListener('click', () => document.getElementById('wishConvertOverlay').classList.remove('open'));
+
+function updateWishConvertBalanceNote() {
+  const qty = Number(document.getElementById('wishConvertQty').value) || 0;
+  const price = Number(document.getElementById('wishConvertPrice').value) || 0;
+  const deposit = Number(document.getElementById('wishConvertDeposit').value) || 0;
+  const total = qty * price;
+  document.getElementById('wishConvertBalanceNote').textContent = `總額 ${ntd(total)}　／　尾款 ${ntd(Math.max(total - deposit, 0))}`;
+}
+['wishConvertQty', 'wishConvertPrice', 'wishConvertDeposit'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateWishConvertBalanceNote);
+});
+
+document.getElementById('wishConvertSaveBtn').addEventListener('click', async () => {
+  const name = document.getElementById('wishConvertName').value.trim();
+  const qty = Number(document.getElementById('wishConvertQty').value);
+  const price = Number(document.getElementById('wishConvertPrice').value);
+  const deposit = Number(document.getElementById('wishConvertDeposit').value);
+  const msg = document.getElementById('wishConvertMsg');
+  if (!name) { msg.textContent = '請輸入商品名稱'; msg.className = 'form-msg err'; return; }
+  if (!qty || qty <= 0) { msg.textContent = '數量不正確'; msg.className = 'form-msg err'; return; }
+  if (!price || price <= 0) { msg.textContent = '單價不正確'; msg.className = 'form-msg err'; return; }
+  if (deposit === null || isNaN(deposit) || deposit < 0) { msg.textContent = '訂金金額不正確'; msg.className = 'form-msg err'; return; }
+  if (deposit > price * qty) { msg.textContent = '訂金不能超過總額'; msg.className = 'form-msg err'; return; }
+
+  const btn = document.getElementById('wishConvertSaveBtn');
+  btn.disabled = true; btn.textContent = '建立中...';
+  const { data, error } = await sb.rpc('admin_create_custom_order', {
+    p_user_id: wishConvertUserId, p_product_name: name, p_quantity: qty, p_price_ntd: price, p_deposit_ntd: deposit,
+  });
+  btn.disabled = false; btn.textContent = '建立訂單';
+  if (error) { msg.textContent = '建立失敗：' + error.message; msg.className = 'form-msg err'; return; }
+
+  const result = data?.[0];
+  await sb.from('wishlist_requests').update({ converted_order_id: result?.new_order_id }).eq('id', wishConvertCurrentId);
+
+  toast(`訂單已建立（${result?.new_order_no}），已進入待確認付款狀態`);
+  document.getElementById('wishConvertOverlay').classList.remove('open');
+  renderAdminMessagesThread();
+});
+
+let imageTagCurrentUrl = null;
+async function openImageTagModal(imageUrl) {
+  imageTagCurrentUrl = imageUrl;
+  const productId = document.getElementById('productEditId').value;
+  const msg = document.getElementById('imageTagMsg');
+  msg.textContent = '';
+
+  // 這件商品目前所有款式值(跨顏色/尺寸/自訂三組)，攤平成一個清單
+  const allValues = [];
+  (state.productEditVariants || []).forEach(g => {
+    (g.rows || []).forEach(r => { if (r.value) allValues.push({ type: g.type, value: r.value }); });
+  });
+
+  const { data: existingTags } = await sb.from('product_image_tags').select('image_url, variant_value').eq('product_id', productId);
+  const tagMap = new Map((existingTags || []).map(t => [t.variant_value, t.image_url]));
+
+  const list = document.getElementById('imageTagCheckboxList');
+  if (allValues.length === 0) {
+    list.innerHTML = '<p style="font-size:13px;color:var(--ink-soft);">這件商品尚未設定任何款式，請先在下方新增款式後再設定標籤。</p>';
+  } else {
+    list.innerHTML = allValues.map(v => {
+      const currentImg = tagMap.get(v.value);
+      const checked = currentImg === imageUrl;
+      const elsewhere = currentImg && currentImg !== imageUrl;
+      return `
+        <label style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-weight:400;">
+          <input type="checkbox" data-tag-value="${escapeHtml(v.value)}" ${checked ? 'checked' : ''} style="width:auto;">
+          <span>${escapeHtml(v.type)}：${escapeHtml(v.value)}</span>
+          ${elsewhere ? '<span style="font-size:11px; color:var(--ink-soft); margin-left:auto;">目前對應到另一張圖片，勾選會改指過來</span>' : ''}
+        </label>
+      `;
+    }).join('');
+  }
+  document.getElementById('imageTagOverlay').classList.add('open');
+}
+document.getElementById('imageTagClose').addEventListener('click', () => document.getElementById('imageTagOverlay').classList.remove('open'));
+document.getElementById('imageTagSaveBtn').addEventListener('click', async () => {
+  const productId = document.getElementById('productEditId').value;
+  const msg = document.getElementById('imageTagMsg');
+  const checkboxes = document.querySelectorAll('#imageTagCheckboxList input[type="checkbox"]');
+  const checkedValues = [...checkboxes].filter(cb => cb.checked).map(cb => cb.dataset.tagValue);
+  const uncheckedValues = [...checkboxes].filter(cb => !cb.checked).map(cb => cb.dataset.tagValue);
+
+  msg.textContent = '儲存中...'; msg.className = 'form-msg';
+
+  // 勾選的：直接 upsert，同一個款式值原本對應到別張圖片的話，這裡會直接覆蓋過來
+  if (checkedValues.length > 0) {
+    const rows = checkedValues.map(v => ({ product_id: productId, image_url: imageTagCurrentUrl, variant_value: v }));
+    const { error: upsertErr } = await sb.from('product_image_tags').upsert(rows, { onConflict: 'product_id,variant_value' });
+    if (upsertErr) { msg.textContent = '儲存失敗：' + upsertErr.message; msg.className = 'form-msg err'; return; }
+  }
+  // 取消勾選的：只清除「原本確實對應到這張圖片」的標籤，不要動到對應到其他圖片的
+  if (uncheckedValues.length > 0) {
+    await sb.from('product_image_tags').delete().eq('product_id', productId).eq('image_url', imageTagCurrentUrl).in('variant_value', uncheckedValues);
+  }
+
+  msg.textContent = '已儲存！'; msg.className = 'form-msg ok';
+  setTimeout(() => document.getElementById('imageTagOverlay').classList.remove('open'), 600);
+});
 
 function renderVariantGroups() {
   const container = document.getElementById('variantGroupsContainer');
@@ -5972,15 +6225,32 @@ document.getElementById('wishSubmitForm').addEventListener('submit', async (e) =
   const social_link = document.getElementById('wishSocialLink').value.trim();
   const description = document.getElementById('wishDesc').value.trim();
 
-  const { error } = await sb.from('wishlist_requests').insert({
+  const wishType = document.querySelector('input[name="wishType"]:checked').value;
+
+  const { data: inserted, error } = await sb.from('wishlist_requests').insert({
     user_id: state.user.id, brand_name, country: country || null, category: category || null,
     image_url: state.wishSubmitImageUrl || null, size: size || null, color: color || null,
-    social_link: social_link || null, description: description || null,
-  });
+    social_link: social_link || null, description: description || null, wish_type: wishType,
+  }).select().single();
   if (error) {
     msg.textContent = '送出失敗，請稍後再試'; msg.className = 'form-msg err';
     return;
   }
+
+  if (wishType === 'personal') {
+    // 個人詢問：整合成一則訊息直接送給我們，並帶客戶去聊天室，讓他清楚知道許願已經變成私訊
+    await sb.from('messages').insert({
+      user_id: state.user.id, sender: 'customer',
+      content: '我想私下詢問這件商品的採購與報價～', wishlist_id: inserted.id,
+    });
+    e.target.reset();
+    state.wishSubmitImageUrl = null;
+    toast('已送出個人詢問，請留意聊天室訊息');
+    state.chatReturnHash = location.hash;
+    location.hash = '#messages';
+    return;
+  }
+
   msg.textContent = '收到你的許願了，審核通過後會公開在許願專區，謝謝！'; msg.className = 'form-msg ok';
   e.target.reset();
   state.wishSubmitImageUrl = null;
@@ -5996,7 +6266,7 @@ const WISH_COUNTRY_LABEL2 = {}; // country 現在是自由文字，直接顯示�
 
 async function loadWishlistPublic() {
   const list = document.getElementById('wishlistPublicList');
-  const { data: wishes, error } = await sb.from('wishlist_requests').select('*').eq('is_public', true).order('created_at', { ascending: false });
+  const { data: wishes, error } = await sb.from('wishlist_requests').select('*').eq('is_public', true).eq('wish_type', 'public').order('created_at', { ascending: false });
   if (error) { list.innerHTML = '<p>讀取失敗</p>'; console.error(error); return; }
   if (!wishes || wishes.length === 0) { list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">目前還沒有公開的許願。</p>'; return; }
 
@@ -6251,12 +6521,15 @@ document.getElementById('adminResetPasswordBtn').addEventListener('click', async
 
 async function drawAdminChat(box, customerAvatar, myAvatar) {
   const withImages = await Promise.all(adminChatMsgState.messages.map(async m => ({ ...m, _image: await signedChatImage(m.image_path) })));
-  const withOrders = await attachOrderPreviews(withImages);
+  const withOrders = await attachWishPreviews(await attachOrderPreviews(withImages));
   const html = buildChatBubblesHtml(withOrders, myAvatar, customerAvatar, m => m.sender === 'admin', m => (m.sender === 'admin' && m.is_read) ? ' · 客戶已讀' : '', true);
   box.innerHTML = html || '<p style="color:var(--ink-soft);font-size:13px">尚未有訊息。你可以主動向這位會員問候。</p>';
   box.querySelectorAll('[data-product-link]').forEach(el => el.addEventListener('click', () => { if (el.dataset.productLink) location.hash = `#product=${el.dataset.productLink}`; }));
   box.querySelectorAll('[data-order-quick-view]').forEach(btn => {
     btn.addEventListener('click', () => { location.hash = '#admin-orders'; });
+  });
+  box.querySelectorAll('[data-wish-convert]:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => openWishConvertModal(btn.dataset.wishConvert));
   });
   box.querySelectorAll('[data-order-quick-confirm]:not([disabled])').forEach(btn => {
     btn.addEventListener('click', async () => {
