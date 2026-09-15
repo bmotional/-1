@@ -2561,7 +2561,7 @@ document.getElementById('lineLoginBtn').addEventListener('click', () => {
 
 async function completeLineSession(email, hashedToken) {
   if (!hashedToken) { toast('登入失敗，請重新嘗試'); return; }
-  const { error } = await sb.auth.verifyOtp({ email, token: hashedToken, type: 'magiclink' });
+  const { error } = await sb.auth.verifyOtp({ token_hash: hashedToken, type: 'magiclink' });
   if (error) { toast('登入失敗：' + error.message); return; }
   toast('登入成功！');
   closeAuth();
