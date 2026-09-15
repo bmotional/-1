@@ -2593,7 +2593,17 @@ async function handleLineLoginCallback() {
   openAuth();
   toast('LINE登入處理中...');
   const { data, error } = await sb.functions.invoke('line-login-verify', { body: { code, redirect_uri: lineRedirectUri() } });
-  if (error || data?.error) { toast(data?.error || 'LINE登入失敗，請重新嘗試'); return; }
+  if (error || data?.error) {
+    // Supabase的函式呼叫在後端回傳非2xx狀態碼時，實際的錯誤內容會放在 error.context(一個Response物件)，
+    // 不是 data 裡面，之前這裡沒有讀對地方，導致畫面一直只顯示籠統的訊息，看不到真正的原因
+    let detail = data?.error;
+    if (!detail && error?.context) {
+      try { const body = await error.context.json(); detail = body?.error; } catch (e) { /* 無法解析就沿用預設訊息 */ }
+    }
+    console.error('line-login-verify failed', error, data, detail);
+    toast(detail || 'LINE登入失敗，請重新嘗試');
+    return;
+  }
 
   if (data.existing) {
     await completeLineSession(data.email, data.hashed_token);
@@ -2618,7 +2628,15 @@ document.getElementById('lineTermsConfirmBtn').addEventListener('click', async (
   btn.disabled = true; btn.textContent = '處理中...';
   const { data, error } = await sb.functions.invoke('line-login-complete', { body: { pending: linePendingToken } });
   btn.disabled = false; btn.textContent = '確認並完成登入';
-  if (error || data?.error) { msg.textContent = data?.error || '建立帳號失敗，請重新嘗試'; msg.className = 'form-msg err'; return; }
+  if (error || data?.error) {
+    let detail = data?.error;
+    if (!detail && error?.context) {
+      try { const body = await error.context.json(); detail = body?.error; } catch (e) { /* 無法解析就沿用預設訊息 */ }
+    }
+    console.error('line-login-complete failed', error, data, detail);
+    msg.textContent = detail || '建立帳號失敗，請重新嘗試'; msg.className = 'form-msg err';
+    return;
+  }
 
   linePendingToken = null;
   await completeLineSession(data.email, data.hashed_token);
