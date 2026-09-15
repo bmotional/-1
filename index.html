@@ -1039,6 +1039,32 @@
   <div id="adminRescueList" style="max-width:680px;"></div>
 </div>
 
+<!-- ============ 會員管理 全頁畫面 ============ -->
+<div id="adminMembersPageView" class="wrap section" style="display:none;">
+  <button class="btn btn-outline btn-sm" id="adminMembersPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
+  <h2 class="section-title">會員管理</h2>
+  <p class="sub" style="max-width:560px; margin-bottom:16px;">搜尋顯示名稱、帳號或會員編號，主動找到要處理的會員，不需要等對方先傳訊息聯絡。</p>
+  <div style="display:flex; gap:8px; max-width:480px; margin-bottom:20px;">
+    <input type="search" id="adminMembersSearch" placeholder="輸入顯示名稱、帳號或會員編號..." style="flex:1; padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius);">
+  </div>
+  <div id="adminMembersList" style="max-width:680px;"></div>
+</div>
+
+<!-- ============ 會員管理：解除LINE連動 醒目防呆確認 ============ -->
+<div class="modal-overlay" id="unlinkLineConfirmOverlay">
+  <div class="modal">
+    <button class="modal-close" id="unlinkLineConfirmClose" aria-label="關閉">×</button>
+    <h3 style="color:var(--danger);">⚠️ 解除LINE連動確認</h3>
+    <p class="sub">即將解除 <strong id="unlinkLineConfirmName"></strong> 的LINE連動。這個動作只會清除LINE連動資料，帳號、訂單、訊息等歷史紀錄完全不受影響；如果這個帳號沒有另外設定密碼，之後會變成無法登入的帳號。這個LINE身分之後可以被任何人重新註冊使用。</p>
+    <p class="sub" style="font-weight:600; color:var(--danger);">為避免手滑誤觸，請在下方輸入這位會員的顯示名稱「<span id="unlinkLineConfirmNameEcho"></span>」以確認：</p>
+    <div class="field">
+      <input type="text" id="unlinkLineConfirmInput" autocomplete="off">
+    </div>
+    <button type="button" class="btn btn-primary" style="width:100%; background:var(--danger); border-color:var(--danger);" id="unlinkLineConfirmBtn" disabled>確認解除LINE連動</button>
+    <div class="form-msg" id="unlinkLineConfirmMsg"></div>
+  </div>
+</div>
+
 <!-- ============ 商品管理 全頁畫面 ============ -->
 <div id="adminProductsPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="adminProductsPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
@@ -1849,6 +1875,7 @@
       <button class="admin-tab" data-admin-tab="demandPending">待鎖需求</button>
       <button class="admin-tab" data-admin-tab="demandAll">全店需求總覽</button>
       <a href="#admin-rescue" class="admin-tab" id="adminRescueTabLink" style="text-decoration:none; display:inline-block;">帳號救援</a>
+      <a href="#admin-members" class="admin-tab" id="adminMembersTabLink" style="text-decoration:none; display:inline-block;">會員管理</a>
     </div>
 
     <div id="adminOrdersTab">
@@ -3781,16 +3808,19 @@ function renderRoute() {
   const isWishSubmit = hash === '#wishlist-submit';
   const isWishPublic = hash === '#wishlist-public';
   const isAdminRescue = hash === '#admin-rescue';
+  const isAdminMembers = hash === '#admin-members';
   const isMembershipTerms = hash === '#membership-terms';
   const isPolicyHub = hash === '#policies';
   const adminPage = ADMIN_PANEL_PAGES[hash];
 
   const anyAdminPageOpen = !!adminPage;
-  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isRefundOrders || isPreorderGuide || isRefundPolicy || isWishSubmit || isWishPublic || isAdminRescue || isMembershipTerms || isPolicyHub) ? 'none' : 'block';
+  document.getElementById('mainView').style.display = (productMatch || isMessages || isNotifications || isAdminMessages || anyAdminPageOpen || isEditProfile || isHistoryOrders || isActiveOrders || isRefundOrders || isPreorderGuide || isRefundPolicy || isWishSubmit || isWishPublic || isAdminRescue || isAdminMembers || isMembershipTerms || isPolicyHub) ? 'none' : 'block';
   document.getElementById('membershipTermsPageView').style.display = isMembershipTerms ? 'block' : 'none';
   document.getElementById('policyHubPageView').style.display = isPolicyHub ? 'block' : 'none';
   document.getElementById('adminRescuePageView').style.display = isAdminRescue ? 'block' : 'none';
   if (isAdminRescue) { if (!state.profile?.is_admin) { toast('僅管理者可使用此頁面'); location.hash = ''; } else { loadAdminRescueRequests(); } }
+  document.getElementById('adminMembersPageView').style.display = isAdminMembers ? 'block' : 'none';
+  if (isAdminMembers) { if (!state.profile?.is_admin) { toast('僅管理者可使用此頁面'); location.hash = ''; } else { loadAdminMembersList(); } }
   document.getElementById('productPageView').style.display = productMatch ? 'block' : 'none';
   document.getElementById('messagesPageView').style.display = isMessages ? 'block' : 'none';
   document.getElementById('notificationsPageView').style.display = isNotifications ? 'block' : 'none';
@@ -5604,6 +5634,79 @@ async function loadAdminRescueRequests() {
     });
   });
 }
+
+document.getElementById('adminMembersTabLink').addEventListener('click', () => {
+  document.getElementById('adminOverlay').classList.remove('open');
+});
+document.getElementById('adminMembersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
+
+let adminMembersCache = [];
+async function loadAdminMembersList() {
+  const { data, error } = await sb.rpc('admin_list_members');
+  if (error) { document.getElementById('adminMembersList').innerHTML = '<p>讀取失敗</p>'; console.error(error); return; }
+  adminMembersCache = data || [];
+  renderAdminMembersList('');
+}
+function renderAdminMembersList(query) {
+  const list = document.getElementById('adminMembersList');
+  const q = query.trim().toLowerCase();
+  const filtered = !q ? adminMembersCache : adminMembersCache.filter(m =>
+    (m.display_name || '').toLowerCase().includes(q) ||
+    (m.account || '').toLowerCase().includes(q) ||
+    (m.uid || '').toLowerCase().includes(q)
+  );
+  if (filtered.length === 0) {
+    list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">' + (q ? '找不到符合的會員。' : '目前沒有任何會員。') + '</p>';
+    return;
+  }
+  list.innerHTML = filtered.map(m => `
+    <div class="order-row" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <img src="${m.avatar_url || DEFAULT_AVATAR_SVG}" alt="" style="width:40px; height:40px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); flex-shrink:0;">
+      <div style="flex:1; min-width:160px;">
+        <strong>${escapeHtml(m.display_name || '（未設定名稱）')}</strong>
+        <p class="sub" style="margin:2px 0 0; font-size:12px;">會員編號：${escapeHtml(m.uid || '—')}　帳號：${escapeHtml(m.account || '（尚未設定）')}</p>
+      </div>
+      ${m.line_user_id
+        ? `<span class="order-card-status paid" style="margin-right:4px;">已連動LINE</span>
+           <button type="button" class="btn btn-outline btn-sm" data-unlink-line="${m.id}" data-unlink-name="${escapeHtml(m.display_name || '這位會員')}">解除LINE連動</button>`
+        : `<span class="order-card-status pending">未連動LINE</span>`
+      }
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-unlink-line]').forEach(btn => {
+    btn.addEventListener('click', () => openUnlinkLineConfirm(btn.dataset.unlinkLine, btn.dataset.unlinkName));
+  });
+}
+document.getElementById('adminMembersSearch').addEventListener('input', (e) => renderAdminMembersList(e.target.value));
+
+let unlinkLineTargetId = null, unlinkLineTargetName = null;
+function openUnlinkLineConfirm(userId, displayName) {
+  unlinkLineTargetId = userId;
+  unlinkLineTargetName = displayName;
+  document.getElementById('unlinkLineConfirmName').textContent = displayName;
+  document.getElementById('unlinkLineConfirmNameEcho').textContent = displayName;
+  document.getElementById('unlinkLineConfirmInput').value = '';
+  document.getElementById('unlinkLineConfirmBtn').disabled = true;
+  document.getElementById('unlinkLineConfirmMsg').textContent = '';
+  document.getElementById('unlinkLineConfirmOverlay').classList.add('open');
+}
+document.getElementById('unlinkLineConfirmClose').addEventListener('click', () => {
+  document.getElementById('unlinkLineConfirmOverlay').classList.remove('open');
+});
+document.getElementById('unlinkLineConfirmInput').addEventListener('input', (e) => {
+  document.getElementById('unlinkLineConfirmBtn').disabled = e.target.value.trim() !== unlinkLineTargetName;
+});
+document.getElementById('unlinkLineConfirmBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('unlinkLineConfirmBtn');
+  const msg = document.getElementById('unlinkLineConfirmMsg');
+  btn.disabled = true; btn.textContent = '處理中...';
+  const { error } = await sb.rpc('admin_unlink_line', { target_user_id: unlinkLineTargetId });
+  btn.textContent = '確認解除LINE連動';
+  if (error) { msg.textContent = '操作失敗：' + error.message; msg.className = 'form-msg err'; btn.disabled = false; return; }
+  toast('已解除LINE連動');
+  document.getElementById('unlinkLineConfirmOverlay').classList.remove('open');
+  loadAdminMembersList();
+});
 
 async function loadAdminWishlist() {
   const { data, error } = await sb
