@@ -995,9 +995,12 @@
       <div id="adminChatUserList"></div>
     </aside>
     <section class="chat-thread">
-      <div class="chat-thread-head" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <div class="chat-thread-head" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
         <span id="adminChatThreadTitle">選擇一位會員開始對話</span>
-        <button type="button" class="btn btn-outline btn-sm" id="adminResetPasswordBtn" style="display:none; flex-shrink:0;">重設此會員密碼</button>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline btn-sm" id="adminUnlinkLineBtn" style="display:none; flex-shrink:0;">解除LINE連動</button>
+          <button type="button" class="btn btn-outline btn-sm" id="adminResetPasswordBtn" style="display:none; flex-shrink:0;">重設此會員密碼</button>
+        </div>
       </div>
       <div class="chat-log" id="adminChatMessages"></div>
       <div class="chat-file-preview" id="adminChatImagePreview" hidden></div>
@@ -1413,6 +1416,19 @@
         </div>
       </div>
       <p style="font-size:12px; color:var(--ink-soft); margin-top:-8px;">登入帳號無法自行修改，如需變更請聯絡客服協助處理</p>
+    </div>
+
+    <!-- LINE連動狀態：沒連動的人可以隨時主動連動 -->
+    <div class="ep-section">
+      <h3 class="ep-section-title">LINE登入</h3>
+      <div id="epLineLinkedRow" style="display:none;">
+        <span class="order-card-status paid">已連動LINE</span>
+      </div>
+      <div id="epLineUnlinkedRow" style="display:none;">
+        <p class="sub" style="margin-bottom:10px;">連動LINE帳號後，之後也可以直接用LINE快速登入，不用每次輸入帳號密碼。</p>
+        <button type="button" class="btn btn-outline btn-sm" id="epLinkLineBtn" style="background:#06C755; color:#fff; border-color:#06C755;">連動LINE帳號</button>
+      </div>
+      <div class="form-msg" id="epLineLinkMsg"></div>
     </div>
 
     <!-- 尚未設定帳號密碼登入方式(LINE登入的會員)：只有帳號設定後永久鎖定，密碼之後隨時可以再改 -->
@@ -2547,21 +2563,24 @@ const LINE_CHANNEL_ID = '2011606780';
 
 function lineRedirectUri() { return location.origin + location.pathname; }
 
-document.getElementById('lineLoginBtn').addEventListener('click', () => {
+function startLineOAuth(intent) {
   try {
     const oauthState = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
     localStorage.setItem('line_oauth_state', oauthState);
     localStorage.setItem('line_oauth_state_time', String(Date.now()));
+    localStorage.setItem('line_oauth_intent', intent);
     const params = new URLSearchParams({
       response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
       state: oauthState, scope: 'profile openid',
     });
     location.href = `https://access.line.me/oauth2/v2.1/authorize?${params}`;
   } catch (e) {
-    console.error('LINE login redirect failed', e);
-    toast('無法啟動LINE登入，請稍後再試：' + e.message);
+    console.error('LINE OAuth redirect failed', e);
+    toast('無法啟動LINE連動，請稍後再試：' + e.message);
   }
-});
+}
+document.getElementById('lineLoginBtn').addEventListener('click', () => startLineOAuth('login'));
+document.getElementById('epLinkLineBtn').addEventListener('click', () => startLineOAuth('link'));
 
 async function completeLineSession(email, hashedToken) {
   if (!hashedToken) { toast('登入失敗，請重新嘗試'); return; }
@@ -2582,6 +2601,9 @@ async function handleLineLoginCallback() {
   const cleanUrl = location.pathname + location.hash;
   history.replaceState(null, '', cleanUrl);
 
+  const intent = localStorage.getItem('line_oauth_intent') || 'login';
+  localStorage.removeItem('line_oauth_intent');
+
   // 用 localStorage(跟瀏覽器綁定)取代 sessionStorage(跟分頁綁定)：
   // 手機上LINE App透過系統的Universal Link跳轉回來，實際開啟的瀏覽器情境不一定跟原本發起登入的相同
   // (甚至可能換了一個瀏覽器App)，localStorage在這種情況下還是可能讀不到。
@@ -2594,6 +2616,25 @@ async function handleLineLoginCallback() {
   localStorage.removeItem('line_oauth_state_time');
   if (!returnedState || returnedState !== savedState || (savedStateTime && Date.now() - savedStateTime > 10 * 60_000)) {
     console.warn('LINE OAuth state 比對不到(可能是跨瀏覽器情境跳轉)，仍繼續使用授權碼完成登入');
+  }
+
+  if (intent === 'link') {
+    // 連動LINE帳號：這個人已經是登入狀態，只需要把LINE身分綁到目前帳號上，不用走註冊/登入流程
+    toast('LINE連動處理中...');
+    const { data, error } = await sb.functions.invoke('line-link-account', { body: { code, redirect_uri: lineRedirectUri() } });
+    if (error || data?.error) {
+      let detail = data?.error;
+      if (!detail && error?.context) {
+        try { const body = await error.context.json(); detail = body?.error; } catch (e) { /* 無法解析就沿用預設訊息 */ }
+      }
+      console.error('line-link-account failed', error, data, detail);
+      toast(detail || 'LINE連動失敗，請重新嘗試');
+      return;
+    }
+    toast(data.alreadyLinked ? '這個LINE帳號本來就已經連動了' : 'LINE帳號連動成功！');
+    await loadProfile();
+    if (location.hash === '#edit-profile') populateEditProfileFields();
+    return;
   }
 
   openAuth();
@@ -4199,7 +4240,7 @@ async function loadProfile() {
   if (!state.user) { state.profile = null; updateAdminUI(); return; }
   const { data, error } = await sb
     .from('profiles')
-    .select('is_admin, display_name, uid, account, instagram, avatar_url, contact_email, phone, contact_email_verified, contact_email_bounced, password_reset_required')
+    .select('is_admin, display_name, uid, account, instagram, avatar_url, contact_email, phone, contact_email_verified, contact_email_bounced, password_reset_required, line_user_id')
     .eq('id', state.user.id)
     .single();
   if (error) { console.error('讀取會員資料失敗', error); state.profile = null; }
@@ -4369,6 +4410,11 @@ function populateEditProfileFields() {
   document.getElementById('epSetPassword').value = '';
   document.getElementById('epSetPasswordConfirm').value = '';
   document.getElementById('epSetAccountMsg').textContent = '';
+
+  const hasLine = !!state.profile?.line_user_id;
+  document.getElementById('epLineLinkedRow').style.display = hasLine ? 'block' : 'none';
+  document.getElementById('epLineUnlinkedRow').style.display = hasLine ? 'none' : 'block';
+  document.getElementById('epLineLinkMsg').textContent = '';
 
   exitEpEditMode('userinfo');
 }
@@ -6698,6 +6744,10 @@ async function renderAdminMessagesThread() {
   const name = state.adminChatProfile?.display_name || '會員';
   document.getElementById('adminChatThreadTitle').textContent = `與 ${name} 的對話`;
   document.getElementById('adminResetPasswordBtn').style.display = 'inline-block';
+  // 獨立查一次目前是否有連動LINE，不依賴呼叫端傳進來的物件是否完整
+  const { data: lineCheck } = await sb.from('profiles').select('line_user_id').eq('id', uid).maybeSingle();
+  const unlinkBtn = document.getElementById('adminUnlinkLineBtn');
+  unlinkBtn.style.display = lineCheck?.line_user_id ? 'inline-block' : 'none';
   box.scrollTop = box.scrollHeight;
 
   if (!box.dataset.scrollBound) {
@@ -6724,6 +6774,17 @@ document.getElementById('adminResetPasswordBtn').addEventListener('click', async
   });
   if (error || data?.error) { toast('重設失敗：' + (data?.error || error.message)); return; }
   toast('密碼已重設，請透過聊天室告知對方新密碼');
+});
+
+document.getElementById('adminUnlinkLineBtn').addEventListener('click', async () => {
+  const uid = state.adminChatActiveUser;
+  if (!uid) return;
+  const name = state.adminChatProfile?.display_name || '這位會員';
+  if (!confirm(`確定要解除 ${name} 目前的LINE連動嗎？\n\n這麼做只會清除LINE連動資料，帳號、訂單、訊息等歷史紀錄完全不受影響；如果這個帳號沒有另外設定密碼，之後會變成無法登入的帳號。這個LINE身分之後可以被任何人（包含這位會員自己）重新註冊使用。`)) return;
+  const { error } = await sb.rpc('admin_unlink_line', { target_user_id: uid });
+  if (error) { toast('操作失敗：' + error.message); return; }
+  toast('已解除LINE連動');
+  document.getElementById('adminUnlinkLineBtn').style.display = 'none';
 });
 
 async function drawAdminChat(box, customerAvatar, myAvatar) {
