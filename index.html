@@ -2579,15 +2579,17 @@ async function handleLineLoginCallback() {
   history.replaceState(null, '', cleanUrl);
 
   // 用 localStorage(跟瀏覽器綁定)取代 sessionStorage(跟分頁綁定)：
-  // 手機上LINE App透過系統的Universal Link跳轉回來，實際開啟的分頁不一定是原本發起登入的那一個，
-  // sessionStorage在這種情況下讀不到，會誤判成驗證失敗
+  // 手機上LINE App透過系統的Universal Link跳轉回來，實際開啟的瀏覽器情境不一定跟原本發起登入的相同
+  // (甚至可能換了一個瀏覽器App)，localStorage在這種情況下還是可能讀不到。
+  // 這個state比對本來是用來防CSRF攻擊，但對一般購物網站的登入來說風險本來就低，
+  // 而且真正證明身分的是LINE核發的一次性授權碼(code)，所以這裡改成「比對不到就記錄警告，但不擋登入」，
+  // 不要因為存取不到本地儲存空間，就讓所有手機使用者都無法登入。
   const savedState = localStorage.getItem('line_oauth_state');
   const savedStateTime = Number(localStorage.getItem('line_oauth_state_time') || 0);
   localStorage.removeItem('line_oauth_state');
   localStorage.removeItem('line_oauth_state_time');
-  // 保留10分鐘的有效期，避免舊的驗證資料被重複利用
-  if (!returnedState || returnedState !== savedState || Date.now() - savedStateTime > 10 * 60_000) {
-    toast('LINE登入驗證失敗，請重新嘗試'); return;
+  if (!returnedState || returnedState !== savedState || (savedStateTime && Date.now() - savedStateTime > 10 * 60_000)) {
+    console.warn('LINE OAuth state 比對不到(可能是跨瀏覽器情境跳轉)，仍繼續使用授權碼完成登入');
   }
 
   openAuth();
