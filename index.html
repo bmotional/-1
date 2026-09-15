@@ -809,9 +809,6 @@
         <svg id="acctIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
         <img id="acctAvatarImg" alt="" style="display:none; width:36px; height:36px; border-radius:999px; object-fit:cover;">
       </button>
-      <a href="https://line.me/R/ti/p/@REPLACE_WITH_YOUR_LINE_ID" target="_blank" rel="noopener" class="icon-btn" id="lineBtn" aria-label="加LINE好友" title="加LINE好友，掌握最新出貨通知">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#06C755"><path d="M12 2C6.48 2 2 5.69 2 10.25c0 4.1 3.61 7.53 8.48 8.15.33.07.78.22.9.5.1.26.07.66.03.92l-.15.9c-.04.26-.2 1.02.9.56 1.1-.47 5.94-3.5 8.1-6 .81-.9 1.24-1.83 1.24-2.9C21.5 5.69 17.52 2 12 2z"/></svg>
-      </a>
       <button class="icon-btn" id="chatBtn" aria-label="聯絡我們" title="聯絡我們">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
         <span class="cart-badge" id="chatBadge" style="display:none">0</span>
@@ -1407,7 +1404,7 @@
     </div>
 
     <!-- 帳號資訊(唯讀，登入帳號不可自行修改) -->
-    <div class="ep-section">
+    <div class="ep-section" id="epAccountReadonlySection">
       <h3 class="ep-section-title">帳號資訊</h3>
       <div class="ep-field-row">
         <div class="field" style="flex:1; margin-bottom:0;">
@@ -1418,8 +1415,32 @@
       <p style="font-size:12px; color:var(--ink-soft); margin-top:-8px;">登入帳號無法自行修改，如需變更請聯絡客服協助處理</p>
     </div>
 
+    <!-- 尚未設定帳號密碼登入方式(LINE登入的會員)：設定後永久鎖定，不能再改 -->
+    <div class="ep-section" id="epSetAccountSection" style="display:none;">
+      <h3 class="ep-section-title">設定帳號密碼登入方式</h3>
+      <p class="sub">你目前是用LINE登入，尚未設定帳號密碼。設定完成後就會永久鎖定、無法再修改，請謹慎填寫。</p>
+      <div class="field">
+        <label for="epNewAccount">帳號（至少6碼，可用英文字母、數字、底線、句點、連字號）</label>
+        <input type="text" id="epNewAccount">
+      </div>
+      <div class="field">
+        <label for="epNewAccountConfirm">再輸入一次帳號確認</label>
+        <input type="text" id="epNewAccountConfirm">
+      </div>
+      <div class="field">
+        <label for="epSetPassword">密碼（至少6碼）</label>
+        <input type="password" id="epSetPassword" minlength="6">
+      </div>
+      <div class="field">
+        <label for="epSetPasswordConfirm">再輸入一次密碼確認</label>
+        <input type="password" id="epSetPasswordConfirm" minlength="6">
+      </div>
+      <button type="button" class="btn btn-primary" style="width:100%" id="epSetAccountSaveBtn">設定完成（無法再修改）</button>
+      <div class="form-msg" id="epSetAccountMsg"></div>
+    </div>
+
     <!-- 修改密碼：需要輸入目前密碼＋兩次新密碼才會生效 -->
-    <div class="ep-section">
+    <div class="ep-section" id="epChangePasswordSection">
       <h3 class="ep-section-title">修改密碼</h3>
       <div id="epPasswordFormClosed">
         <button type="button" class="btn btn-outline btn-sm" id="epOpenPasswordFormBtn">修改密碼</button>
@@ -1561,7 +1582,23 @@
         <button type="submit" class="btn btn-primary" style="width:100%">登入</button>
         <div class="form-msg" id="loginMsg"></div>
       </form>
+      <div class="divider">或</div>
+      <button type="button" class="btn btn-outline" id="lineLoginBtn" style="width:100%; background:#06C755; color:#fff; border-color:#06C755; justify-content:center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 5.69 2 10.25c0 4.1 3.61 7.53 8.48 8.15.33.07.78.22.9.5.1.26.07.66.03.92l-.15.9c-.04.26-.2 1.02.9.56 1.1-.47 5.94-3.5 8.1-6 .81-.9 1.24-1.83 1.24-2.9C21.5 5.69 17.52 2 12 2z"/></svg>
+        用LINE登入
+      </button>
       <div class="auth-switch">還沒有帳號？<button id="toSignup">立即註冊</button></div>
+    </div>
+
+    <div id="authLineTermsView" style="display:none">
+      <h3>歡迎，<span id="lineTermsDisplayName"></span></h3>
+      <p class="sub">這是你第一次使用LINE登入濱水一湖，請閱讀並同意以下條款後即可完成建立帳號。</p>
+      <div class="field" style="display:flex; align-items:flex-start; gap:8px;">
+        <input type="checkbox" id="lineAgreeTerms" style="width:auto; margin-top:3px;">
+        <label for="lineAgreeTerms" style="font-weight:400; margin-bottom:0;">我已閱讀並同意<a href="#membership-terms" target="_blank" rel="noopener" style="color:var(--brass-dark); text-decoration:underline;">會員註冊條款</a></label>
+      </div>
+      <button type="button" class="btn btn-primary" style="width:100%" id="lineTermsConfirmBtn">確認並完成登入</button>
+      <div class="form-msg" id="lineTermsMsg"></div>
     </div>
 
     <div id="authSignupView" style="display:none">
@@ -2501,6 +2538,78 @@ document.getElementById('productSearchInput').addEventListener('input', (e) => {
    ============================================================ */
 const authOverlay = document.getElementById('authOverlay');
 const TURNSTILE_SITE_KEY = '0x4AAAAAAEmB_pKQiDMFxZC3';
+
+// LINE 登入設定：等你在 LINE Developers Console 建立好 LINE Login channel，把 Channel ID 換到這裡即可
+const LINE_CHANNEL_ID = 'REPLACE_WITH_YOUR_LINE_CHANNEL_ID';
+
+function lineRedirectUri() { return location.origin + location.pathname; }
+
+document.getElementById('lineLoginBtn').addEventListener('click', () => {
+  const oauthState = crypto.randomUUID();
+  sessionStorage.setItem('line_oauth_state', oauthState);
+  const params = new URLSearchParams({
+    response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
+    state: oauthState, scope: 'profile openid',
+  });
+  location.href = `https://access.line.me/oauth2/v2.1/authorize?${params}`;
+});
+
+async function completeLineSession(email, hashedToken) {
+  if (!hashedToken) { toast('登入失敗，請重新嘗試'); return; }
+  const { error } = await sb.auth.verifyOtp({ email, token: hashedToken, type: 'magiclink' });
+  if (error) { toast('登入失敗：' + error.message); return; }
+  toast('登入成功！');
+  closeAuth();
+}
+
+let linePendingToken = null;
+async function handleLineLoginCallback() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code');
+  const returnedState = params.get('state');
+  if (!code) return;
+
+  // 處理完就把網址上的 code/state 清掉，避免重新整理頁面時重複觸發
+  const cleanUrl = location.pathname + location.hash;
+  history.replaceState(null, '', cleanUrl);
+
+  const savedState = sessionStorage.getItem('line_oauth_state');
+  sessionStorage.removeItem('line_oauth_state');
+  if (!returnedState || returnedState !== savedState) { toast('LINE登入驗證失敗，請重新嘗試'); return; }
+
+  openAuth();
+  toast('LINE登入處理中...');
+  const { data, error } = await sb.functions.invoke('line-login-verify', { body: { code, redirect_uri: lineRedirectUri() } });
+  if (error || data?.error) { toast(data?.error || 'LINE登入失敗，請重新嘗試'); return; }
+
+  if (data.existing) {
+    await completeLineSession(data.email, data.hashed_token);
+  } else {
+    // 第一次用這個LINE身分登入，先顯示條款同意畫面，同意後才真正建立帳號
+    linePendingToken = data.pending;
+    document.getElementById('authLoginView').style.display = 'none';
+    document.getElementById('lineTermsDisplayName').textContent = data.displayName || 'LINE會員';
+    document.getElementById('authLineTermsView').style.display = 'block';
+  }
+}
+
+document.getElementById('lineTermsConfirmBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('lineTermsMsg');
+  if (!document.getElementById('lineAgreeTerms').checked) {
+    msg.textContent = '請先閱讀並勾選同意會員註冊條款'; msg.className = 'form-msg err';
+    return;
+  }
+  if (!linePendingToken) { msg.textContent = '驗證已過期，請重新登入'; msg.className = 'form-msg err'; return; }
+
+  const btn = document.getElementById('lineTermsConfirmBtn');
+  btn.disabled = true; btn.textContent = '處理中...';
+  const { data, error } = await sb.functions.invoke('line-login-complete', { body: { pending: linePendingToken } });
+  btn.disabled = false; btn.textContent = '確認並完成登入';
+  if (error || data?.error) { msg.textContent = data?.error || '建立帳號失敗，請重新嘗試'; msg.className = 'form-msg err'; return; }
+
+  linePendingToken = null;
+  await completeLineSession(data.email, data.hashed_token);
+});
 let loginTurnstileWidgetId = null, signupTurnstileWidgetId = null, epPasswordTurnstileWidgetId = null;
 let loginCaptchaToken = null, signupCaptchaToken = null, epPasswordCaptchaToken = null;
 
@@ -2567,6 +2676,7 @@ function refreshAuthView() {
   const forgotV = document.getElementById('authForgotView');
   forgotV.style.display = 'none';
   document.getElementById('authRescueView').style.display = 'none';
+  document.getElementById('authLineTermsView').style.display = 'none';
   if (state.user) {
     loginV.style.display = 'none';
     signupV.style.display = 'none';
@@ -4211,6 +4321,18 @@ function populateEditProfileFields() {
   document.getElementById('epPasswordFormOpen').style.display = 'none';
   document.getElementById('epPasswordFormClosed').style.display = 'block';
   document.getElementById('epPasswordMsg').textContent = '';
+
+  // LINE登入、還沒設定過帳號密碼的會員，顯示設定入口；已經有帳號的維持唯讀顯示
+  const hasAccount = !!state.profile?.account;
+  document.getElementById('epAccountReadonlySection').style.display = hasAccount ? 'block' : 'none';
+  document.getElementById('epSetAccountSection').style.display = hasAccount ? 'none' : 'block';
+  document.getElementById('epChangePasswordSection').style.display = hasAccount ? 'block' : 'none';
+  document.getElementById('epNewAccount').value = '';
+  document.getElementById('epNewAccountConfirm').value = '';
+  document.getElementById('epSetPassword').value = '';
+  document.getElementById('epSetPasswordConfirm').value = '';
+  document.getElementById('epSetAccountMsg').textContent = '';
+
   exitEpEditMode('userinfo');
 }
 function epCap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -4242,6 +4364,54 @@ document.querySelectorAll('[data-ep-edit-field]').forEach(btn => {
 });
 
 /* ---------- 修改密碼：需要先驗證目前密碼，兩次新密碼一致才會送出 ---------- */
+document.getElementById('epSetAccountSaveBtn').addEventListener('click', async () => {
+  const account = document.getElementById('epNewAccount').value.trim();
+  const accountConfirm = document.getElementById('epNewAccountConfirm').value.trim();
+  const password = document.getElementById('epSetPassword').value;
+  const passwordConfirm = document.getElementById('epSetPasswordConfirm').value;
+  const msg = document.getElementById('epSetAccountMsg');
+
+  if (!validateAccountFormat(account)) {
+    msg.textContent = '帳號至少需要6個字元，可用英文字母、數字、底線、句點、連字號'; msg.className = 'form-msg err';
+    return;
+  }
+  if (account !== accountConfirm) {
+    msg.textContent = '兩次輸入的帳號不一致，請重新確認'; msg.className = 'form-msg err';
+    return;
+  }
+  if (password.length < 6) {
+    msg.textContent = '密碼至少需要6碼'; msg.className = 'form-msg err';
+    return;
+  }
+  if (password !== passwordConfirm) {
+    msg.textContent = '兩次輸入的密碼不一致，請重新確認'; msg.className = 'form-msg err';
+    return;
+  }
+  if (!confirm(`確定要將帳號設定為「${account}」嗎？設定後將無法再修改，請確認拼寫正確。`)) return;
+
+  const btn = document.getElementById('epSetAccountSaveBtn');
+  btn.disabled = true; btn.textContent = '設定中...';
+
+  // 先確保帳號沒有被搶先使用、並且鎖定，成功後才去改登入信箱跟密碼，避免兩邊資料不一致
+  const { error: lockErr } = await sb.rpc('set_account_and_lock', { p_account: account });
+  if (lockErr) {
+    btn.disabled = false; btn.textContent = '設定完成（無法再修改）';
+    msg.textContent = lockErr.message; msg.className = 'form-msg err';
+    return;
+  }
+
+  const { error: updateErr } = await sb.auth.updateUser({ email: `${account.toLowerCase()}@internal.local`, password });
+  btn.disabled = false; btn.textContent = '設定完成（無法再修改）';
+  if (updateErr) {
+    msg.textContent = '帳號已鎖定，但密碼設定失敗：' + updateErr.message + '，請聯絡客服協助處理'; msg.className = 'form-msg err';
+    return;
+  }
+
+  await loadProfile();
+  populateEditProfileFields();
+  toast('帳號密碼設定完成！之後可以用帳號+密碼登入');
+});
+
 document.getElementById('epOpenPasswordFormBtn').addEventListener('click', () => {
   document.getElementById('epPasswordFormClosed').style.display = 'none';
   document.getElementById('epPasswordFormOpen').style.display = 'block';
@@ -6591,6 +6761,7 @@ document.getElementById('navToggle').addEventListener('click', () => {
   if (state.user) loadActiveOrders("activeOrdersList").catch(()=>{});
 
   renderRoute();
+  handleLineLoginCallback();
   // 有新訊息時，更新目前開啟的聊天室與未讀數。
   state.chatChannel = sb.channel('messages-live').on('postgres_changes', { event:'*', schema:'public', table:'messages' }, () => {
     updateChatBadge();
