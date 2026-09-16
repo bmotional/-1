@@ -1444,6 +1444,22 @@
       <p style="font-size:12px; color:var(--ink-soft); margin-top:-8px;">登入帳號無法自行修改，如需變更請聯絡客服協助處理</p>
     </div>
 
+    <!-- 帳號已鎖定但密碼從未設定成功的補救區塊(例如上一次設定密碼中途失敗) -->
+    <div class="ep-section" id="epRetryPasswordSection" style="display:none;">
+      <h3 class="ep-section-title">完成密碼設定</h3>
+      <p class="sub">你的帳號已經設定完成，但密碼還沒有成功設定，請在這裡完成最後一步。</p>
+      <div class="field">
+        <label for="epRetryPassword">密碼（至少6碼）</label>
+        <input type="password" id="epRetryPassword" minlength="6">
+      </div>
+      <div class="field">
+        <label for="epRetryPasswordConfirm">再輸入一次密碼確認</label>
+        <input type="password" id="epRetryPasswordConfirm" minlength="6">
+      </div>
+      <button type="button" class="btn btn-primary" style="width:100%" id="epRetryPasswordSaveBtn">完成密碼設定</button>
+      <div class="form-msg" id="epRetryPasswordMsg"></div>
+    </div>
+
     <!-- LINE連動狀態：沒連動的人可以隨時主動連動 -->
     <div class="ep-section">
       <h3 class="ep-section-title">LINE登入</h3>
@@ -4430,16 +4446,23 @@ function populateEditProfileFields() {
   document.getElementById('epPasswordFormClosed').style.display = 'block';
   document.getElementById('epPasswordMsg').textContent = '';
 
-  // LINE登入、還沒設定過帳號密碼的會員，顯示設定入口；已經有帳號的維持唯讀顯示
+  // 三種狀態：完全還沒設定帳號 / 帳號已鎖定但密碼從未設定成功(卡住的狀態) / 已經完整設定好
   const hasAccount = !!state.profile?.account;
+  const expectedEmail = hasAccount ? `${state.profile.account.toLowerCase()}@internal.local` : null;
+  const passwordNeverMigrated = hasAccount && state.user?.email !== expectedEmail;
+
   document.getElementById('epAccountReadonlySection').style.display = hasAccount ? 'block' : 'none';
-  document.getElementById('epSetAccountSection').style.display = hasAccount ? 'none' : 'block';
-  document.getElementById('epChangePasswordSection').style.display = hasAccount ? 'block' : 'none';
+  document.getElementById('epSetAccountSection').style.display = !hasAccount ? 'block' : 'none';
+  document.getElementById('epRetryPasswordSection').style.display = passwordNeverMigrated ? 'block' : 'none';
+  document.getElementById('epChangePasswordSection').style.display = (hasAccount && !passwordNeverMigrated) ? 'block' : 'none';
   document.getElementById('epNewAccount').value = '';
   document.getElementById('epNewAccountConfirm').value = '';
   document.getElementById('epSetPassword').value = '';
   document.getElementById('epSetPasswordConfirm').value = '';
   document.getElementById('epSetAccountMsg').textContent = '';
+  document.getElementById('epRetryPassword').value = '';
+  document.getElementById('epRetryPasswordConfirm').value = '';
+  document.getElementById('epRetryPasswordMsg').textContent = '';
 
   const hasLine = !!state.profile?.line_user_id;
   document.getElementById('epLineLinkedRow').style.display = hasLine ? 'block' : 'none';
@@ -4513,16 +4536,57 @@ document.getElementById('epSetAccountSaveBtn').addEventListener('click', async (
     return;
   }
 
-  const { error: updateErr } = await sb.auth.updateUser({ email: `${account.toLowerCase()}@internal.local`, password });
+  // 這個專案有開「修改密碼要先驗證目前密碼」的安全性設定，
+  // 但LINE會員從來沒設過密碼、提供不出「目前密碼」，直接呼叫 updateUser 一定會被擋下來，
+  // 所以第一次設定密碼改用後端(service role)直接設定，繞過這個只適用於「已經有密碼」情境的限制
+  const { data, error: updateErr } = await sb.functions.invoke('set-initial-password', { body: { account, new_password: password } });
   btn.disabled = false; btn.textContent = '設定完成（無法再修改）';
-  if (updateErr) {
-    msg.textContent = '帳號已鎖定，但密碼設定失敗：' + updateErr.message + '，請聯絡客服協助處理'; msg.className = 'form-msg err';
+  if (updateErr || data?.error) {
+    let detail = data?.error;
+    if (!detail && updateErr?.context) {
+      try { const body = await updateErr.context.json(); detail = body?.error; } catch (e) { /* 無法解析就沿用預設訊息 */ }
+    }
+    console.error('set-initial-password failed', updateErr, data, detail);
+    msg.textContent = '帳號已鎖定，但密碼設定失敗：' + (detail || '請聯絡客服協助處理'); msg.className = 'form-msg err';
     return;
   }
 
+  await sb.auth.refreshSession();
+  const { data: { user: freshUser } } = await sb.auth.getUser();
+  state.user = freshUser;
   await loadProfile();
   populateEditProfileFields();
   toast('帳號密碼設定完成！之後可以用帳號+密碼登入');
+});
+
+document.getElementById('epRetryPasswordSaveBtn').addEventListener('click', async () => {
+  const password = document.getElementById('epRetryPassword').value;
+  const passwordConfirm = document.getElementById('epRetryPasswordConfirm').value;
+  const msg = document.getElementById('epRetryPasswordMsg');
+  if (password.length < 6) { msg.textContent = '密碼至少需要6碼'; msg.className = 'form-msg err'; return; }
+  if (password !== passwordConfirm) { msg.textContent = '兩次輸入的密碼不一致，請重新確認'; msg.className = 'form-msg err'; return; }
+
+  const btn = document.getElementById('epRetryPasswordSaveBtn');
+  btn.disabled = true; btn.textContent = '設定中...';
+  // 帳號名稱已經在上一次鎖定過了，這裡不用也不能再呼叫 set_account_and_lock，直接完成密碼設定
+  const { data, error: updateErr } = await sb.functions.invoke('set-initial-password', { body: { account: state.profile.account, new_password: password } });
+  btn.disabled = false; btn.textContent = '完成密碼設定';
+  if (updateErr || data?.error) {
+    let detail = data?.error;
+    if (!detail && updateErr?.context) {
+      try { const body = await updateErr.context.json(); detail = body?.error; } catch (e) { /* 無法解析就沿用預設訊息 */ }
+    }
+    console.error('set-initial-password (retry) failed', updateErr, data, detail);
+    msg.textContent = detail || '設定失敗，請聯絡客服協助處理'; msg.className = 'form-msg err';
+    return;
+  }
+
+  await sb.auth.refreshSession();
+  const { data: { user: freshUser } } = await sb.auth.getUser();
+  state.user = freshUser;
+  await loadProfile();
+  populateEditProfileFields();
+  toast('密碼設定完成！之後可以用帳號+密碼登入');
 });
 
 document.getElementById('epOpenPasswordFormBtn').addEventListener('click', () => {
