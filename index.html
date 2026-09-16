@@ -427,6 +427,12 @@
   .big-modal .modal { max-width: 640px; max-height: 82vh; overflow-y: auto; }
   #adminOverlay .modal { height: 82vh; max-height: 780px; }
   .product-modal .modal { max-width: 760px; max-height: 88vh; overflow-y: auto; }
+  .product-edit-sticky-bar {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg-raised); margin: -32px -32px 16px; padding: 14px 32px;
+    border-bottom: 1px solid var(--line);
+  }
   .product-edit-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
   @media (max-width: 640px) { .product-edit-layout { grid-template-columns: 1fr; } }
   .product-page-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
@@ -671,6 +677,8 @@
     display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
   }
   .modal-overlay.open { display: flex; }
+  /* 這些視窗可能會在其他視窗(例如編輯商品)已經開著的情況下，疊在最上層開啟，z-index要更高才不會被擋住 */
+  #variantImagePickerOverlay, #imageTagOverlay, #productEditUnsavedOverlay { z-index: 200; }
   .modal {
     background: var(--bg-raised); border-radius: var(--radius); max-width: 400px; width: 100%;
     padding: 32px; position: relative; box-shadow: 0 12px 40px rgba(42,40,35,0.2);
@@ -2127,6 +2135,18 @@
 
 <!-- ============ 商品圖片：設定款式標籤 ============ -->
 <!-- ============ 為單一款式選項挑選參考圖 ============ -->
+<!-- ============ 編輯商品：關閉前有未儲存變更的確認 ============ -->
+<div class="modal-overlay" id="productEditUnsavedOverlay">
+  <div class="modal">
+    <h3>尚有未儲存的變更</h3>
+    <p class="sub">這次編輯還沒有儲存，確定要關閉嗎？</p>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button type="button" class="btn btn-outline" id="productEditUnsavedCancelBtn" style="flex:1;">取消</button>
+      <button type="button" class="btn btn-primary" id="productEditUnsavedSaveBtn" style="flex:1;">儲存改變</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="variantImagePickerOverlay">
   <div class="modal">
     <button class="modal-close" id="variantImagePickerClose" aria-label="關閉">×</button>
@@ -2238,7 +2258,10 @@
 <!-- ============ Product Edit Modal（管理員新增/編輯商品用） ============ -->
 <div class="modal-overlay product-modal" id="productEditOverlay">
   <div class="modal">
-    <button class="modal-close" id="productEditClose" aria-label="關閉">×</button>
+    <div class="product-edit-sticky-bar">
+      <button type="button" class="btn btn-primary btn-sm" id="productEditSaveInlineBtn">💾 儲存</button>
+      <button class="modal-close" id="productEditClose" aria-label="關閉" style="position:static;">×</button>
+    </div>
     <h3 id="productEditTitle">編輯商品</h3>
 
     <div class="product-edit-layout">
@@ -6078,6 +6101,8 @@ async function openProductEditor(product) {
   }
 
   document.getElementById('productEditOverlay').classList.add('open');
+  // 放在真的要顯示視窗前才重置，避免上面這些初始化過程被誤判成「使用者自己改的」
+  state.productEditHasUnsavedChanges = false;
 }
 
 function renderProductImageGallery() {
@@ -6381,6 +6406,8 @@ function renderVariantGroups() {
   container.querySelectorAll('[data-stage-delete]').forEach(btn => {
     btn.addEventListener('click', () => {
       const [gi, idx] = btn.dataset.stageDelete.split(':').map(Number);
+      const value = state.productEditVariants[gi]?.rows?.[idx]?.value || '這個選項';
+      if (!confirm(`確定要移除「${value}」這個選項嗎？`)) return;
       state.productEditVariants[gi].rows.splice(idx, 1);
       renderVariantGroups();
     });
@@ -6407,10 +6434,10 @@ function renderVariantRow(v, gi, i, isColorType) {
   return `
     <div class="admin-variant-row">
       ${isColorType ? `<span class="admin-variant-swatch" style="background:${v.color_hex || '#ccc'}"></span>` : ''}
+      ${canTag ? `<button type="button" class="btn btn-sm" data-set-variant-image="${escapeHtml(v.value)}" title="設定這個選項的參考圖，客戶選到這個選項時彈窗會跳到這張圖" style="background:#E8F0F7; color:#2C5B7A; border:1px solid #C7DCEA;">設定圖片</button>` : ''}
       <span class="admin-variant-name">${v.value}</span>
-      <button type="button" class="btn btn-outline btn-sm" data-stage-toggle-avail="${gi}:${i}">${v.is_available ? '設為缺貨' : '設為有貨'}</button>
+      <button type="button" class="btn btn-sm" data-stage-toggle-avail="${gi}:${i}" style="background:#FBEFC9; color:#5C4A1E; border:1px solid #EEDBA0;">${v.is_available ? '設為缺貨' : '設為有貨'}</button>
       ${!v.is_available ? `<input type="text" data-stage-msg="${gi}:${i}" placeholder="自訂缺貨提示(留空用預設)" value="${v.unavailable_message || ''}" style="flex:1; min-width:120px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-size:12px;">` : ''}
-      ${canTag ? `<button type="button" class="btn btn-outline btn-sm" data-set-variant-image="${escapeHtml(v.value)}" title="設定這個選項的參考圖，客戶選到這個選項時彈窗會跳到這張圖">設定圖片</button>` : ''}
       <button type="button" class="cart-item-remove" data-stage-delete="${gi}:${i}">移除</button>
     </div>
   `;
@@ -6424,7 +6451,33 @@ document.getElementById('addVariantGroupBtn').addEventListener('click', () => {
   renderVariantGroups();
 });
 document.getElementById('productEditClose').addEventListener('click', () => {
+  if (state.productEditHasUnsavedChanges) {
+    document.getElementById('productEditUnsavedOverlay').classList.add('open');
+    return;
+  }
   document.getElementById('productEditOverlay').classList.remove('open');
+});
+
+// 表單欄位的直接輸入/選擇，透過事件冒泡集中偵測，不用每個欄位分別綁定
+document.getElementById('productEditOverlay').addEventListener('input', (e) => {
+  if (e.target.closest('#productEditForm')) state.productEditHasUnsavedChanges = true;
+});
+document.getElementById('productEditOverlay').addEventListener('change', (e) => {
+  if (e.target.closest('#productEditForm')) state.productEditHasUnsavedChanges = true;
+});
+// 款式、圖片相關的按鈕操作(新增/移除/排序/設定圖片等)不是表單欄位，額外用點擊事件偵測
+document.getElementById('productEditOverlay').addEventListener('click', (e) => {
+  if (e.target.closest('[data-stage-delete], [data-stage-toggle-avail], [data-remove-group], [data-toggle-preset], [data-add-custom-value], [data-pig-remove], [data-pig-cover], [data-pig-left], [data-pig-right], [data-pig-tag], [data-set-variant-image], #addVariantGroupBtn, #productImageAddBtn')) {
+    state.productEditHasUnsavedChanges = true;
+  }
+});
+
+document.getElementById('productEditUnsavedCancelBtn').addEventListener('click', () => {
+  document.getElementById('productEditUnsavedOverlay').classList.remove('open');
+});
+document.getElementById('productEditUnsavedSaveBtn').addEventListener('click', async () => {
+  document.getElementById('productEditUnsavedOverlay').classList.remove('open');
+  await saveProductEdit({ closeAfter: true });
 });
 
 // 圖片上傳：選檔案後立即上傳到 Supabase Storage，成功後把公開網址存起來備用
@@ -6592,6 +6645,13 @@ document.getElementById('cropConfirmBtn').addEventListener('click', async () => 
 
 document.getElementById('productEditForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  await saveProductEdit({ closeAfter: true });
+});
+document.getElementById('productEditSaveInlineBtn').addEventListener('click', async () => {
+  await saveProductEdit({ closeAfter: false });
+});
+
+async function saveProductEdit({ closeAfter }) {
   const msg = document.getElementById('productEditMsg');
   msg.textContent = '儲存中...'; msg.className = 'form-msg';
 
@@ -6653,12 +6713,23 @@ document.getElementById('productEditForm').addEventListener('submit', async (e) 
     await sb.from('product_images').insert(galleryRows);
   }
 
+  // 不管是否要關閉視窗，都要把款式的暫存狀態重新對齊資料庫實際內容(補上新款式的真實id)，
+  // 避免「儲存但不關閉」之後繼續編輯再存一次，把剛新增的款式重複插入
+  document.getElementById('productEditId').value = newId;
+  await loadVariantsIntoStage(newId);
+  state.productEditHasUnsavedChanges = false;
+
   msg.textContent = '儲存成功'; msg.className = 'form-msg ok';
-  toast('商品已儲存');
   await loadAdminProducts();
   await loadProducts(); // 同步更新前台商品列表
-  setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
-});
+
+  if (closeAfter) {
+    toast('商品已儲存');
+    setTimeout(() => document.getElementById('productEditOverlay').classList.remove('open'), 600);
+  } else {
+    toast('已儲存，可以繼續編輯');
+  }
+}
 
 function buildDemandGroups(items) {
   // 回傳 { productKey: { total, combo:{}, colors:{}, sizes:{}, noVariantQty, image } }
