@@ -991,7 +991,11 @@
   </div>
   <div class="chat-shell" id="adminChatShell">
     <aside class="chat-inbox">
-      <input id="adminChatSearch" type="search" placeholder="搜尋會員名稱..." style="width:100%; padding:10px; border:1px solid var(--line); background:var(--bg); margin-bottom:10px;">
+      <input id="adminChatSearch" type="search" placeholder="搜尋會員..." style="width:100%; padding:10px; border:1px solid var(--line); background:var(--bg); margin-bottom:8px;">
+      <div class="filter-group" id="adminChatSearchModeGroup" style="margin-bottom:10px;">
+        <button class="chip active" data-search-mode="name">依名字</button>
+        <button class="chip" data-search-mode="uid">依會員編號</button>
+      </div>
       <div id="adminChatUserList"></div>
     </aside>
     <section class="chat-thread">
@@ -1043,9 +1047,14 @@
 <div id="adminMembersPageView" class="wrap section" style="display:none;">
   <button class="btn btn-outline btn-sm" id="adminMembersPageBackBtn" style="margin-bottom:20px;">← 返回管理後台</button>
   <h2 class="section-title">會員管理</h2>
-  <p class="sub" style="max-width:560px; margin-bottom:16px;">搜尋顯示名稱、帳號或會員編號，主動找到要處理的會員，不需要等對方先傳訊息聯絡。</p>
-  <div style="display:flex; gap:8px; max-width:480px; margin-bottom:20px;">
-    <input type="search" id="adminMembersSearch" placeholder="輸入顯示名稱、帳號或會員編號..." style="flex:1; padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius);">
+  <p class="sub" style="max-width:560px; margin-bottom:16px;">搜尋顯示名稱、帳號、會員編號或登入信箱，主動找到要處理的會員，不需要等對方先傳訊息聯絡。點擊會員可以展開查看更完整的詳細資料。</p>
+  <div style="display:flex; gap:8px; max-width:480px; margin-bottom:12px;">
+    <input type="search" id="adminMembersSearch" placeholder="輸入顯示名稱、帳號、會員編號或信箱..." style="flex:1; padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius);">
+  </div>
+  <div class="filter-group" id="adminMembersLineFilterGroup" style="margin-bottom:20px;">
+    <button class="chip active" data-line-filter="all">全部</button>
+    <button class="chip" data-line-filter="linked">已連動LINE</button>
+    <button class="chip" data-line-filter="unlinked">未連動LINE</button>
   </div>
   <div id="adminMembersList" style="max-width:680px;"></div>
 </div>
@@ -5705,40 +5714,93 @@ document.getElementById('adminMembersTabLink').addEventListener('click', () => {
 document.getElementById('adminMembersPageBackBtn').addEventListener('click', () => { location.hash = ''; });
 
 let adminMembersCache = [];
+let adminMembersLineFilter = 'all';
+let adminMembersExpandedId = null;
 async function loadAdminMembersList() {
   const { data, error } = await sb.rpc('admin_list_members');
   if (error) { document.getElementById('adminMembersList').innerHTML = '<p>讀取失敗</p>'; console.error(error); return; }
   adminMembersCache = data || [];
-  renderAdminMembersList('');
+  renderAdminMembersList(document.getElementById('adminMembersSearch').value);
 }
+document.querySelectorAll('[data-line-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-line-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    adminMembersLineFilter = btn.dataset.lineFilter;
+    renderAdminMembersList(document.getElementById('adminMembersSearch').value);
+  });
+});
 function renderAdminMembersList(query) {
   const list = document.getElementById('adminMembersList');
   const q = query.trim().toLowerCase();
-  const filtered = !q ? adminMembersCache : adminMembersCache.filter(m =>
+  let filtered = !q ? adminMembersCache : adminMembersCache.filter(m =>
     (m.display_name || '').toLowerCase().includes(q) ||
     (m.account || '').toLowerCase().includes(q) ||
-    (m.uid || '').toLowerCase().includes(q)
+    (m.uid || '').toLowerCase().includes(q) ||
+    (m.email || '').toLowerCase().includes(q)
   );
+  if (adminMembersLineFilter === 'linked') filtered = filtered.filter(m => !!m.line_user_id);
+  if (adminMembersLineFilter === 'unlinked') filtered = filtered.filter(m => !m.line_user_id);
+
   if (filtered.length === 0) {
     list.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">' + (q ? '找不到符合的會員。' : '目前沒有任何會員。') + '</p>';
     return;
   }
   list.innerHTML = filtered.map(m => `
-    <div class="order-row" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-      <img src="${m.avatar_url || DEFAULT_AVATAR_SVG}" alt="" style="width:40px; height:40px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); flex-shrink:0;">
-      <div style="flex:1; min-width:160px;">
-        <strong>${escapeHtml(m.display_name || '（未設定名稱）')}</strong>
-        <p class="sub" style="margin:2px 0 0; font-size:12px;">會員編號：${escapeHtml(m.uid || '—')}　帳號：${escapeHtml(m.account || '（尚未設定）')}</p>
+    <div class="order-row" data-member-row="${m.id}" style="cursor:pointer;">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <img src="${m.avatar_url || DEFAULT_AVATAR_SVG}" alt="" style="width:40px; height:40px; border-radius:999px; object-fit:cover; background:var(--bg-raised); border:1px solid var(--line); flex-shrink:0;">
+        <div style="flex:1; min-width:160px;">
+          <strong>${escapeHtml(m.display_name || '（未設定名稱）')}</strong>
+          <p class="sub" style="margin:2px 0 0; font-size:12px;">會員編號：${escapeHtml(m.uid || '—')}　帳號：${escapeHtml(m.account || '（尚未設定）')}</p>
+        </div>
+        ${m.line_user_id ? `<span class="order-card-status paid" style="margin-right:4px;">已連動LINE</span>` : `<span class="order-card-status pending">未連動LINE</span>`}
+        <span style="font-size:12px; color:var(--ink-soft);">${adminMembersExpandedId === m.id ? '▲ 收合' : '▼ 展開詳情'}</span>
       </div>
-      ${m.line_user_id
-        ? `<span class="order-card-status paid" style="margin-right:4px;">已連動LINE</span>
-           <button type="button" class="btn btn-outline btn-sm" data-unlink-line="${m.id}" data-unlink-name="${escapeHtml(m.display_name || '這位會員')}">解除LINE連動</button>`
-        : `<span class="order-card-status pending">未連動LINE</span>`
-      }
+      <div id="memberDetail-${m.id}" style="display:${adminMembersExpandedId === m.id ? 'block' : 'none'}; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);"></div>
     </div>
   `).join('');
-  list.querySelectorAll('[data-unlink-line]').forEach(btn => {
-    btn.addEventListener('click', () => openUnlinkLineConfirm(btn.dataset.unlinkLine, btn.dataset.unlinkName));
+  list.querySelectorAll('[data-member-row]').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('[data-unlink-line]')) return; // 解除連動按鈕自己有處理，不要連動觸發展開/收合
+      toggleAdminMemberDetail(row.dataset.memberRow);
+    });
+  });
+  // 如果目前有展開中的會員，重新整理列表後要重新把詳細資料填回去(例如剛解除LINE連動後)
+  if (adminMembersExpandedId && filtered.some(m => m.id === adminMembersExpandedId)) {
+    fetchAndFillMemberDetail(adminMembersExpandedId);
+  }
+}
+
+function toggleAdminMemberDetail(memberId) {
+  if (adminMembersExpandedId === memberId) {
+    adminMembersExpandedId = null;
+    renderAdminMembersList(document.getElementById('adminMembersSearch').value);
+    return;
+  }
+  adminMembersExpandedId = memberId;
+  renderAdminMembersList(document.getElementById('adminMembersSearch').value);
+}
+
+async function fetchAndFillMemberDetail(memberId) {
+  const detailBox = document.getElementById(`memberDetail-${memberId}`);
+  if (!detailBox) return;
+  detailBox.innerHTML = '<p style="font-size:13px; color:var(--ink-soft);">讀取中...</p>';
+  const { data, error } = await sb.rpc('admin_get_member_detail', { target_user_id: memberId });
+  const detail = data?.[0];
+  if (error || !detail) { detailBox.innerHTML = '<p style="font-size:13px; color:var(--danger);">讀取詳細資料失敗</p>'; return; }
+  detailBox.innerHTML = `
+    <div style="display:grid; grid-template-columns:auto 1fr; gap:6px 16px; font-size:13px;">
+      <span style="color:var(--ink-soft);">登入信箱</span><span>${escapeHtml(detail.email || '—')}</span>
+      <span style="color:var(--ink-soft);">是否有密碼</span><span>${detail.has_password ? '已設定密碼' : '尚未設定密碼'}</span>
+      <span style="color:var(--ink-soft);">聯絡信箱</span><span>${escapeHtml(detail.contact_email || '（未填寫）')}</span>
+      <span style="color:var(--ink-soft);">手機號碼</span><span>${escapeHtml(detail.phone || '（未填寫）')}</span>
+      <span style="color:var(--ink-soft);">Instagram</span><span>${escapeHtml(detail.instagram || '（未填寫）')}</span>
+    </div>
+    ${detail.line_user_id ? `<button type="button" class="btn btn-outline btn-sm" style="margin-top:12px;" data-unlink-line="${detail.id}" data-unlink-name="${escapeHtml(detail.display_name || '這位會員')}">解除LINE連動</button>` : ''}
+  `;
+  detailBox.querySelectorAll('[data-unlink-line]').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openUnlinkLineConfirm(btn.dataset.unlinkLine, btn.dataset.unlinkName); });
   });
 }
 document.getElementById('adminMembersSearch').addEventListener('input', (e) => renderAdminMembersList(e.target.value));
@@ -6846,6 +6908,14 @@ document.getElementById('openAdminMessagesBtn').addEventListener('click', () => 
 document.getElementById('adminChatSearch').addEventListener('input', () => {
   clearTimeout(adminSearchTimer); adminSearchTimer = setTimeout(renderAdminMessagesPage, 250);
 });
+document.querySelectorAll('[data-search-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-search-mode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.adminChatSearchMode = btn.dataset.searchMode;
+    renderAdminMessagesPage();
+  });
+});
 function previewText(m) { return m.image_path && !m.content ? '[圖片]' : (m.content || (m.product_name ? `[商品] ${m.product_name}` : '')); }
 async function renderAdminMessagesPage() {
   if (!state.profile?.is_admin) { toast('僅管理者可使用此頁面'); location.hash = ''; return; }
@@ -6855,28 +6925,45 @@ async function renderAdminMessagesPage() {
   const grouped = new Map();
   // 管理員以個人身分（客戶視角）傳的訊息，也要能在這裡看到並回覆，這樣才能透過兩個分頁籤互相對話
   (messages || []).forEach(m => { if (!grouped.has(m.user_id)) grouped.set(m.user_id,{last:m,unread:0}); if (m.sender === 'customer' && !m.is_read) grouped.get(m.user_id).unread++; });
+
   const query = document.getElementById('adminChatSearch').value.trim();
-  let profiles = [];
+  const searchMode = state.adminChatSearchMode || 'name';
+  const profileMap = new Map();
+  let ids;
+
   if (query) {
-    const { data } = await sb.from('profiles').select('id,display_name,uid,created_at').ilike('display_name', `%${query.replace(/[%_]/g,'')}%`).order('created_at',{ascending:false}).limit(30);
-    profiles = data || [];
-  } else if (grouped.size) {
-    const { data } = await sb.from('profiles').select('id,display_name,uid,created_at').in('id',[...grouped.keys()]); profiles = data || [];
+    // 有搜尋字詞時，只顯示真正比對到的會員，不再連同其他無關的既有對話一起顯示
+    let q = sb.from('profiles').select('id,display_name,uid,created_at');
+    q = searchMode === 'uid' ? q.ilike('uid', `%${query.replace(/[%_]/g,'')}%`) : q.ilike('display_name', `%${query.replace(/[%_]/g,'')}%`);
+    const { data } = await q.order('created_at',{ascending:false}).limit(30);
+    (data || []).forEach(p => profileMap.set(p.id, p));
+    ids = [...profileMap.keys()];
+  } else {
+    // 沒有搜尋字詞：維持原本行為，列出目前所有有對話紀錄的會員
+    if (grouped.size) {
+      const { data } = await sb.from('profiles').select('id,display_name,uid,created_at').in('id',[...grouped.keys()]);
+      (data || []).forEach(p => profileMap.set(p.id, p));
+    }
+    ids = [...grouped.keys()];
+    // 沒建立profile資料列(理論上不會發生)的會員，還是要保留在清單裡，不要憑空消失
+    ids.forEach(id => { if (!profileMap.has(id)) profileMap.set(id, null); });
   }
-  const profileMap = new Map(profiles.map(p => [p.id,p]));
-  const ids = query ? [...new Set([...grouped.keys(),...profiles.map(p=>p.id)])] : [...grouped.keys()];
-  ids.sort((a,b) => new Date(grouped.get(b)?.last.created_at || 0)-new Date(grouped.get(a)?.last.created_at || 0));
+
+  // 有搜尋時ids已經只剩下真正比對到的會員；同一批裡再依最近訊息時間排序，
+  // 沒有搜尋時則是目前所有有對話紀錄的會員，一樣依最近訊息時間排序
+  ids.sort((a, b) => new Date(grouped.get(b)?.last.created_at || 0) - new Date(grouped.get(a)?.last.created_at || 0));
+
   list.innerHTML = ids.length ? ids.map(id => {
     const p=profileMap.get(id), g=grouped.get(id); const name=p?.display_name || '未命名會員';
     return `<div class="chat-inbox-row ${state.adminChatActiveUser===id?'active':''}" data-admin-user="${id}">
       <div class="chat-inbox-meta"><strong>${escapeHtml(name)}${p?.uid ? `（${p.uid}）` : ''}</strong></div>
-      <div class="chat-inbox-preview">${escapeHtml(g ? previewText(g.last) : '尚未開始對話')}</div>
+      <div class="chat-inbox-preview">${escapeHtml(g ? previewText(g.last) : '尚無對話紀錄')}</div>
       <div class="chat-inbox-bottom">
         ${g?.unread ? `<div class="chat-unread">${g.unread} 則未讀</div>` : '<span></span>'}
         <span class="chat-inbox-date">${g ? new Date(g.last.created_at).toLocaleDateString('zh-Hant-TW') : ''}</span>
       </div>
     </div>`;
-  }).join('') : '<p style="font-size:13px;color:var(--ink-soft)">搜尋會員名稱或等待客戶傳來訊息。</p>';
+  }).join('') : `<p style="font-size:13px;color:var(--ink-soft)">${query ? '找不到符合的會員。' : '搜尋會員或等待客戶傳來訊息。'}</p>`;
   list.querySelectorAll('[data-admin-user]').forEach(el => el.addEventListener('click', () => openAdminMessagesThread(el.dataset.adminUser, profileMap.get(el.dataset.adminUser))));
   if (state.adminChatActiveUser) await renderAdminMessagesThread();
 }
