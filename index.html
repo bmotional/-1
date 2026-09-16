@@ -4620,7 +4620,7 @@ document.getElementById('epSetAccountSaveBtn').addEventListener('click', async (
     return;
   }
 
-  await sb.auth.refreshSession();
+  await sb.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' });
   const { data: { user: freshUser } } = await sb.auth.getUser();
   state.user = freshUser;
   await loadProfile();
@@ -4650,7 +4650,9 @@ document.getElementById('epRetryPasswordSaveBtn').addEventListener('click', asyn
     return;
   }
 
-  await sb.auth.refreshSession();
+  // 改信箱之後，前端手上原本的舊session其實已經失效了(綁的是舊身分)，
+  // 這裡直接用剛核發的新登入憑證建立一個對應新信箱的有效session，不會被悄悄登出
+  await sb.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' });
   const { data: { user: freshUser } } = await sb.auth.getUser();
   state.user = freshUser;
   await loadProfile();
