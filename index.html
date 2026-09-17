@@ -2733,10 +2733,18 @@ async function handleLineLoginCallback() {
   const savedState = getLineCookie('line_oauth_state');
   clearLineCookie('line_oauth_state');
   if (!returnedState || returnedState !== savedState) {
-    // 這正是LINE官方文件承認的「自動登入失敗」症狀。官方建議的做法：
-    // 自動、無感地換成關閉自動登入的網址再試一次，使用者不用自己重新點擊登入。
-    // 用一個cookie擋一下，避免萬一連第二次都失敗時無限重新導向。
     const alreadyRetried = getLineCookie('line_auto_login_retry');
+    // 暫時性除錯用：把實際發生的狀況直接顯示在畫面上，不需要接電腦看devtools也看得到，
+    // 這樣才能知道究竟是「完全讀不到cookie」還是「讀到了但值對不上」還是其他情況。
+    alert(
+      '【除錯資訊】\n' +
+      'code存在：' + (!!code) + '\n' +
+      '網址帶回的state：' + (returnedState || '(空)') + '\n' +
+      '本機cookie讀到的state：' + (savedState || '(讀不到/空)') + '\n' +
+      '目前document.cookie內容：' + (document.cookie || '(完全是空的)') + '\n' +
+      '是否已經重試過一次：' + (!!alreadyRetried) + '\n' +
+      '目前網址：' + location.href
+    );
     if (!alreadyRetried) {
       setLineCookie('line_auto_login_retry', '1', 300);
       toast('登入銜接中，請稍候...');
