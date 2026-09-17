@@ -2163,6 +2163,7 @@
     <h3>設定「<span id="variantImagePickerValueName"></span>」的參考圖</h3>
     <p class="sub">點選一張圖片，客戶選到這個選項時，購物車彈窗會自動跳到這張圖。同一張圖片可以被多個選項共用。</p>
     <div id="variantImagePickerGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; max-height:360px; overflow-y:auto; margin-bottom:12px;"></div>
+    <button type="button" class="btn btn-outline btn-sm" id="variantImagePickerResetBtn" style="width:100%; display:none;">恢復預設（不指定圖片）</button>
     <div class="form-msg" id="variantImagePickerMsg"></div>
   </div>
 </div>
@@ -6247,9 +6248,11 @@ async function openVariantImagePicker(variantValue) {
   document.getElementById('variantImagePickerValueName').textContent = variantValue;
   document.getElementById('variantImagePickerMsg').textContent = '';
   const grid = document.getElementById('variantImagePickerGrid');
+  const resetBtn = document.getElementById('variantImagePickerResetBtn');
   const images = state.productEditImages || [];
   if (images.length === 0) {
     grid.innerHTML = '<p style="font-size:13px;color:var(--ink-soft);">這件商品還沒有上傳任何圖片，請先在上方新增圖片。</p>';
+    resetBtn.style.display = 'none';
   } else {
     const { data: existingTags } = await sb.from('product_image_tags').select('image_url, variant_value').eq('product_id', productId);
     const currentUrl = (existingTags || []).find(t => t.variant_value === variantValue)?.image_url;
@@ -6262,10 +6265,22 @@ async function openVariantImagePicker(variantValue) {
     grid.querySelectorAll('[data-pick-image]').forEach(btn => {
       btn.addEventListener('click', () => selectVariantImage(btn.dataset.pickImage));
     });
+    // 只有這個選項目前真的有設定圖片時，才顯示「恢復預設」，本來就沒設定的話不需要這個按鈕
+    resetBtn.style.display = currentUrl ? 'block' : 'none';
   }
   document.getElementById('variantImagePickerOverlay').classList.add('open');
 }
 document.getElementById('variantImagePickerClose').addEventListener('click', () => {
+  document.getElementById('variantImagePickerOverlay').classList.remove('open');
+});
+document.getElementById('variantImagePickerResetBtn').addEventListener('click', async () => {
+  const productId = document.getElementById('productEditId').value;
+  const msg = document.getElementById('variantImagePickerMsg');
+  msg.textContent = '恢復中...'; msg.className = 'form-msg';
+  const { error } = await sb.from('product_image_tags').delete()
+    .eq('product_id', productId).eq('variant_value', variantImagePickerValue);
+  if (error) { msg.textContent = '恢復失敗：' + error.message; msg.className = 'form-msg err'; return; }
+  toast(`「${variantImagePickerValue}」已恢復成預設（不指定圖片）`);
   document.getElementById('variantImagePickerOverlay').classList.remove('open');
 });
 async function selectVariantImage(imageUrl) {
