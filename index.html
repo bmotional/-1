@@ -2693,6 +2693,10 @@ function startLineOAuth(intent) {
     const params = new URLSearchParams({
       response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
       state: oauthState, scope: 'profile openid',
+      // 停用LINE的「自動跳轉到App」機制：這個機制官方文件本身就承認在某些手機系統上會失敗，
+      // 失敗時就是造成我們一直卡住的那個state比對不上的症狀。全程留在瀏覽器裡，
+      // 沒有App↔瀏覽器的交接動作，就不會有這個問題；如果使用者先前在瀏覽器登入過LINE，一樣可以一鍵完成。
+      disable_auto_login: 'true',
     });
     location.href = `https://access.line.me/oauth2/v2.1/authorize?${params}`;
   } catch (e) {
