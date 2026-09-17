@@ -2672,12 +2672,24 @@ const LINE_CHANNEL_ID = '2011606780';
 
 function lineRedirectUri() { return location.origin + location.pathname; }
 
+// Cookie會隨著瀏覽器實際發出的HTTP請求自動附帶，不像localStorage要靠JS自己去讀，
+// 在LINE App跳轉回瀏覽器這種「可能經過中介瀏覽器情境」的流程裡更可靠，這是業界OAuth函式庫的標準做法。
+function setLineCookie(name, value, maxAgeSeconds) {
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax; Secure`;
+}
+function getLineCookie(name) {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+function clearLineCookie(name) {
+  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax; Secure`;
+}
+
 function startLineOAuth(intent) {
   try {
     const oauthState = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem('line_oauth_state', oauthState);
-    localStorage.setItem('line_oauth_state_time', String(Date.now()));
-    localStorage.setItem('line_oauth_intent', intent);
+    setLineCookie('line_oauth_state', oauthState, 600);
+    setLineCookie('line_oauth_intent', intent, 600);
     const params = new URLSearchParams({
       response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
       state: oauthState, scope: 'profile openid',
@@ -2710,21 +2722,14 @@ async function handleLineLoginCallback() {
   const cleanUrl = location.pathname + location.hash;
   history.replaceState(null, '', cleanUrl);
 
-  const intent = localStorage.getItem('line_oauth_intent') || 'login';
-  localStorage.removeItem('line_oauth_intent');
+  const intent = getLineCookie('line_oauth_intent') || 'login';
+  clearLineCookie('line_oauth_intent');
 
-  // 用 localStorage(跟瀏覽器綁定)取代 sessionStorage(跟分頁綁定)：
-  // 手機上LINE App透過系統的Universal Link跳轉回來，實際開啟的瀏覽器情境不一定跟原本發起登入的相同
-  // (甚至可能換了一個瀏覽器App)，localStorage在這種情況下還是可能讀不到。
-  // 這個state比對本來是用來防CSRF攻擊，但對一般購物網站的登入來說風險本來就低，
-  // 而且真正證明身分的是LINE核發的一次性授權碼(code)，所以這裡改成「比對不到就記錄警告，但不擋登入」，
-  // 不要因為存取不到本地儲存空間，就讓所有手機使用者都無法登入。
-  const savedState = localStorage.getItem('line_oauth_state');
-  const savedStateTime = Number(localStorage.getItem('line_oauth_state_time') || 0);
-  localStorage.removeItem('line_oauth_state');
-  localStorage.removeItem('line_oauth_state_time');
-  if (!returnedState || returnedState !== savedState || (savedStateTime && Date.now() - savedStateTime > 10 * 60_000)) {
-    console.warn('LINE OAuth state 比對不到(可能是跨瀏覽器情境跳轉)，仍繼續使用授權碼完成登入');
+  const savedState = getLineCookie('line_oauth_state');
+  clearLineCookie('line_oauth_state');
+  if (!returnedState || returnedState !== savedState) {
+    toast('LINE登入驗證失敗，請重新嘗試');
+    return;
   }
 
   if (intent === 'link') {
