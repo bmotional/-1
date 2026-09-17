@@ -4074,10 +4074,11 @@ function renderVariantSlot(slot, sectionId, rowId, labelId, selectionObj, select
       row.querySelectorAll('.swatch, .size-chip').forEach(s => s.classList.remove('selected'));
       el.classList.add('selected');
       selectionObj[selectionKey] = el.dataset.value;
-      // 選了這個款式，如果有對應的參考圖就跳過去；沒有的話回到封面圖，不維持在不相關的舊圖上
+      // 選了這個款式，如果有對應的參考圖就跳過去；沒有設定圖片的話維持目前畫面不變
+      // (小視窗剛打開時預設就是顯示第一張圖，所以第一次點到沒設定圖片的選項，看到的自然就是第一張圖)
       if (galleryContainerId) {
         const taggedUrl = imageTagsMap?.get(el.dataset.value);
-        jumpGalleryToUrl(galleryContainerId, taggedUrl || coverUrl);
+        if (taggedUrl) jumpGalleryToUrl(galleryContainerId, taggedUrl);
       }
     });
   });
