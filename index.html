@@ -5482,7 +5482,7 @@ async function loadAdminOrders() {
       <div class="order-row-top">
         <span class="order-id" style="display:flex; align-items:center; gap:8px;">
           <img src="${m?.avatar_url || DEFAULT_AVATAR_SVG}" style="width:26px; height:26px; border-radius:999px; object-fit:cover; flex-shrink:0;" alt="">
-          訂單 ${o.order_no || ('#' + o.id)}　${m ? `${m.display_name || '（未命名）'}（${m.uid || '—'}）` : '（未知會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}
+          訂單 ${o.order_no || ('#' + o.id)}　${m ? `${escapeHtml(m.display_name || '（未命名）')}（${escapeHtml(m.uid || '—')}）` : '（未知會員）'}　${new Date(o.created_at).toLocaleDateString('zh-Hant-TW')}
         </span>
         ${hasAwaitingPayment ? `<button class="btn btn-primary btn-sm" data-confirm-payment-order="${o.id}">確認整筆訂單已付款</button>` : ''}
       </div>
@@ -5983,10 +5983,10 @@ async function loadAdminWishlist() {
 
     return `
     <div class="wish-row ${w.admin_read ? '' : 'unread-row'}">
-      <div class="wish-row-brand">${w.brand_name}${w.is_public ? '<span style="color:var(--sencha); font-size:11px; margin-left:8px;">● 已公開</span>' : ''}</div>
-      <div class="wish-row-meta">${[w.country, w.category].filter(Boolean).join(' · ')}</div>
-      ${w.description ? `<div class="wish-row-desc">${w.description}</div>` : ''}
-      <div class="wish-row-meta">${nameMap[w.user_id] || '（未命名會員）'}　${new Date(w.created_at).toLocaleDateString('zh-Hant-TW')}</div>
+      <div class="wish-row-brand">${escapeHtml(w.brand_name)}${w.is_public ? '<span style="color:var(--sencha); font-size:11px; margin-left:8px;">● 已公開</span>' : ''}</div>
+      <div class="wish-row-meta">${[w.country, w.category].filter(Boolean).map(escapeHtml).join(' · ')}</div>
+      ${w.description ? `<div class="wish-row-desc">${escapeHtml(w.description)}</div>` : ''}
+      <div class="wish-row-meta">${escapeHtml(nameMap[w.user_id] || '（未命名會員）')}　${new Date(w.created_at).toLocaleDateString('zh-Hant-TW')}</div>
       ${wishVotes.length ? `<div class="wish-row-meta" style="margin-top:6px;">收到 ${wishVotes.length} 筆可接受價格填寫，有效 ${validVotes.length} 筆${avg ? `，定價參考均值 NT$${avg}` : ''}${invalidVotes.length ? `（另有 ${invalidVotes.length} 筆判定為無效統計）` : ''}</div>` : ''}
       <div class="order-admin-actions" style="flex-wrap:wrap; margin-top:8px;">
         <button class="btn btn-outline btn-sm" data-toggle-read-wish="${w.id}" data-current-read="${w.admin_read}">${w.admin_read ? '標記未讀' : '標記已讀'}</button>
@@ -6987,10 +6987,10 @@ async function loadWishlistPublic() {
         <div class="wish-card-top">
           ${w.image_url ? `<img src="${w.image_url}" class="wish-card-img" alt="">` : ''}
           <div>
-            <div class="wish-card-name">${w.brand_name}</div>
-            <div class="wish-card-meta">${[w.country, w.category, w.color, w.size].filter(Boolean).join(' · ')}</div>
+            <div class="wish-card-name">${escapeHtml(w.brand_name)}</div>
+            <div class="wish-card-meta">${[w.country, w.category, w.color, w.size].filter(Boolean).map(escapeHtml).join(' · ')}</div>
             ${w.description ? `<div class="wish-card-desc">${escapeHtml(w.description)}</div>` : ''}
-            ${w.social_link ? `<a href="${w.social_link}" target="_blank" style="font-size:12px; color:var(--brass-dark);">官網/粉專連結 →</a>` : ''}
+            ${/^https?:\/\//i.test(w.social_link || '') ? `<a href="${escapeHtml(w.social_link)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--brass-dark);">官網/粉專連結 →</a>` : ''}
           </div>
         </div>
         <div class="wish-card-actions">
