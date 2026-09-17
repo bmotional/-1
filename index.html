@@ -2685,27 +2685,28 @@ function clearLineCookie(name) {
   document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax; Secure`;
 }
 
-function startLineOAuth(intent) {
+function startLineOAuth(intent, forceDisableAutoLogin) {
   try {
     const oauthState = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
     setLineCookie('line_oauth_state', oauthState, 600);
     setLineCookie('line_oauth_intent', intent, 600);
-    const params = new URLSearchParams({
+    const paramsObj = {
       response_type: 'code', client_id: LINE_CHANNEL_ID, redirect_uri: lineRedirectUri(),
       state: oauthState, scope: 'profile openid',
-      // 停用LINE的「自動跳轉到App」機制：這個機制官方文件本身就承認在某些手機系統上會失敗，
-      // 失敗時就是造成我們一直卡住的那個state比對不上的症狀。全程留在瀏覽器裡，
-      // 沒有App↔瀏覽器的交接動作，就不會有這個問題；如果使用者先前在瀏覽器登入過LINE，一樣可以一鍵完成。
-      disable_auto_login: 'true',
-    });
+    };
+    // 先讓大多數人享受LINE App一鍵核准的體驗；只有真的踩到LINE官方文件承認的
+    // 「自動登入失敗」情況時，才會由 handleLineLoginCallback 自動、無感地用這個參數重試一次，
+    // 不需要使用者自己再手動點一次登入。
+    if (forceDisableAutoLogin) paramsObj.disable_auto_login = 'true';
+    const params = new URLSearchParams(paramsObj);
     location.href = `https://access.line.me/oauth2/v2.1/authorize?${params}`;
   } catch (e) {
     console.error('LINE OAuth redirect failed', e);
     toast('無法啟動LINE連動，請稍後再試：' + e.message);
   }
 }
-document.getElementById('lineLoginBtn').addEventListener('click', () => startLineOAuth('login'));
-document.getElementById('epLinkLineBtn').addEventListener('click', () => startLineOAuth('link'));
+document.getElementById('lineLoginBtn').addEventListener('click', () => startLineOAuth('login', false));
+document.getElementById('epLinkLineBtn').addEventListener('click', () => startLineOAuth('link', false));
 
 async function completeLineSession(email, hashedToken) {
   if (!hashedToken) { toast('登入失敗，請重新嘗試'); return; }
@@ -2732,9 +2733,21 @@ async function handleLineLoginCallback() {
   const savedState = getLineCookie('line_oauth_state');
   clearLineCookie('line_oauth_state');
   if (!returnedState || returnedState !== savedState) {
+    // 這正是LINE官方文件承認的「自動登入失敗」症狀。官方建議的做法：
+    // 自動、無感地換成關閉自動登入的網址再試一次，使用者不用自己重新點擊登入。
+    // 用一個cookie擋一下，避免萬一連第二次都失敗時無限重新導向。
+    const alreadyRetried = getLineCookie('line_auto_login_retry');
+    if (!alreadyRetried) {
+      setLineCookie('line_auto_login_retry', '1', 300);
+      toast('登入銜接中，請稍候...');
+      startLineOAuth(intent, true);
+      return;
+    }
+    clearLineCookie('line_auto_login_retry');
     toast('LINE登入驗證失敗，請重新嘗試');
     return;
   }
+  clearLineCookie('line_auto_login_retry');
 
   if (intent === 'link') {
     // 連動LINE帳號：這個人已經是登入狀態，只需要把LINE身分綁到目前帳號上，不用走註冊/登入流程
