@@ -946,7 +946,7 @@
         <div class="swatch-row" id="pageExtraRow"></div>
       </div>
 
-      <div id="pageRefundNote" style="display:none;" class="status-callout">此商品採購後即不接受任何退款，請確認品項與數量後再加入購物車。</div>
+      <div id="pageRefundNote" style="display:none;" class="status-callout">⚠️ 商品抵台後不予退款，請確認品項與數量後再加入購物車。</div>
       <div class="qty-selector" style="margin-top:16px;">
         <button type="button" class="qty-btn" id="pageQtyMinus">−</button>
         <input type="number" id="pageQtyInput" class="qty-input" value="1" min="1" max="99">
@@ -2229,7 +2229,7 @@
           <div class="swatch-row" id="detailExtraRow"></div>
         </div>
 
-        <div id="detailRefundNote" style="display:none;" class="status-callout">此商品採購後即不接受任何退款，請確認品項與數量後再加入購物車。</div>
+        <div id="detailRefundNote" style="display:none;" class="status-callout">⚠️ 商品抵台後不予退款，請確認品項與數量後再加入購物車。</div>
         <div class="qty-selector" style="margin-top:14px;">
           <button type="button" class="qty-btn" id="detailQtyMinus">−</button>
           <input type="number" id="detailQtyInput" class="qty-input" value="1" min="1" max="99">
@@ -2542,7 +2542,6 @@ function renderProducts() {
     card.innerHTML = `
       <div class="card-image" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}" data-open-page="${p.id}" title="查看大圖與詳情（開新分頁）">
         <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
-        ${p.is_refundable === false ? '<span class="status-badge" style="left:auto; right:10px; background:var(--danger);">不可退貨</span>' : ''}
         <button class="heart-btn ${isFav ? 'active' : ''}" data-toggle-fav="${p.id}" aria-label="加入收藏">
           <svg viewBox="0 0 24 24"><path class="heart-fill" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
         </button>
